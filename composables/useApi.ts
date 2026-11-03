@@ -11,12 +11,14 @@ function csrfToken(): string | undefined {
   return document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)?.[1]
 }
 
-/** SRS ARC-05 / ARC-06 / §7. Typed API client for /api/v1. Sends cookies; adds the CSRF header on unsafe methods. */
+/** SRS ARC-05 / ARC-06 / §7. Typed API client for /api/v1. Sends cookies; adds the CSRF header on
+ * unsafe methods. On a 401 from an admin call it rotates the refresh cookie once and retries
+ * (access tokens live 15 min). */
 export function useApi() {
   const config = useRuntimeConfig()
   const base = import.meta.server ? config.apiBaseInternal : config.public.apiBase
 
-  async function api<T>(path: string, opts: FetchOptions = {}): Promise<T> {
+  async function raw<T>(path: string, opts: FetchOptions): Promise<T> {
     const method = String(opts.method ?? 'GET').toUpperCase()
     const headers: Record<string, string> = { ...(opts.headers as Record<string, string>) }
     if (method !== 'GET' && method !== 'HEAD') {
@@ -24,7 +26,31 @@ export function useApi() {
       if (t) headers['X-CSRFToken'] = t
     }
     if (import.meta.server) Object.assign(headers, useRequestHeaders(['cookie']))
-    return await $fetch<T>(path, { baseURL: base, credentials: 'include', ...opts, headers })
+    return await $fetch<T>(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)
   }
-  return { api }
+
+  async function api<T>(path: string, opts: FetchOptions = {}): Promise<T> {
+    try {
+      return await raw<T>(path, opts)
+    } catch (e) {
+      const status = (e as { statusCode?: number }).statusCode
+      const isAuthCall = path.startsWith('/admin/auth/')
+      if (import.meta.client && status === 401 && path.startsWith('/admin/') && !isAuthCall) {
+        await raw('/admin/auth/refresh/', { method: 'POST' })
+        return await raw<T>(path, opts)
+      }
+      throw e
+    }
+  }
+
+  /** Pull the {code,message,fields} body out of a failed call (SRS §7 error shape). */
+  function errorOf(e: unknown): ApiError {
+    const data = (e as { data?: Partial<ApiError> }).data
+    return {
+      code: data?.code ?? 'error',
+      message: data?.message ?? 'Something went wrong. Please try again.',
+      fields: data?.fields ?? {}
+    }
+  }
+  return { api, errorOf }
 }

@@ -24,3 +24,21 @@
     @apply inline-flex min-h-touch items-center justify-center border border-primary bg-transparent px-8 text-xs font-medium uppercase tracking-[0.16em] text-primary hover:bg-primary-soft;
   }
 }
+
+/* Admin building blocks (design boards: AdminSettings/AdminTheme/AdminUsers). Token colours only. */
+@layer components {
+  .card { @apply flex flex-col gap-4 border border-border bg-surface p-6; }
+  .cap { @apply text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted; }
+  .fld { @apply flex flex-col gap-2; }
+  .fld > label { @apply text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink; }
+  .inp { @apply box-border h-[46px] w-full border border-border bg-surface px-3.5 text-[14.5px] text-ink; }
+  textarea.inp { @apply h-auto min-h-[96px] py-3; }
+  .hint { @apply text-[13px] text-muted; }
+  .err { @apply text-[13px] font-medium text-accent; }
+  .tab { @apply min-h-touch border-b-2 border-transparent px-4 text-sm text-muted; }
+  .tab[aria-pressed='true'] { @apply border-primary text-ink; }
+  .switch { @apply relative h-6 w-11 shrink-0 border border-border bg-cream; }
+  .switch[aria-checked='true'] { @apply border-primary bg-primary; }
+  .switch::after { content: ''; @apply absolute left-0.5 top-0.5 h-4 w-4 bg-surface transition-transform; }
+  .switch[aria-checked='true']::after { transform: translateX(20px); @apply bg-primary-contrast; }
+}

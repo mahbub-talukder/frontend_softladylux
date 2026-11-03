@@ -1,9 +1,11 @@
+<script setup lang="ts">
+// SRS ARC-04: separate admin layout. The sidebar only renders for a signed-in staff user.
+const auth = useAuthStore()
+</script>
+
 <template>
-  <div class="flex min-h-screen bg-cream text-ink">
-    <aside class="w-64 shrink-0 bg-dark p-6 text-on-dark">
-      <NuxtLink to="/admin" class="font-display text-xl">SoftLadyLux Admin</NuxtLink>
-      <p class="mt-6 text-xs opacity-70">Menu appears per permission (M1).</p>
-    </aside>
-    <main class="flex-1 p-8"><slot /></main>
+  <div class="flex min-h-screen bg-bg text-ink">
+    <AdminSidebar v-if="auth.isStaff" />
+    <main class="min-w-0 flex-1 p-8"><slot /></main>
   </div>
 </template>

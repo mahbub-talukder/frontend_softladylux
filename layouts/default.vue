@@ -1,13 +1,15 @@
+<script setup lang="ts">
+// Storefront layout: header + footer read from the Settings API (SET-08).
+const { data: s } = await useSiteSettings()
+useHead({
+  link: () => (s.value?.favicon ? [{ rel: 'icon', href: s.value.favicon.url }] : [])
+})
+</script>
+
 <template>
   <div class="min-h-screen bg-bg text-ink">
-    <header class="border-b border-border bg-surface">
-      <div class="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-4">
-        <NuxtLink to="/" class="font-display text-2xl">SoftLadyLux</NuxtLink>
-      </div>
-    </header>
+    <StoreHeader />
     <main class="mx-auto max-w-screen-xl px-4 py-8"><slot /></main>
-    <footer class="bg-dark px-4 py-8 text-sm text-on-dark">
-      <div class="mx-auto max-w-screen-xl">[FOOTER: contact and support hours come from Settings]</div>
-    </footer>
+    <StoreFooter />
   </div>
 </template>

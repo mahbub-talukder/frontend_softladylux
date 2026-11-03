@@ -1,0 +1,51 @@
+<script setup lang="ts">
+// Design: AdminSidebar board. SRS ADM-01 / PRM-04: an item shows only when the signed-in user
+// holds its permission; Users and Audit log are Owner-only. Later milestones add their items here.
+const auth = useAuthStore()
+const route = useRoute()
+
+interface Item { label: string; to: string; d: string; permission?: string; ownerOnly?: boolean }
+const ITEMS: Item[] = [
+  { label: 'Dashboard', to: '/admin', d: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z', permission: 'dashboard.view' },
+  { label: 'Website content', to: '/admin/website', d: 'M3 5h18v14H3zM3 9h18', permission: 'website.manage' },
+  { label: 'Theme colours', to: '/admin/theme', d: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z', permission: 'theme.manage' },
+  { label: 'Settings', to: '/admin/settings', d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1V5h-4v2l-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1v2h4v-2l2-1 2 1 2-4-2-1z', permission: 'settings.manage' },
+  { label: 'Staff & permissions', to: '/admin/users', d: 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 4-6 8-6s8 2 8 6', ownerOnly: true },
+  { label: 'Audit log', to: '/admin/audit-log', d: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4', ownerOnly: true }
+]
+const visible = computed(() => ITEMS.filter((i) => allowed(i, { isOwner: auth.isOwner, can: auth.can })))
+const active = (to: string) => (to === '/admin' ? route.path === '/admin' : route.path.startsWith(to))
+const initials = computed(() => (auth.me?.full_name || 'ST').slice(0, 2).toUpperCase())
+
+async function signOut() {
+  await auth.logout()
+  await navigateTo('/admin/login')
+}
+</script>
+
+<template>
+  <nav aria-label="Admin" class="flex min-h-screen w-64 shrink-0 flex-col gap-1.5 bg-dark px-4 py-7 text-on-dark">
+    <NuxtLink to="/admin" class="flex flex-col gap-1.5 px-3 pb-6">
+      <span class="font-display text-3xl leading-none tracking-wide">SoftLady<em class="text-accent">Lux</em></span>
+      <span class="text-[10px] uppercase tracking-[0.34em] opacity-70">Admin panel</span>
+    </NuxtLink>
+    <NuxtLink
+      v-for="i in visible" :key="i.to" :to="i.to"
+      class="flex min-h-[46px] items-center gap-3.5 border-l-2 px-3 text-[14.5px]"
+      :class="active(i.to) ? 'border-accent bg-primary-hover/40' : 'border-transparent opacity-80 hover:opacity-100'"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="i.d" /></svg>
+      <span>{{ i.label }}</span>
+    </NuxtLink>
+    <div class="min-h-10 flex-1" />
+    <NuxtLink to="/" class="flex min-h-touch items-center gap-3 border border-primary-hover px-3 text-[13px] uppercase tracking-widest">View storefront <span aria-hidden="true">↗</span></NuxtLink>
+    <div class="mt-3 flex items-center gap-3 border-t border-primary-hover px-3 pt-4">
+      <span class="flex h-9 w-9 items-center justify-center bg-primary-hover/40 font-display text-lg">{{ initials }}</span>
+      <span class="flex flex-1 flex-col leading-tight">
+        <span class="text-sm">{{ auth.me?.full_name || 'Staff' }}</span>
+        <span class="text-xs opacity-60">{{ auth.isOwner ? 'Owner · all permissions' : 'Staff' }}</span>
+      </span>
+    </div>
+    <button type="button" class="min-h-touch px-3 text-left text-xs uppercase tracking-widest opacity-70 hover:opacity-100" @click="signOut">Sign out</button>
+  </nav>
+</template>
