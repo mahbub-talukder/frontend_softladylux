@@ -6,5 +6,5 @@ useSeoMeta({ title: () => (q.value ? `Search: ${q.value}` : 'Search'), robots: '
 </script>
 
 <template>
-  <ShopListing :key="q" :scope="{}" :title="q ? `Results for “${q}”` : 'Search'" :crumbs="[{ name: 'Home', to: '/' }, { name: 'Search' }]" />
+  <StoreShopListing :key="q" :scope="{}" :title="q ? `Results for “${q}”` : 'Search'" :crumbs="[{ name: 'Home', to: '/' }, { name: 'Search' }]" />
 </template>

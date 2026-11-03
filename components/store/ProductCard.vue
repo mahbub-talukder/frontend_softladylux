@@ -10,7 +10,7 @@ const p = computed(() => props.product)
 <template>
   <article class="group flex flex-col">
     <NuxtLink :to="`/product/${p.slug}`" class="relative block bg-cream" :aria-label="p.name">
-      <NuxtImg v-if="p.image" :src="mediaSrc(p.image.url)" :alt="p.image.alt_text || p.name" width="480" height="640" sizes="(min-width: 1024px) 25vw, 50vw" loading="lazy" class="aspect-[3/4] w-full object-cover" />
+      <NuxtImg format="webp" v-if="p.image" :src="mediaSrc(p.image.url)" :alt="p.image.alt_text || p.name" width="480" height="640" sizes="xs:50vw md:33vw lg:25vw" loading="lazy" class="aspect-[3/4] w-full object-cover" />
       <div v-else class="aspect-[3/4] w-full" />
       <div class="absolute left-2 top-2 flex flex-col items-start gap-1">
         <span v-if="p.tag" class="bg-primary px-2 py-0.5 text-[11px] uppercase tracking-widest text-primary-contrast">{{ p.tag }}</span>

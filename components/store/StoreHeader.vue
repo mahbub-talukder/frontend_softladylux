@@ -16,7 +16,7 @@ const note = computed(() => home.value?.announcements?.[0])
     </div>
     <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-4 px-4 py-4">
       <NuxtLink to="/" class="flex items-center" :aria-label="s?.company_name">
-        <NuxtImg v-if="s?.logo" :src="mediaSrc(s.logo.url)" :alt="s.logo.alt_text" height="40" class="h-10 w-auto" />
+        <NuxtImg format="webp" v-if="s?.logo" :src="mediaSrc(s.logo.url)" :alt="s.logo.alt_text" height="40" class="h-10 w-auto" />
         <span v-else class="font-display text-2xl">{{ s?.company_name || 'SoftLadyLux' }}</span>
       </NuxtLink>
       <StoreSearch class="order-last w-full md:order-none md:w-auto md:flex-1" />

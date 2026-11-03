@@ -29,7 +29,7 @@ async function onFile(e: Event) {
   <div class="fld">
     <label>{{ label }}</label>
     <div v-if="modelValue" class="flex items-center gap-3">
-      <NuxtImg :src="mediaSrc(modelValue.url)" :alt="modelValue.alt_text" width="96" height="64" class="h-16 w-24 border border-border object-cover" />
+      <NuxtImg format="webp" :src="mediaSrc(modelValue.url)" :alt="modelValue.alt_text" width="96" height="64" class="h-16 w-24 border border-border object-cover" />
       <button type="button" class="hint underline" @click="emit('update:modelValue', null)">Remove</button>
     </div>
     <input v-model="alt" class="inp" placeholder="Alt text (describe the image)" :aria-label="`${label} alt text`">

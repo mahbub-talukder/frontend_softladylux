@@ -60,11 +60,11 @@ const tabs = computed(() => [
       <div class="flex flex-col-reverse gap-3 md:flex-row">
         <div class="flex gap-2 md:flex-col">
           <button v-for="(im, i) in gallery" :key="im.url" class="border" :class="i === active ? 'border-primary' : 'border-border'" :aria-label="`Photo ${i + 1}`" @click="active = i">
-            <NuxtImg :src="mediaSrc(im.url)" :alt="im.alt_text" width="64" height="85" class="h-[85px] w-16 object-cover" />
+            <NuxtImg format="webp" :src="mediaSrc(im.url)" :alt="im.alt_text" width="64" height="85" class="h-[85px] w-16 object-cover" />
           </button>
         </div>
         <div class="relative flex-1 bg-cream">
-          <NuxtImg v-if="gallery[active]" :src="mediaSrc(gallery[active].url)" :alt="gallery[active].alt_text || p.name" width="720" height="960" sizes="(min-width: 768px) 45vw, 100vw" class="aspect-[3/4] w-full object-cover" loading="eager" />
+          <NuxtImg format="webp" v-if="gallery[active]" :src="mediaSrc(gallery[active].url)" :alt="gallery[active].alt_text || p.name" width="720" height="960" sizes="xs:100vw md:45vw" class="aspect-[3/4] w-full object-cover" loading="eager" />
           <span v-if="p.tag" class="absolute left-3 top-3 bg-primary px-2 py-0.5 text-xs uppercase tracking-widest text-primary-contrast">{{ p.tag }}</span>
         </div>
       </div>
@@ -105,7 +105,7 @@ const tabs = computed(() => [
     </section>
     <section v-if="p.related.length" class="mt-16">
       <div class="cap">Complete the set</div><h2 class="mb-4 text-3xl">You may also love</h2>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-4"><ProductCard v-for="r in p.related" :key="r.id" :product="r" /></div>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4"><StoreProductCard v-for="r in p.related" :key="r.id" :product="r" /></div>
     </section>
   </div>
 </template>

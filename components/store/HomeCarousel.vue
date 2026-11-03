@@ -13,7 +13,7 @@ const href = (s: Slide) => (s.link_type === 'category' ? `/shop/${s.link_value}`
     <div v-for="(s, n) in slides" v-show="n === i" :key="s.id" class="relative">
       <picture>
         <source v-if="s.mobile_media" media="(max-width: 767px)" :srcset="mediaSrc(s.mobile_media.url)">
-        <NuxtImg :src="mediaSrc(s.media.url)" :alt="s.media.alt_text" width="1600" height="900" sizes="100vw" :loading="n === 0 ? 'eager' : 'lazy'" class="h-[420px] w-full object-cover md:h-[560px]" />
+        <NuxtImg format="webp" :src="mediaSrc(s.media.url)" :alt="s.media.alt_text" width="1600" height="900" sizes="100vw" :loading="n === 0 ? 'eager' : 'lazy'" class="h-[420px] w-full object-cover md:h-[560px]" />
       </picture>
       <div class="absolute inset-0 flex items-center bg-dark/30">
         <div class="mx-auto w-full max-w-screen-xl px-4 text-on-dark">

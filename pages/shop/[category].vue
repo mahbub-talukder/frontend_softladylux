@@ -9,5 +9,5 @@ useSeoMeta({ title: () => cat.value?.name, description: () => cat.value?.descrip
 </script>
 
 <template>
-  <ShopListing :key="slug" :scope="{ category: slug }" :title="cat!.name" :blurb="cat!.description" :crumbs="[{ name: 'Home', to: '/' }, { name: cat!.name }]" />
+  <StoreShopListing :key="slug" :scope="{ category: slug }" :title="cat!.name" :blurb="cat!.description" :crumbs="[{ name: 'Home', to: '/' }, { name: cat!.name }]" />
 </template>

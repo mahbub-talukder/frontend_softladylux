@@ -129,7 +129,7 @@ const chipList = computed(() => chips(filters.value))
           <button class="btn-secondary mt-4" @click="clearAll">Clear all filters</button>
         </div>
         <div v-else class="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3">
-          <ProductCard v-for="p in items" :key="p.id" :product="p" />
+          <StoreProductCard v-for="p in items" :key="p.id" :product="p" />
         </div>
         <div v-if="items.length" class="mt-10 flex flex-col items-center gap-3">
           <p class="hint">Showing {{ items.length }} of {{ total }}</p>

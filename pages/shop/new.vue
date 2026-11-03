@@ -4,5 +4,5 @@ useSeoMeta({ title: 'New arrivals' })
 </script>
 
 <template>
-  <ShopListing :scope="{ new: true }" title="New arrivals" :crumbs="[{ name: 'Home', to: '/' }, { name: 'New arrivals' }]" />
+  <StoreShopListing :scope="{ new: true }" title="New arrivals" :crumbs="[{ name: 'Home', to: '/' }, { name: 'New arrivals' }]" />
 </template>
