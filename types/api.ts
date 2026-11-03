@@ -9,6 +9,7 @@ export interface PublicSettings {
   messenger_link: string; footer_about: string; copyright_text: string
   bkash_number: string; nagad_number: string; cod_enabled: boolean
   delivery_fee_inside_dhaka: string; delivery_fee_outside_dhaka: string
+  delivery_time_inside_dhaka: string; delivery_time_outside_dhaka: string
   seo_title: string; seo_description: string; gtm_id: string
 }
 
@@ -27,7 +28,9 @@ export interface TrustItem { id: number; icon: string; title: string; text: stri
 export interface StaticPage { id: number; slug: string; title: string; body: string; is_active: boolean }
 
 export interface Home {
-  announcements: Announcement[]; carousel: Slide[]; banners: Banner[]; categories: unknown[]
+  announcements: Announcement[]; carousel: Slide[]; banners: Banner[]
+  categories: { name: string; slug: string; tile: { url: string; alt_text: string } | null }[]
+  new_arrivals: CardProduct[]; signature: CardProduct[]; offers: CardProduct[]
   trust: TrustItem[]; videos: Video[]
 }
 
@@ -45,3 +48,35 @@ export interface AuditRow { id: number; created_at: string; user: string | null;
 // Loosely-typed form rows for generic admin editors.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Dict = Record<string, any>
+
+// ---- Catalogue (M2)
+export interface CardProduct {
+  id: number; name: string; slug: string; price: string; compare_at_price: string | null
+  discount_pct: number; tag: string | null; sold_out: boolean
+  image: { url: string; alt_text: string; width: number; height: number; color: string } | null
+  category: { name: string; slug: string }; subcategory: { name: string; slug: string } | null
+  colors: { name: string; hex: string }[]; sizes: string[]
+}
+export interface ProductVariant {
+  id: number; sku: string; size_label: string; color_name: string; color_hex: string
+  price: string; in_stock: boolean; low_stock_left: number | null
+}
+export interface ProductDetail extends CardProduct {
+  short_desc: string; description: string; care_notes: string; collection: string; uom: string
+  images: NonNullable<CardProduct['image']>[]; variants: ProductVariant[]
+  breadcrumb: { name: string; slug: string }[]; related: CardProduct[]
+  seo_title: string; seo_description: string
+}
+export interface PublicCategory {
+  name: string; slug: string; description: string; count: number
+  subcategories: { name: string; slug: string; count: number }[]
+  tile: { url: string; alt_text: string } | null
+}
+export interface Facets {
+  subcategories: { name: string; slug: string; count: number }[]
+  categories: { name: string; slug: string; count: number }[]
+  sizes: string[]; colours: { name: string; hex: string }[]; collections: string[]
+  price: { min: string; max: string }
+}
+export interface ProductPage { count: number; next: string | null; results: CardProduct[]; facets: Facets }
+export interface SizeChartData { name: string; type: string; rows: Record<string, any> } // eslint-disable-line @typescript-eslint/no-explicit-any

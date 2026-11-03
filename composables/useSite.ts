@@ -11,3 +11,9 @@ export function useHome() {
   const { api } = useApi()
   return useAsyncData('home', () => api<Home>('/home/'))
 }
+
+/** SRS CAT-01 / CAT-17: active categories with nested sub-categories and counts. */
+export function useCategories() {
+  const { api } = useApi()
+  return useAsyncData('categories', () => api<import('~/types/api').PublicCategory[]>('/categories/'))
+}

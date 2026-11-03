@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Design: Main board (M1 blocks). SRS WEB-06: fixed layout. Carousel, trust strip, the two
-// banners and the video gallery are live; category tiles, product sections and the size-finder
-// band arrive with the catalogue (M2).
+// banners, category tiles, New/Signature/Offers (filled from product flags) and the video gallery.
 const { data: home } = await useHome()
 const { data: s } = await useSiteSettings()
+const tab = ref<'offers' | 'favourites'>('offers')
 const banner = (p: string) => home.value?.banners.find((b) => b.placement === p)
 
 useSeoMeta({
@@ -30,6 +30,31 @@ useSeoMeta({
         </NuxtLink>
       </template>
     </section>
+    <section v-if="home?.categories.length" class="mx-auto w-full max-w-screen-xl px-4">
+      <div class="cap">Shop by category</div><h2 class="mb-4 text-3xl">The wardrobe, edited</h2>
+      <ul class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <li v-for="c in home.categories" :key="c.slug">
+          <NuxtLink :to="`/shop/${c.slug}`" class="block" data-track="home_category_tile">
+            <NuxtImg v-if="c.tile" :src="mediaSrc(c.tile.url)" :alt="c.tile.alt_text || c.name" width="400" height="500" class="aspect-[4/5] w-full object-cover" loading="lazy" />
+            <div v-else class="aspect-[4/5] w-full bg-cream" />
+            <div class="mt-2 font-display text-xl">{{ c.name }}</div>
+          </NuxtLink>
+        </li>
+      </ul>
+    </section>
+    <section v-if="home?.new_arrivals.length" class="mx-auto w-full max-w-screen-xl px-4">
+      <div class="flex items-end justify-between"><div><div class="cap">Just landed</div><h2 class="mb-4 text-3xl">New arrivals</h2></div><NuxtLink to="/shop/new" class="underline">View all</NuxtLink></div>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4"><ProductCard v-for="p in home.new_arrivals.slice(0, 4)" :key="p.id" :product="p" /></div>
+    </section>
+    <section v-if="home?.signature.length" class="mx-auto w-full max-w-screen-xl px-4">
+      <div class="cap">Signature collection</div><h2 class="mb-4 text-3xl">Our signature pieces</h2>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3"><ProductCard v-for="p in home.signature.slice(0, 3)" :key="p.id" :product="p" /></div>
+    </section>
+    <section v-if="home?.offers.length || home?.signature.length" class="mx-auto w-full max-w-screen-xl px-4">
+      <div class="cap">Curated for you</div><h2 class="mb-4 text-3xl">Offers &amp; favourites</h2>
+      <div class="mb-4 flex gap-2" role="tablist"><button class="tab" :aria-pressed="tab === 'offers'" @click="tab = 'offers'">Offers</button><button class="tab" :aria-pressed="tab === 'favourites'" @click="tab = 'favourites'">Favourites</button></div>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-4"><ProductCard v-for="p in (tab === 'offers' ? home.offers : home.signature).slice(0, 4)" :key="p.id" :product="p" /></div>
+    </section>
     <section v-if="home?.videos.length" class="mx-auto w-full max-w-screen-xl px-4">
       <div class="cap">Watch</div><h2 class="mb-4 text-3xl">Video gallery</h2>
       <div class="grid gap-4 sm:grid-cols-3">
@@ -38,6 +63,13 @@ useSeoMeta({
           <NuxtImg v-if="v.thumbnail" :src="mediaSrc(v.thumbnail.url)" :alt="v.thumbnail.alt_text" width="640" height="360" class="aspect-video w-full object-cover" loading="lazy" />
           <div class="p-3">{{ v.title }}</div>
         </a>
+      </div>
+    </section>
+    <section class="mx-auto w-full max-w-screen-xl px-4">
+      <div class="flex flex-col items-start gap-3 bg-primary-soft p-8">
+        <div class="cap">Fit guidance</div><h2 class="text-3xl">Find the size that feels like yours</h2>
+        <p class="max-w-xl text-muted">Enter two measurements and our calculator suggests your band and cup size, with a full size chart.</p>
+        <NuxtLink to="/size-guide" class="btn" data-track="home_size_finder">Find my size</NuxtLink>
       </div>
     </section>
   </div>
