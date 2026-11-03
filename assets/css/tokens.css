@@ -1,0 +1,36 @@
+/*
+ * SRS THM-01/THM-03/THM-04/THM-13, UI-09. THE ONLY FILE that may contain raw colour values (THM-01, THM-05).
+ * Defaults = "Signature" palette (THM-13). At render time the server overrides the
+ * primary/accent/derived tokens from the published palette (THM-06).
+ */
+:root {
+  /* palette-driven */
+  --color-primary: #231e1c;
+  --color-primary-hover: #8c5550;
+  --color-primary-active: #6f423e;
+  --color-primary-soft: #efe8e3;
+  --color-primary-contrast: #f8f4ec;
+  --color-accent: #8c5550;
+
+  /* neutrals: fixed in v1 (THM-03) */
+  --color-bg: #f8f4ec;
+  --color-surface: #fffdf9;
+  --color-cream: #f0e8db;
+  --color-border: #e3d9c9;
+  --color-ink: #231e1c;
+  --color-muted: #6e625b;
+  --color-dark: #231e1c;
+  --color-on-dark: #f8f4ec;
+
+  /* order status badges: fixed, not part of the palette */
+  --status-draft-fg: #6e5a3a;
+  --status-draft-bg: #efe3cf;
+  --status-confirmed-fg: #4a5c7a;
+  --status-confirmed-bg: #e1e7f0;
+  --status-shipping-fg: #6b3f3b;
+  --status-shipping-bg: #f0dad5;
+  --status-delivered-fg: #3f5b3c;
+  --status-delivered-bg: #dee9da;
+  --status-closed-fg: #5b514b;
+  --status-closed-bg: #e8e2d9;
+}

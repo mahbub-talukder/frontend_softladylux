@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display font-medium;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary-hover);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-touch items-center justify-center border border-primary bg-primary px-8 text-xs font-medium uppercase tracking-[0.16em] text-primary-contrast hover:border-primary-hover hover:bg-primary-hover;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-touch items-center justify-center border border-primary bg-transparent px-8 text-xs font-medium uppercase tracking-[0.16em] text-primary hover:bg-primary-soft;
+  }
+}
