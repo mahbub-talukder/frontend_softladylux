@@ -92,20 +92,20 @@ const when = (d: string) => new Date(d).toLocaleString()
       <div class="flex flex-col gap-6">
         <form v-if="canAdjust" class="card" @submit.prevent="save">
           <h2 class="text-2xl">Adjust inventory</h2>
-          <p v-if="sel" class="text-sm">Selected SKU <b>{{ sel.sku }}</b> · <b>{{ sel.on_hand }}</b> on hand<br><span class="hint">{{ sel.product }}</span></p>
-          <p v-else class="hint">Select a SKU to adjust.</p>
-          <div class="flex flex-wrap gap-2" role="group" aria-label="Adjustment type"><button v-for="k in KINDS" :key="k[0]" type="button" class="min-h-touch border px-3 text-sm" :class="kind === k[0] ? 'border-primary bg-primary text-primary-contrast' : 'border-border'" :aria-pressed="kind === k[0]" @click="kind = k[0]">{{ k[1] }}</button></div>
+          <div v-if="sel" class="bg-admin-bg px-4 py-3.5"><div class="cap">Selected SKU</div><div class="mt-1 text-base">{{ sel.sku }} · <b class="font-semibold">{{ sel.on_hand }}</b> on hand</div><div class="text-[13.5px] text-body">{{ sel.product }} · {{ sel.label }}</div></div>
+          <p v-else class="bg-admin-bg px-4 py-3.5 text-sm text-muted">Select a SKU from the list to adjust its stock.</p>
+          <div class="grid grid-cols-2 border border-ink" role="group" aria-label="Adjustment type"><button v-for="k in KINDS" :key="k[0]" type="button" class="h-11 text-xs font-medium uppercase tracking-[0.1em] transition-colors" :class="kind === k[0] ? 'bg-ink text-bg' : 'hover:bg-cream'" :aria-pressed="kind === k[0]" @click="kind = k[0]">{{ k[1] }}</button></div>
           <div class="fld"><label for="aq">Quantity</label><input id="aq" v-model.number="amount" type="number" class="inp"></div>
           <div class="fld"><label for="ar">Lot / shipment reference{{ kind === 'correction' ? ' (optional)' : '' }}</label><input id="ar" v-model="lot" class="inp" placeholder="e.g. LOT-2611-A or SHIP-0042"></div>
           <div class="fld"><label for="am">Remarks</label><textarea id="am" v-model="remarks" class="inp" placeholder="Reason for this adjustment" /></div>
-          <p v-if="sel" class="text-sm">New quantity <b :class="newQty < 0 ? 'text-accent' : ''">{{ newQty }}</b></p>
+          <p v-if="sel" class="flex justify-between border-t border-border pt-3.5 text-[14.5px]"><span>New quantity</span><b class="font-semibold" :class="newQty < 0 ? 'text-accent' : ''">{{ newQty }}</b></p>
           <p v-if="error" class="err" role="alert">{{ error }}</p><p v-if="message" class="hint" role="status">{{ message }}</p>
           <button class="btn" :disabled="!sel || newQty < 0" data-track="stock_adjust">Save adjustment</button>
         </form>
         <div v-if="sel" class="card">
           <h2 class="text-2xl">History · {{ sel.sku }}</h2>
           <ol class="flex flex-col gap-2 text-sm">
-            <li v-for="m in history" :key="m.id" class="border-b border-border pb-2"><b>{{ m.delta_on_hand > 0 ? '+' : '' }}{{ m.delta_on_hand }}</b> → {{ m.on_hand_after }} · {{ m.reason.replace('_', ' ') }}<span v-if="m.order_ref"> · {{ m.order_ref }}</span><br><span class="hint">{{ when(m.created_at) }}<template v-if="m.user"> · {{ m.user }}</template><template v-if="m.lot_reference"> · {{ m.lot_reference }}</template></span><br>{{ m.remarks }}</li>
+            <li v-for="m in history" :key="m.id" class="flex flex-col gap-0.5 border-t border-border py-3.5"><div class="flex justify-between text-[14.5px]"><span class="font-medium capitalize">{{ m.reason.replace('_', ' ') }}<span v-if="m.order_ref" class="font-normal text-muted"> · {{ m.order_ref }}</span></span><b class="font-semibold" :style="{ color: m.delta_on_hand > 0 ? 'var(--stage-delivered-fg)' : 'var(--stage-shipping-fg)' }">{{ m.delta_on_hand > 0 ? '+' : '−' }}{{ Math.abs(m.delta_on_hand) }}</b></div><div class="text-[13px] text-muted">{{ when(m.created_at) }}<template v-if="m.user"> · {{ m.user }}</template><template v-if="m.lot_reference"> · {{ m.lot_reference }}</template> · now {{ m.on_hand_after }}</div><div v-if="m.remarks" class="text-[13.5px] text-body">{{ m.remarks }}</div></li>
             <li v-if="!history.length" class="hint">No movements yet.</li>
           </ol>
         </div>

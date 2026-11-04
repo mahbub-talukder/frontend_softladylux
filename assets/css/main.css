@@ -63,16 +63,17 @@
   .switch[aria-checked='true']::after { transform: translateX(20px); @apply bg-primary-contrast; }
 }
 
-/* Print pages (invoice, delivery slip). Colours still come from tokens. */
+/* Print pages (invoice, delivery slip): white paper on a grey desk, as in the OrderPrint board. */
 @layer components {
-  .print-sheet { @apply mx-auto max-w-3xl p-8; }
-  .print-sheet table { @apply w-full border-collapse text-sm; }
-  .print-sheet th { @apply border-b border-border bg-primary-soft p-2 text-left text-xs uppercase tracking-widest; }
-  .print-sheet td { @apply border-b border-border p-2; }
+  .print-sheet { @apply mx-auto my-6 flex w-full max-w-[600px] flex-col gap-[22px] bg-white p-6 shadow-[0_1px_6px_rgba(0,0,0,0.12)] sm:p-10; }
+  .print-sheet.slip { @apply max-w-[400px] gap-4 p-8; }
+  :where(.print-sheet) table { @apply w-full border-collapse text-[13.5px]; }
+  :where(.print-sheet) th { @apply border-b border-ink px-0 py-2 text-left text-[11.5px] font-semibold uppercase tracking-[0.14em]; }
+  :where(.print-sheet) td { @apply border-b border-border px-0 py-2.5 align-top; }
 }
 @media print {
   .no-print { display: none !important; }
-  .print-sheet { padding: 0; max-width: none; }
+  .print-sheet { padding: 0; max-width: none; margin: 0; box-shadow: none; }
   .page-break { break-after: page; }
 }
 

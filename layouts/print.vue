@@ -4,5 +4,5 @@
 </script>
 
 <template>
-  <div class="min-h-screen bg-surface text-ink print:bg-white"><slot /></div>
+  <div class="min-h-screen bg-admin-bg px-3 py-2 text-ink print:bg-white print:p-0"><slot /></div>
 </template>
