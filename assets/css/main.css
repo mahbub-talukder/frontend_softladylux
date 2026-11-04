@@ -30,6 +30,12 @@
   .sf-inp { @apply box-border h-[52px] w-full border border-field bg-surface px-4 text-[15.5px] text-ink placeholder:text-muted; }
   textarea.sf-inp { @apply h-auto min-h-[150px] py-3.5; }
   .sf-lbl { @apply text-xs font-semibold uppercase tracking-[0.16em]; }
+  /* Order stage chip (Account board): data-stage = draft | confirmed | shipping | delivered | cancelled | returned */
+  .stage { @apply inline-block whitespace-nowrap px-2.5 py-[5px] text-[11px] font-semibold uppercase tracking-[0.14em]; color: var(--stage-draft-fg); background: var(--stage-draft-bg); }
+  .stage[data-stage='confirmed'] { color: var(--stage-confirmed-fg); background: var(--stage-confirmed-bg); }
+  .stage[data-stage='shipping'] { color: var(--stage-shipping-fg); background: var(--stage-shipping-bg); }
+  .stage[data-stage='delivered'] { color: var(--stage-delivered-fg); background: var(--stage-delivered-bg); }
+  .stage[data-stage='cancelled'], .stage[data-stage='returned'] { color: var(--stage-cancelled-fg); background: var(--stage-cancelled-bg); }
   .chip-size { @apply inline-flex h-12 min-w-[54px] items-center justify-center border border-field bg-surface px-3 text-[15px] transition-colors hover:border-primary; }
   .chip-size[aria-pressed='true'] { @apply border-primary bg-primary text-primary-contrast; }
   .chip-size:disabled { @apply text-muted line-through opacity-60; }
@@ -69,3 +75,12 @@
   .print-sheet { padding: 0; max-width: none; }
   .page-break { break-after: page; }
 }
+
+/* Smooth motion: quick fade between pages and for content that arrives after load.
+   Reduced-motion users get none (the rule in @layer base shortens every duration). */
+.page-enter-active { transition: opacity 0.26s ease, transform 0.26s ease; }
+.page-leave-active { transition: opacity 0.14s ease; }
+.page-enter-from { opacity: 0; transform: translateY(6px); }
+.page-leave-to { opacity: 0; }
+@keyframes sl-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: sl-fade-in 0.35s ease both; }

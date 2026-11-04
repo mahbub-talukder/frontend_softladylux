@@ -23,6 +23,7 @@ export default defineNuxtConfig({
   // Originals live in the shared media volume; NUXT_IMAGE_DIR points IPX at it (mounted at /media in Docker).
   image: { format: ['webp'], dir: process.env.NUXT_IMAGE_DIR || 'public' },
   app: {
-    head: { htmlAttrs: { lang: 'en' }, title: 'SoftLadyLux' }
+    head: { htmlAttrs: { lang: 'en' }, title: 'SoftLadyLux' },
+    pageTransition: { name: 'page', mode: 'out-in' }
   }
 })

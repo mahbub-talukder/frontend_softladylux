@@ -141,7 +141,7 @@ const tabs = computed(() => [
           <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" class="!h-[54px] !w-[54px] border border-field bg-surface" />
         </div>
         <p v-if="needSize" class="err -mt-2" role="alert">Choose a size first.</p>
-        <div v-if="added" class="flex items-center justify-between gap-3 border-l-[3px] border-gold bg-cream px-[18px] py-4 text-[15px]" role="status"><span>{{ added }}</span><NuxtLink to="/cart" class="whitespace-nowrap border-b border-ink text-xs font-medium uppercase tracking-[0.14em]">View bag</NuxtLink></div>
+        <div v-if="added" class="fade-in flex items-center justify-between gap-3 border-l-[3px] border-gold bg-cream px-[18px] py-4 text-[15px]" role="status"><span>{{ added }}</span><NuxtLink to="/cart" class="whitespace-nowrap border-b border-ink text-xs font-medium uppercase tracking-[0.14em]">View bag</NuxtLink></div>
 
         <div class="flex flex-col border-t border-border">
           <div v-for="(t, i) in tabs" :key="t.id" class="border-b border-border">

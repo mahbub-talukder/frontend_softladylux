@@ -41,7 +41,7 @@ onBeforeUnmount(() => clearTimeout(timer))
 </script>
 
 <template>
-  <article class="group flex w-full flex-col gap-3.5" @mouseenter="hover = true" @mouseleave="leave" @focusin="hover = true" @focusout="(e: FocusEvent) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) leave() }">
+  <article class="fade-in group flex w-full flex-col gap-3.5" @mouseenter="hover = true" @mouseleave="leave" @focusin="hover = true" @focusout="(e: FocusEvent) => { if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) leave() }">
     <StoreTile :src="p.image?.url" :alt="p.image?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="3/4" :sizes="'xs:50vw md:33vw lg:25vw'">
       <NuxtLink :to="`/product/${p.slug}`" class="absolute inset-0" :aria-label="p.name" />
       <div class="pointer-events-none absolute left-3.5 top-3.5 flex flex-col items-start gap-1.5">

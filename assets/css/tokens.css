@@ -23,6 +23,11 @@
   --color-on-dark: #f8f4ec;
 
   /* DesignSystem board neutrals (fixed in v1, THM-03) */
+  --stage-draft-fg: #6e5a3a; --stage-draft-bg: #efe3cf;
+  --stage-confirmed-fg: #4a5c7a; --stage-confirmed-bg: #e1e7f0;
+  --stage-shipping-fg: #6b3f3b; --stage-shipping-bg: #f0dad5;
+  --stage-delivered-fg: #3f5b3c; --stage-delivered-bg: #dee9da;
+  --stage-cancelled-fg: #5b514b; --stage-cancelled-bg: #e8e2d9;
   --color-success: #5e7a5a;
   --color-gold: #7c6036;        /* eyebrow / bronze accent text */
   --color-champagne: #c9b28d;   /* accent on dark */
