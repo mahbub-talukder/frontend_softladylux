@@ -5,14 +5,15 @@ import { canonicalOf, siteOrigin } from '~/utils/seo'
 const { data: s } = await useSiteSettings()
 const url = useRequestURL()
 const route = useRoute()
-const origin = computed(() => siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', '')))
+// Read once in setup: composables like useRuntimeConfig() must not run lazily inside computed().
+const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', ''))
 useHead({
-  link: () => [...(s.value?.favicon ? [{ rel: 'icon', href: s.value.favicon.url }] : []), { rel: 'canonical', href: canonicalOf(origin.value, route.path) }]
+  link: () => [...(s.value?.favicon ? [{ rel: 'icon', href: s.value.favicon.url }] : []), { rel: 'canonical', href: canonicalOf(origin, route.path) }]
 })
 // Open Graph defaults from Settings (SET-04); pages override title/description/image.
 useSeoMeta({
   ogSiteName: () => s.value?.company_name, ogType: 'website', twitterCard: 'summary_large_image',
-  ogImage: () => (s.value?.seo_share_image ? origin.value + s.value.seo_share_image.url : undefined),
+  ogImage: () => (s.value?.seo_share_image ? origin + s.value.seo_share_image.url : undefined),
   description: () => s.value?.seo_description || s.value?.tagline || undefined, ogDescription: () => s.value?.seo_description || undefined
 })
 </script>
