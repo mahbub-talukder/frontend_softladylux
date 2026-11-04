@@ -7,6 +7,7 @@ import type { CustomerMe } from '~/types/api'
 import { cleanCode, isCode, normalizePhone, passwordProblem, RESEND_SECONDS, secondsLeft } from '~/utils/otp'
 
 useSeoMeta({ title: 'Log in', robots: 'noindex' })
+definePageMeta({ layout: 'bleed' })
 const route = useRoute()
 const customer = useCustomerStore()
 const { api, errorOf } = useApi()
@@ -98,69 +99,70 @@ async function doReset() {
 </script>
 
 <template>
-  <section class="mx-auto grid max-w-4xl gap-8 md:grid-cols-[1fr_1.1fr]">
-    <div class="hidden flex-col justify-center gap-3 bg-primary-soft p-8 md:flex">
-      <h2 class="text-3xl">Your wardrobe, always within reach</h2>
-      <p class="text-muted">Save favourites and follow every order from confirmation to delivery.</p>
+  <section class="flex min-h-[760px] flex-col md:flex-row">
+    <div class="relative hidden min-h-[420px] flex-1 items-center justify-center bg-tile-2 md:flex">
+      <div class="absolute inset-9 border border-gold/35" />
+      <div class="-mt-28 w-[260px] text-gold" aria-hidden="true"><StoreArt kind="set" /></div>
+      <div class="absolute bottom-16 left-16 max-w-[380px]"><h2 class="font-display text-[44px] leading-[1.05]">Your wardrobe, always within reach</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-body">Save favourites and follow every order from confirmation to delivery.</p></div>
     </div>
 
-    <div>
-      <div v-if="step === 'login' || step === 'register'" class="mb-4 flex border-b border-border" role="tablist">
-        <button class="tab" :aria-pressed="step === 'login'" @click="reset('login')">Log in</button>
-        <button class="tab" :aria-pressed="step === 'register'" @click="reset('register')">Create account</button>
+    <div class="flex flex-1 items-start justify-center px-5 py-10 md:items-center md:px-10 md:py-16">
+      <div class="flex w-full max-w-[440px] flex-col gap-7">
+        <div v-if="step === 'login' || step === 'register'" class="flex border-b border-field" role="tablist">
+          <button v-for="t in ([['login', 'Log in'], ['register', 'Register']] as const)" :key="t[0]" class="-mb-px h-[52px] flex-1 border-b-2 text-[12.5px] font-medium uppercase tracking-[0.16em] transition-colors" :class="step === t[0] ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'" role="tab" :aria-selected="step === t[0]" @click="reset(t[0])">{{ t[1] }}</button>
+        </div>
+
+        <form v-if="step === 'login'" class="flex flex-col gap-5" @submit.prevent="login">
+          <div><div class="eyebrow">Welcome back</div><h1 class="mt-2 font-display text-[40px] leading-[1.05] md:text-[46px]">Log in</h1></div>
+          <div class="fld"><label class="sf-lbl" for="lp">Mobile number</label><input id="lp" v-model="f.phone" class="sf-inp" inputmode="tel" autocomplete="username" placeholder="01XXXXXXXXX" required></div>
+          <div class="fld"><label class="sf-lbl" for="lw">Password</label><input id="lw" v-model="f.password" class="sf-inp" type="password" autocomplete="current-password" required></div>
+          <div class="flex items-center justify-between gap-3 text-sm"><label class="flex min-h-11 cursor-pointer items-center gap-2.5"><input v-model="f.remember" type="checkbox" class="h-4 w-4 accent-accent">Keep me signed in</label><button type="button" class="border-b border-ink py-2 text-sm" @click="reset('forgot')">Forgot password?</button></div>
+          <p v-if="message" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ message }}</p>
+          <button class="btn !h-14 w-full" :disabled="busy" data-track="login_submit"><span v-if="busy" class="btn-spin" />Log in</button>
+          <p class="text-[13.5px] leading-relaxed text-body">No account needed to buy. You can check out as a guest and track the order with its number and your phone.</p>
+        </form>
+
+        <form v-else-if="step === 'register'" class="flex flex-col gap-5" @submit.prevent="register">
+          <div><div class="eyebrow">New here</div><h1 class="mt-2 font-display text-[40px] leading-[1.05] md:text-[46px]">Create account</h1></div>
+          <div class="fld"><label class="sf-lbl" for="rn">Full name</label><input id="rn" v-model="f.full_name" class="sf-inp" autocomplete="name" required><p v-if="errors.full_name" class="err" role="alert">{{ errors.full_name }}</p></div>
+          <div class="fld"><label class="sf-lbl" for="rp">Mobile number</label><input id="rp" v-model="f.phone" class="sf-inp" inputmode="tel" autocomplete="username" placeholder="01XXXXXXXXX" required><p v-if="errors.phone" class="err" role="alert">{{ errors.phone }} <button v-if="errors.phone.includes('already')" type="button" class="underline" @click="reset('login')">Log in</button></p></div>
+          <div class="fld"><label class="sf-lbl" for="rw">Password</label><input id="rw" v-model="f.password" class="sf-inp" type="password" autocomplete="new-password" required><p v-if="errors.password" class="err" role="alert">{{ errors.password }}</p></div>
+          <div class="fld"><label class="sf-lbl" for="re">Email <span class="font-normal normal-case tracking-normal text-muted">(optional)</span></label><input id="re" v-model="f.email" class="sf-inp" type="email" autocomplete="email"><p v-if="errors.email" class="err" role="alert">{{ errors.email }}</p></div>
+          <p v-if="message" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ message }}</p>
+          <button class="btn !h-14 w-full" :disabled="busy" data-track="register_submit"><span v-if="busy" class="btn-spin" />Send verification code</button>
+          <p class="text-[13.5px] leading-relaxed text-body">We text a 6-digit code to your mobile number. Earlier guest orders on this number are added to your account once verified.</p>
+        </form>
+
+        <form v-else-if="step === 'verify'" class="flex flex-col gap-5" @submit.prevent="verify">
+          <div><div class="eyebrow">Step 2 of 2</div><h1 class="mt-2 font-display text-[40px] leading-[1.05] md:text-[46px]">Verify mobile</h1></div>
+          <p class="text-[15px] leading-relaxed text-body">Enter the 6-digit code sent by SMS to {{ f.phone }}. It expires in 5 minutes.</p>
+          <div class="fld"><label class="sf-lbl" for="vc">Verification code</label><input id="vc" v-model="f.code" class="sf-inp !text-[22px] tracking-[0.5em]" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="······" autofocus @input="f.code = cleanCode(f.code)"><p v-if="errors.code" class="err" role="alert">{{ errors.code }}</p></div>
+          <p v-if="smsFailed" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">We couldn’t send the SMS. Try again{{ wait ? ` in ${wait}s` : '' }}, or contact us on {{ s?.support_phones?.[0] || '[PHONE NUMBER]' }}.</p>
+          <p v-if="message" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ message }}</p>
+          <button class="btn !h-14 w-full" :disabled="busy" data-track="otp_verify"><span v-if="busy" class="btn-spin" />Verify &amp; continue</button>
+          <div class="flex items-center justify-between gap-3 text-sm text-body"><button type="button" class="min-h-11 disabled:text-muted" :disabled="busy || wait > 0" @click="resend">{{ wait > 0 ? `Resend code in ${wait}s` : 'Resend code' }}</button><button type="button" class="border-b border-ink py-2 text-sm" @click="reset('register')">Change number</button></div>
+        </form>
+
+        <form v-else-if="step === 'forgot'" class="flex flex-col gap-5" @submit.prevent="forgot">
+          <div><div class="eyebrow">Reset password</div><h1 class="mt-2 font-display text-[40px] leading-[1.05] md:text-[46px]">Forgot password</h1></div>
+          <p class="text-[15px] leading-relaxed text-body">Enter your mobile number and we will text you a code so you can choose a new password.</p>
+          <div class="fld"><label class="sf-lbl" for="fp">Mobile number</label><input id="fp" v-model="f.phone" class="sf-inp" inputmode="tel" placeholder="01XXXXXXXXX" required><p v-if="errors.phone" class="err" role="alert">{{ errors.phone }}</p></div>
+          <p v-if="message" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ message }}</p>
+          <button class="btn !h-14 w-full" :disabled="busy"><span v-if="busy" class="btn-spin" />Send code</button>
+          <button type="button" class="border-b border-ink py-2 text-sm self-start" @click="reset('login')">Back to log in</button>
+        </form>
+
+        <form v-else class="flex flex-col gap-5" @submit.prevent="doReset">
+          <div><div class="eyebrow">Reset password</div><h1 class="mt-2 font-display text-[40px] leading-[1.05] md:text-[46px]">New password</h1></div>
+          <p class="text-[15px] leading-relaxed text-body">If {{ f.phone }} has an account, a code is on its way. Enter it with your new password. Other devices will be signed out.</p>
+          <div class="fld"><label class="sf-lbl" for="rc">Code from SMS</label><input id="rc" v-model="f.code" class="sf-inp !text-[22px] tracking-[0.5em]" inputmode="numeric" maxlength="6" autocomplete="one-time-code" @input="f.code = cleanCode(f.code)"><p v-if="errors.code" class="err" role="alert">{{ errors.code }}</p></div>
+          <div class="fld"><label class="sf-lbl" for="rnp">New password</label><input id="rnp" v-model="f.new_password" type="password" class="sf-inp" autocomplete="new-password"><p v-if="errors.new_password || errors.password" class="err">{{ errors.new_password || errors.password }}</p></div>
+          <p v-if="smsFailed" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">We couldn’t send the SMS. Try again, or contact us.</p>
+          <p v-if="message" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ message }}</p>
+          <button class="btn !h-14 w-full" :disabled="busy"><span v-if="busy" class="btn-spin" />Save password &amp; log in</button>
+          <button type="button" class="border-b border-ink py-2 text-sm self-start disabled:text-muted disabled:border-muted" :disabled="busy || wait > 0" @click="resend">{{ wait > 0 ? `Resend code in ${wait}s` : 'Resend code' }}</button>
+        </form>
       </div>
-
-      <form v-if="step === 'login'" class="card" @submit.prevent="login">
-        <div class="cap">Welcome back</div><h1 class="text-4xl">Log in</h1>
-        <div class="fld"><label for="lp">Mobile number</label><input id="lp" v-model="f.phone" class="inp" inputmode="tel" autocomplete="username" placeholder="01XXXXXXXXX" required></div>
-        <div class="fld"><label for="lw">Password</label><input id="lw" v-model="f.password" type="password" class="inp" autocomplete="current-password" required></div>
-        <div class="flex items-center justify-between text-sm"><label class="flex items-center gap-2"><input v-model="f.remember" type="checkbox">Keep me signed in</label><button type="button" class="underline" @click="reset('forgot')">Forgot password?</button></div>
-        <p v-if="message" class="err" role="alert">{{ message }}</p>
-        <button class="btn" :disabled="busy" data-track="login_submit">Log in</button>
-        <p class="hint">No account needed to buy. You can check out as a guest and track the order with its number and your phone.</p>
-      </form>
-
-      <form v-else-if="step === 'register'" class="card" @submit.prevent="register">
-        <div class="cap">New here</div><h1 class="text-4xl">Create account</h1>
-        <div class="fld"><label for="rn">Full name</label><input id="rn" v-model="f.full_name" class="inp" autocomplete="name" required><p v-if="errors.full_name" class="err">{{ errors.full_name }}</p></div>
-        <div class="fld"><label for="rp">Mobile number</label><input id="rp" v-model="f.phone" class="inp" inputmode="tel" autocomplete="username" placeholder="01XXXXXXXXX" required><p v-if="errors.phone" class="err" role="alert">{{ errors.phone }} <button v-if="errors.phone.includes('already')" type="button" class="underline" @click="reset('login')">Log in</button></p></div>
-        <div class="fld"><label for="rw">Password</label><input id="rw" v-model="f.password" type="password" class="inp" autocomplete="new-password" required><p v-if="errors.password" class="err">{{ errors.password }}</p></div>
-        <div class="fld"><label for="re">Email (optional)</label><input id="re" v-model="f.email" type="email" class="inp" autocomplete="email"><p v-if="errors.email" class="err">{{ errors.email }}</p></div>
-        <p v-if="message" class="err" role="alert">{{ message }}</p>
-        <button class="btn" :disabled="busy" data-track="register_submit">Send verification code</button>
-        <p class="hint">We text a 6-digit code to your mobile number. Earlier guest orders on this number are added to your account once verified.</p>
-      </form>
-
-      <form v-else-if="step === 'verify'" class="card" @submit.prevent="verify">
-        <div class="cap">Step 2 of 2</div><h1 class="text-4xl">Verify mobile</h1>
-        <p class="hint">Enter the 6-digit code sent by SMS to {{ f.phone }}. It expires in 5 minutes.</p>
-        <div class="fld"><label for="vc">Verification code</label><input id="vc" v-model="f.code" class="inp tracking-[0.5em]" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="······" @input="f.code = cleanCode(f.code)"><p v-if="errors.code" class="err" role="alert">{{ errors.code }}</p></div>
-        <p v-if="smsFailed" class="err" role="alert">We couldn’t send the SMS. Try again{{ wait ? ` in ${wait}s` : '' }}, or contact us on {{ s?.support_phones?.[0] || '[PHONE NUMBER]' }}.</p>
-        <p v-if="message" class="err" role="alert">{{ message }}</p>
-        <button class="btn" :disabled="busy" data-track="otp_verify">Verify &amp; continue</button>
-        <button type="button" class="btn-secondary" :disabled="busy || wait > 0" @click="resend">{{ wait > 0 ? `Resend code in ${wait}s` : 'Resend code' }}</button>
-        <button type="button" class="hint underline" @click="reset('register')">Change number</button>
-      </form>
-
-      <form v-else-if="step === 'forgot'" class="card" @submit.prevent="forgot">
-        <div class="cap">Forgot password</div><h1 class="text-4xl">Reset password</h1>
-        <p class="hint">Enter your mobile number and we will text you a code.</p>
-        <div class="fld"><label for="fp">Mobile number</label><input id="fp" v-model="f.phone" class="inp" inputmode="tel" placeholder="01XXXXXXXXX" required><p v-if="errors.phone" class="err">{{ errors.phone }}</p></div>
-        <p v-if="message" class="err" role="alert">{{ message }}</p>
-        <button class="btn" :disabled="busy">Send code</button>
-        <button type="button" class="hint underline" @click="reset('login')">Back to log in</button>
-      </form>
-
-      <form v-else class="card" @submit.prevent="doReset">
-        <div class="cap">Forgot password</div><h1 class="text-4xl">New password</h1>
-        <p class="hint">If {{ f.phone }} has an account, a code is on its way. Enter it with your new password. Other devices will be signed out.</p>
-        <div class="fld"><label for="rc">Code</label><input id="rc" v-model="f.code" class="inp tracking-[0.5em]" inputmode="numeric" maxlength="6" autocomplete="one-time-code" @input="f.code = cleanCode(f.code)"><p v-if="errors.code" class="err" role="alert">{{ errors.code }}</p></div>
-        <div class="fld"><label for="rnp">New password</label><input id="rnp" v-model="f.new_password" type="password" class="inp" autocomplete="new-password"><p v-if="errors.new_password || errors.password" class="err">{{ errors.new_password || errors.password }}</p></div>
-        <p v-if="smsFailed" class="err" role="alert">We couldn’t send the SMS. Try again, or contact us.</p>
-        <p v-if="message" class="err" role="alert">{{ message }}</p>
-        <button class="btn" :disabled="busy">Save password &amp; log in</button>
-        <button type="button" class="btn-secondary" :disabled="busy || wait > 0" @click="resend">{{ wait > 0 ? `Resend code in ${wait}s` : 'Resend code' }}</button>
-      </form>
     </div>
   </section>
 </template>
