@@ -4,7 +4,8 @@ import { join, relative } from 'node:path'
 
 const ROOT = process.cwd()
 const SKIP_DIRS = new Set(['node_modules', '.nuxt', '.output', '.git', 'dist', 'tests'])
-const ALLOWED = new Set(['assets/css/tokens.css'])
+// utils/variantPresets.ts holds product-data swatches (what a colour variant looks like), not UI colours.
+const ALLOWED = new Set(['assets/css/tokens.css', 'utils/variantPresets.ts'])
 const EXT = /\.(vue|ts|js|mjs|css|scss|html)$/
 const PATTERNS = [
   /#[0-9a-fA-F]{3,8}\b/,

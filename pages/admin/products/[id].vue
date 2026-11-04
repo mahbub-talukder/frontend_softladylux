@@ -3,6 +3,7 @@
 // lists only the active sub-categories of the chosen category, is disabled until a category is
 // chosen, is required when the category has any, and clears when the category changes.
 // Flow: Save draft -> add images -> Publish (a product needs an image to be published, CAT-04).
+import { COLOUR_PRESETS, DEFAULT_SWATCH, SIZE_PRESETS } from '~/utils/variantPresets'
 import type { Dict } from '~/types/api'
 
 definePageMeta({ layout: 'admin', permission: 'products.view' })
@@ -37,14 +38,47 @@ const subOptions = computed(() => cats.value?.find((c) => c.id === form.value.ca
 function onCategory() { form.value.subcategory = null } // CAT-19: changing the category clears it
 
 // ---- variants
-const genSizes = ref('')
-const genColours = ref('')
+// Chips: pick sizes and colours, then "Add rows" creates each missing size x colour row.
+const unique = (a: string[]) => [...new Set(a.filter(Boolean))]
+const pickedSizes = ref<string[]>(unique(form.value.variants.map((v: Dict) => v.size_label)))
+const pickedColours = ref<{ name: string; hex: string }[]>(
+  unique(form.value.variants.map((v: Dict) => v.color_name)).map((n) => ({
+    name: n, hex: form.value.variants.find((v: Dict) => v.color_name === n && v.color_hex)?.color_hex || COLOUR_PRESETS.find((p) => p.name === n)?.hex || DEFAULT_SWATCH
+  }))
+)
+const extraSizes = computed(() => pickedSizes.value.filter((z) => !SIZE_PRESETS.includes(z)))
+const extraColours = computed(() => pickedColours.value.filter((c) => !COLOUR_PRESETS.some((p) => p.name === c.name)))
+const customSize = ref('')
+const customColour = ref('')
+const picker = ref<HTMLInputElement | null>(null)
+const pickingName = ref('')
+const toggleSize = (z: string) => { pickedSizes.value = pickedSizes.value.includes(z) ? pickedSizes.value.filter((x) => x !== z) : [...pickedSizes.value, z] }
+const isColour = (n: string) => pickedColours.value.some((c) => c.name === n)
+function toggleColour(c: { name: string; hex: string }) {
+  pickedColours.value = isColour(c.name) ? pickedColours.value.filter((x) => x.name !== c.name) : [...pickedColours.value, { ...(pickedColours.value.find((x) => x.name === c.name) ?? c) }]
+}
+const hexOf = (c: { name: string; hex: string }) => pickedColours.value.find((x) => x.name === c.name)?.hex ?? c.hex
+function addCustomSize() { const v = customSize.value.trim(); if (v && !pickedSizes.value.includes(v)) pickedSizes.value.push(v); customSize.value = '' }
+function addCustomColour() { const v = customColour.value.trim(); if (v && !isColour(v)) pickedColours.value.push({ name: v, hex: DEFAULT_SWATCH }); customColour.value = '' }
+// Double-click a picked colour chip to open the colour picker and change its swatch.
+function editSwatch(c: { name: string; hex: string }) {
+  if (!isColour(c.name)) toggleColour(c)
+  pickingName.value = c.name
+  nextTick(() => { const el = picker.value; if (!el) return; el.value = hexOf(c); try { el.showPicker() } catch { el.click() } })
+}
+function onSwatch(e: Event) {
+  const hex = (e.target as HTMLInputElement).value
+  const c = pickedColours.value.find((x) => x.name === pickingName.value)
+  if (c) c.hex = hex
+  for (const v of form.value.variants) if (v.color_name === pickingName.value) v.color_hex = hex
+}
+const variantTotal = computed(() => Math.max(pickedSizes.value.length, 1) * Math.max(pickedColours.value.length, 1))
 const addVariant = () => form.value.variants.push({ size_label: '', color_name: '', color_hex: '', sku: '', price_override: null, on_hand: 0, is_active: true })
 function generate() {
-  const sizes = genSizes.value.split(',').map((s) => s.trim()).filter(Boolean)
-  const colours = genColours.value.split(',').map((s) => s.trim()).filter(Boolean)
-  for (const c of colours.length ? colours : ['']) for (const s of sizes.length ? sizes : ['']) {
-    if (!form.value.variants.some((v: Dict) => v.size_label === s && v.color_name === c)) form.value.variants.push({ size_label: s, color_name: c, color_hex: '', sku: '', price_override: null, on_hand: 0, is_active: true })
+  const sizes = pickedSizes.value
+  const colours = pickedColours.value
+  for (const c of colours.length ? colours : [{ name: '', hex: '' }]) for (const s of sizes.length ? sizes : ['']) {
+    if (!form.value.variants.some((v: Dict) => v.is_active !== false && v.size_label === s && v.color_name === c.name)) form.value.variants.push({ size_label: s, color_name: c.name, color_hex: c.hex, sku: '', price_override: null, on_hand: 0, is_active: true })
   }
 }
 const colourNames = computed<string[]>(() => [...new Set<string>(form.value.variants.map((v: Dict) => v.color_name).filter(Boolean))])
@@ -165,10 +199,25 @@ const fieldErr = (k: string) => errors.value[k] ?? []
       <fieldset class="card" :disabled="!canEdit">
         <h2 class="text-2xl">Variants</h2>
         <p class="hint">Sizes × colours. Each row has its own SKU and stock. Opening stock is logged as a stock movement; later changes go through Inventory.</p>
-        <div class="flex flex-wrap items-end gap-2">
-          <div class="fld"><label for="gs">Sizes</label><input id="gs" v-model="genSizes" class="inp !w-48" placeholder="S, M, L or 34B, 36C"></div>
-          <div class="fld"><label for="gc">Colours</label><input id="gc" v-model="genColours" class="inp !w-48" placeholder="Rose, Black"></div>
-          <button type="button" class="btn-secondary" @click="generate">Generate rows</button>
+        <div class="fld"><label>Sizes</label>
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Sizes">
+            <button v-for="z in [...SIZE_PRESETS, ...extraSizes]" :key="z" type="button" class="chip-size !h-11" :aria-pressed="pickedSizes.includes(z)" @click="toggleSize(z)">{{ z }}</button>
+            <span class="flex"><input v-model="customSize" class="inp !h-11 !w-28" placeholder="Custom size" aria-label="Custom size" @keydown.enter.prevent="addCustomSize"><button type="button" class="btn-secondary !h-11 !px-3" aria-label="Add custom size" @click="addCustomSize">+</button></span>
+          </div>
+        </div>
+        <div class="fld"><label>Colours</label>
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Colours">
+            <button v-for="c in [...COLOUR_PRESETS, ...extraColours]" :key="c.name" type="button" class="chip-size !h-11 gap-2" :aria-pressed="isColour(c.name)" :title="isColour(c.name) ? 'Double-click to change the swatch colour' : 'Click to select'" @click="toggleColour(c)" @dblclick.prevent="editSwatch(c)">
+              <span class="h-3.5 w-3.5 rounded-full ring-1 ring-ink/30" :style="{ backgroundColor: hexOf(c) }" />{{ c.name }}
+            </button>
+            <span class="flex"><input v-model="customColour" class="inp !h-11 !w-32" placeholder="Custom colour" aria-label="Custom colour" @keydown.enter.prevent="addCustomColour"><button type="button" class="btn-secondary !h-11 !px-3" aria-label="Add custom colour" @click="addCustomColour">+</button></span>
+          </div>
+          <input ref="picker" type="color" class="sr-only" tabindex="-1" aria-label="Swatch colour" @input="onSwatch">
+          <p class="hint">Double-click a colour chip to change its swatch.</p>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-[13.5px] text-body">{{ variantTotal }} variant{{ variantTotal === 1 ? '' : 's' }} from this selection, each with its own SKU and stock level.</p>
+          <button type="button" class="btn-secondary" @click="generate">Add rows</button>
         </div>
         <div class="overflow-x-auto"><table class="w-full text-left text-sm">
           <thead><tr class="cap"><th class="p-2">Size</th><th class="p-2">Colour</th><th class="p-2">Swatch</th><th class="p-2">SKU</th><th class="p-2">Price override</th><th class="p-2">Stock</th><th /></tr></thead>

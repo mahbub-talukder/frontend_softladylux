@@ -32,7 +32,21 @@ const TABS: { id: string; label: string; endpoint: string; titleKey: string; can
       { key: 'title', label: 'Title' }, { key: 'body', label: 'Content (HTML)', type: 'textarea' }] }
 ]
 const tab = ref(TABS[0].id)
-const current = computed(() => TABS.find((t) => t.id === tab.value)!)
+const current = computed(() => TABS.find((t) => t.id === tab.value))
+
+// WEB-06: home sections on/off. The server skips a section that is off, so it adds no load time.
+const { api, errorOf } = useApi()
+const sections = ref<{ key: string; label: string; on: boolean }[]>([])
+const sectionMsg = ref('')
+const sectionErr = ref('')
+onMounted(async () => { try { sections.value = await api('/admin/website/home-sections/') } catch { sectionErr.value = 'Home sections could not be loaded.' } })
+async function toggleSection(s: { key: string; on: boolean }) {
+  sectionMsg.value = ''; sectionErr.value = ''
+  const next = !s.on
+  s.on = next
+  try { sections.value = await api('/admin/website/home-sections/', { method: 'PUT', body: { [s.key]: next } }); sectionMsg.value = 'Saved. The storefront updates within a minute.' }
+  catch (e) { s.on = !next; sectionErr.value = errorOf(e).message }
+}
 </script>
 
 <template>
@@ -42,8 +56,18 @@ const current = computed(() => TABS.find((t) => t.id === tab.value)!)
     </AdminHeading>
     <div class="mb-4 flex flex-wrap border-b border-border" role="tablist">
       <button v-for="t in TABS" :key="t.id" class="tab" :aria-pressed="tab === t.id" @click="tab = t.id">{{ t.label }}</button>
+      <button class="tab" :aria-pressed="tab === 'sections'" @click="tab = 'sections'">Home sections</button>
     </div>
-    <div class="max-w-2xl">
+    <div v-if="tab === 'sections'" class="card max-w-2xl !gap-1.5">
+      <h2 class="font-display">Home page sections</h2>
+      <p class="hint mb-2">The home layout is fixed. Switch each section on or off; a section that is off is not loaded at all, so the home page stays fast.</p>
+      <div v-for="x in sections" :key="x.key" class="flex min-h-12 items-center justify-between gap-3 border-b border-border">
+        <span class="text-[15px]">{{ x.label }}</span>
+        <button type="button" role="switch" class="switch" :aria-checked="x.on" :aria-label="x.label" @click="toggleSection(x)" />
+      </div>
+      <p v-if="sectionMsg" class="mt-2 text-sm" role="status">{{ sectionMsg }}</p><p v-if="sectionErr" class="err mt-2" role="alert">{{ sectionErr }}</p>
+    </div>
+    <div v-else-if="current" class="max-w-2xl">
       <AdminContentList :key="current.id" :endpoint="current.endpoint" :fields="current.fields" :title-key="current.titleKey" :can-create="current.canCreate" :can-delete="current.canDelete" :defaults="current.defaults" :note="current.note" />
     </div>
   </section>

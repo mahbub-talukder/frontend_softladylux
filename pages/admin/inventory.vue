@@ -26,6 +26,8 @@ const { data: cats } = await useAsyncData('inv-cats', () => api<Dict[]>('/admin/
 const { data, pending, refresh } = await useAsyncData('inventory', () =>
   api<StockPage>('/admin/inventory/', { query: { q: q.value || undefined, status: status.value || undefined, category: category.value || undefined, page: page.value } }),
 { watch: [page] })
+const { data: byCat } = await useAsyncData('inv-by-cat', () => api<{ name: string; units: number }[]>('/admin/inventory/by-category/'))
+const catMax = computed(() => Math.max(1, ...(byCat.value ?? []).map((c) => c.units)))
 const history = ref<Movement[]>([])
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / 20)))
 const chip: Record<string, string> = { in_stock: 'In stock', low: 'Low', out: 'Out' }
@@ -48,7 +50,7 @@ async function save() {
   try {
     await api('/admin/inventory/adjust/', { method: 'POST', body: { variant: sel.value.id, kind: kind.value, quantity: amount.value, lot_reference: lot.value, remarks: remarks.value } })
     message.value = 'Adjustment saved.'; lot.value = ''; remarks.value = ''
-    await refresh(); const row = data.value?.results.find((r) => r.id === sel.value!.id); if (row) await pick(row)
+    await refresh(); await refreshNuxtData('inv-by-cat'); const row = data.value?.results.find((r) => r.id === sel.value!.id); if (row) await pick(row)
   } catch (e) {
     const er = errorOf(e); error.value = Object.values(er.fields).flat().join(' ') || er.message
   }
@@ -63,6 +65,10 @@ const when = (d: string) => new Date(d).toLocaleString()
       <button v-for="k in ([['in_stock', 'In stock'], ['low', `Low (≤ ${data?.summary.threshold ?? 5})`], ['out', 'Out of stock']] as const)" :key="k[0]" class="card text-left" :class="status === k[0] ? '!border-primary' : ''" @click="status = status === k[0] ? '' : k[0]; search()">
         <span class="cap">{{ k[1] }}</span><span class="font-display text-4xl">{{ data?.summary[k[0]] ?? 0 }}</span>
       </button>
+    </div>
+    <div v-if="byCat?.length" class="card mb-6 !gap-4">
+      <h2 class="font-display">Available quantity by category</h2>
+      <div v-for="c in byCat" :key="c.name" class="flex items-center gap-4"><span class="w-[130px] flex-none text-[14.5px]">{{ c.name }}</span><div class="h-2.5 flex-1 bg-cream"><div class="h-2.5 bg-gold transition-[width] duration-500" :style="{ width: Math.max(c.units ? 2 : 0, Math.round((c.units / catMax) * 100)) + '%' }" /></div><span class="w-14 text-right text-[14.5px] font-medium">{{ c.units }}</span></div>
     </div>
     <form class="mb-4 flex flex-wrap gap-2" @submit.prevent="search">
       <input v-model="q" class="inp !w-64" placeholder="Search SKU or product…" aria-label="Search stock">

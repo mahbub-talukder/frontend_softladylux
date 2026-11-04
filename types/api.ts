@@ -29,6 +29,7 @@ export interface TrustItem { id: number; icon: string; title: string; text: stri
 export interface StaticPage { id: number; slug: string; title: string; body: string; is_active: boolean }
 
 export interface Home {
+  sections?: Record<string, boolean>
   announcements: Announcement[]; carousel: Slide[]; banners: Banner[]
   categories: { name: string; slug: string; tile: { url: string; alt_text: string } | null }[]
   new_arrivals: CardProduct[]; signature: CardProduct[]; offers: CardProduct[]
