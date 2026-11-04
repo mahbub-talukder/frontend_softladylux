@@ -29,32 +29,36 @@ const next = computed(() => order.value?.payment_method === 'cod'
 </script>
 
 <template>
-  <section class="mx-auto max-w-2xl">
+  <section class="mx-auto flex max-w-[760px] flex-col items-center gap-6 py-6 text-center md:gap-[26px] md:py-12">
     <template v-if="order">
-      <div class="cap">Order received</div>
-      <h1 class="text-4xl">Thank you, {{ order.name.split(' ')[0] }}</h1>
-      <p class="mt-2">Your order <b>#{{ order.number }}</b> is placed. {{ next }}<template v-if="order.email"> A confirmation was sent to {{ order.email }}.</template></p>
-      <div class="card mt-6">
-        <ul class="flex flex-col gap-2 text-sm"><li v-for="i in order.items" :key="i.id" class="flex justify-between"><span>{{ i.quantity }} × {{ i.product_name }} <span class="hint">{{ i.variant_label }}</span></span><span>{{ taka(i.line_total) }}</span></li></ul>
-        <dl class="flex flex-col gap-1 border-t border-border pt-3 text-sm">
+      <div class="flex h-[76px] w-[76px] items-center justify-center border border-gold text-gold"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></div>
+      <div class="eyebrow">Order received</div>
+      <h1 class="font-display text-[44px] leading-none md:text-[64px]">Thank you, {{ order.name.split(' ')[0] }}</h1>
+      <p class="max-w-[520px] text-base leading-[1.7] text-body md:text-[17px]">Your order <b class="font-medium text-ink">#{{ order.number }}</b> is placed. {{ next }}<template v-if="order.email"> A confirmation was sent to {{ order.email }}.</template></p>
+      <ol class="mt-2 grid w-full grid-cols-4 border-t border-border" aria-label="Order progress">
+        <li v-for="(st, i) in ['Order placed', 'Confirmed', 'Shipping', 'Delivered']" :key="st" class="flex flex-col items-center gap-2.5 px-1 py-5 md:py-[22px]"><span class="h-3.5 w-3.5 rounded-full border border-gold" :class="i === 0 ? 'bg-gold' : ''" /><span class="text-[11px] uppercase tracking-[0.12em] md:text-xs md:tracking-[0.14em]" :class="i === 0 ? 'font-semibold' : 'text-muted'">{{ st }}</span></li>
+      </ol>
+      <div class="w-full bg-cream p-6 text-left md:p-8">
+        <ul class="flex flex-col gap-2.5 text-[15px]"><li v-for="i in order.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
+        <dl class="mt-4 flex flex-col gap-2 border-t border-field pt-4 text-[15px]">
           <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ taka(order.subtotal) }}</dd></div>
-          <div v-if="Number(order.coupon_discount)" class="flex justify-between"><dt>Coupon {{ order.coupon_code }}</dt><dd>− {{ taka(order.coupon_discount) }}</dd></div>
+          <div v-if="Number(order.coupon_discount)" class="flex justify-between text-rose-deep"><dt>Coupon {{ order.coupon_code }}</dt><dd>− {{ taka(order.coupon_discount) }}</dd></div>
           <div class="flex justify-between"><dt>Delivery</dt><dd>{{ taka(order.delivery_fee) }}</dd></div>
-          <div class="flex justify-between text-lg font-medium"><dt>Total</dt><dd>{{ taka(order.total) }}</dd></div>
+          <div class="flex items-baseline justify-between border-t border-ink pt-3"><dt class="text-xs font-semibold uppercase tracking-[0.18em]">Total</dt><dd class="font-display text-[32px]">{{ taka(order.total) }}</dd></div>
         </dl>
-        <p class="hint">Delivering to {{ order.address_line }}, {{ order.thana }}, {{ order.district }}. Payment: {{ order.payment_status }}.</p>
+        <p class="mt-3 text-[13.5px] text-muted">Delivering to {{ order.address_line }}, {{ order.thana }}, {{ order.district }}. Payment: {{ order.payment_status }}.</p>
       </div>
-      <ol class="mt-6 flex flex-wrap gap-2 text-sm"><li v-for="st in ['Order placed', 'Confirmed', 'Shipping', 'Delivered']" :key="st" class="border border-border px-3 py-1">{{ st }}</li></ol>
-      <p class="hint mt-4">Questions? {{ s?.support_phones?.[0] || '[PHONE NUMBER]' }} · {{ s?.support_email || '[EMAIL ADDRESS]' }}. You can cancel any time before the order ships.</p>
-      <div class="mt-6 flex gap-3"><NuxtLink to="/track" class="btn-secondary">Track my order</NuxtLink><NuxtLink to="/" class="btn">Continue shopping</NuxtLink></div>
+      <p class="text-sm text-muted">Questions? {{ s?.support_phones?.[0] || '[PHONE NUMBER]' }} · {{ s?.support_email || '[EMAIL ADDRESS]' }}. You can cancel any time before the order ships.</p>
+      <div class="flex flex-wrap justify-center gap-3.5"><NuxtLink to="/track" class="btn">Track my order</NuxtLink><NuxtLink to="/" class="btn-secondary">Continue shopping</NuxtLink></div>
     </template>
     <template v-else>
-      <h1 class="text-4xl">Order {{ route.params.number }}</h1>
-      <p class="hint mt-2">Enter the mobile number you used at checkout to view this order.</p>
-      <form class="card mt-4" @submit.prevent="lookup">
-        <div class="fld"><label for="tp">Mobile number</label><input id="tp" v-model="phone" class="inp" inputmode="tel" placeholder="01XXXXXXXXX" required></div>
+      <div class="eyebrow">Order {{ route.params.number }}</div>
+      <h1 class="font-display text-[40px] leading-none md:text-[52px]">View your order</h1>
+      <p class="text-body">Enter the mobile number you used at checkout to view this order.</p>
+      <form class="flex w-full max-w-[420px] flex-col gap-4 bg-cream p-6 text-left md:p-8" @submit.prevent="lookup">
+        <div class="fld"><label class="sf-lbl" for="tp">Mobile number</label><input id="tp" v-model="phone" class="sf-inp" inputmode="tel" placeholder="01XXXXXXXXX" required></div>
         <p v-if="error" class="err" role="alert">{{ error }}</p>
-        <button class="btn" :disabled="busy">View order</button>
+        <button class="btn" :disabled="busy"><span v-if="busy" class="btn-spin" />View order</button>
       </form>
     </template>
   </section>

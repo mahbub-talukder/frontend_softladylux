@@ -23,6 +23,7 @@
   --color-on-dark: #f8f4ec;
 
   /* DesignSystem board neutrals (fixed in v1, THM-03) */
+  --color-success: #5e7a5a;
   --color-gold: #7c6036;        /* eyebrow / bronze accent text */
   --color-champagne: #c9b28d;   /* accent on dark */
   --color-rose-soft: #c9a39d;   /* italic wordmark accent on dark */

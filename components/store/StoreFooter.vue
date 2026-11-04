@@ -38,7 +38,7 @@ async function subscribe() {
         <div><h3 class="font-display text-[30px] font-medium text-on-dark md:text-[38px]">Join the inner circle</h3><p class="mt-2.5 text-[15px] text-text-dark-2">New collections and private offers, delivered to your inbox.</p></div>
         <form class="flex flex-col sm:flex-row" @submit.prevent="subscribe">
           <label for="ft-mail" class="sr-only">Email address</label>
-          <input id="ft-mail" v-model="email" type="email" required placeholder="Your email address" class="h-[52px] min-w-0 flex-1 border border-line-dark-2 bg-transparent px-[18px] text-[15px] text-on-dark outline-none transition-colors placeholder:text-text-dark-3 focus:border-champagne sm:border-r-0">
+          <input id="ft-mail" v-model="email" type="email" required placeholder="Your email address" class="h-[52px] min-w-0 border border-line-dark-2 bg-transparent px-[18px] text-[15px] text-on-dark outline-none transition-colors placeholder:text-text-dark-3 focus:border-champagne sm:flex-1 sm:border-r-0">
           <button class="h-[52px] border border-bg bg-bg px-[30px] text-xs font-medium uppercase tracking-[0.16em] text-ink transition-colors hover:bg-champagne hover:border-champagne" data-track="newsletter_subscribe">Subscribe</button>
         </form>
         <p v-if="nlMsg" class="text-sm md:col-start-2" role="status">{{ nlMsg }}</p><p v-if="nlErr" class="text-sm md:col-start-2" role="alert">{{ nlErr }}</p>

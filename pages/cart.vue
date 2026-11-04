@@ -36,73 +36,70 @@ const priceChanged = (l: { variant: number; price: string }) => {
 </script>
 
 <template>
-  <section>
-    <div class="cap">Step 1 of 3 · Bag</div>
-    <h1 class="text-4xl">Shopping bag</h1>
-    <p v-if="!cart.storageOk" class="mt-3 border border-border bg-cream p-3 text-sm" role="status">Your bag could not be saved on this device (private mode or blocked storage). It works for this visit only.</p>
+  <section class="pb-8">
+    <div class="mb-8 flex flex-col gap-3 md:mb-10"><div class="eyebrow">Step 1 of 3 · Bag</div><h1 class="font-display text-[44px] leading-none md:text-[60px]">Shopping bag</h1></div>
+    <p v-if="!cart.storageOk" class="mb-6 border-l-[3px] border-gold bg-cream p-3 text-sm" role="status">Your bag could not be saved on this device (private mode or blocked storage). It works for this visit only.</p>
 
-    <div v-if="cart.hydrated && !cart.lines.length" class="mt-10 text-center">
-      <h2 class="text-3xl">Your bag is empty</h2><p class="hint mt-1">Discover something you will love.</p>
-      <NuxtLink to="/" class="btn mt-6">Start shopping</NuxtLink>
+    <div v-if="cart.hydrated && !cart.lines.length" class="flex flex-col items-center gap-4 bg-cream px-5 py-20 text-center md:py-24">
+      <h2 class="font-display text-[34px] md:text-[40px]">Your bag is empty</h2><p class="text-body">Discover something you will love.</p>
+      <NuxtLink to="/" class="btn">Start shopping</NuxtLink>
     </div>
 
-    <div v-else-if="cart.lines.length" class="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
-      <div>
+    <div v-else-if="cart.lines.length" class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-14">
+      <div class="min-w-0 flex-1">
         <p v-if="cart.checkFailed" class="err mb-3" role="alert">We couldn’t check your bag just now. <button class="underline" @click="cart.validate()">Try again</button></p>
-        <ul class="flex flex-col divide-y divide-border border-y border-border">
-          <li v-for="l in cart.lines" :key="l.variant" class="flex gap-4 py-4">
-            <NuxtLink :to="`/product/${l.slug}`" class="block w-24 shrink-0 bg-cream">
-              <NuxtImg v-if="l.image" format="webp" :src="mediaSrc(l.image)" :alt="l.name" width="96" height="128" class="h-32 w-24 object-cover" />
-            </NuxtLink>
-            <div class="flex flex-1 flex-col gap-1">
-              <NuxtLink :to="`/product/${l.slug}`" class="font-display text-xl">{{ l.name }}</NuxtLink>
-              <span class="hint">{{ l.label }}</span>
-              <span class="text-sm">{{ taka(l.price) }}</span>
-              <p v-if="priceChanged(l)" class="text-sm text-accent" role="status">The price changed to {{ taka(lineInfo(l.variant)?.price) }}.</p>
-              <div v-if="cart.issuesFor(l.variant).length" class="flex flex-wrap items-center gap-2 text-sm text-accent" role="alert">
-                {{ cart.issuesFor(l.variant).map((i) => issueText[i]).join(', ') }}
-                <button class="underline" @click="cart.fix(l.variant)">{{ cart.issuesFor(l.variant).includes('quantity_above_stock') ? `Reduce to ${lineInfo(l.variant)?.available_quantity}` : 'Remove' }}</button>
-              </div>
-              <div class="mt-auto flex items-center gap-4">
-                <div class="flex items-center border border-border" role="group" :aria-label="`Quantity for ${l.name}`">
-                  <button class="min-h-touch min-w-touch" aria-label="Decrease quantity" @click="cart.setQty(l.variant, l.quantity - 1)">−</button>
-                  <span class="min-w-8 text-center">{{ l.quantity }}</span>
-                  <button class="min-h-touch min-w-touch" aria-label="Increase quantity" @click="cart.setQty(l.variant, l.quantity + 1)">+</button>
+        <div class="hidden grid-cols-[minmax(0,1fr)_140px_120px] gap-5 border-b border-ink pb-3.5 text-xs font-semibold uppercase tracking-[0.18em] md:grid"><span>Product</span><span>Quantity</span><span class="text-right">Total</span></div>
+        <ul>
+          <li v-for="l in cart.lines" :key="l.variant" class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-4 border-b border-border py-6 md:grid-cols-[minmax(0,1fr)_140px_120px] md:items-center md:gap-5 md:py-[26px]">
+            <div class="col-span-2 flex items-center gap-4 md:col-span-1 md:gap-[22px]">
+              <NuxtLink :to="`/product/${l.slug}`" class="block w-[88px] flex-none md:w-[110px]"><StoreTile :src="l.image" :alt="l.name" :tile-key="l.variant" ratio="3/4" :width="110" :height="147" art-width="56%" /></NuxtLink>
+              <div class="flex min-w-0 flex-col gap-1.5">
+                <NuxtLink :to="`/product/${l.slug}`" class="font-display text-[22px] leading-[1.15] md:text-[26px]">{{ l.name }}</NuxtLink>
+                <span class="text-sm text-muted">{{ l.label }}</span>
+                <span class="text-[15px]">{{ taka(l.price) }}</span>
+                <p v-if="priceChanged(l)" class="text-sm text-accent" role="status">The price changed to {{ taka(lineInfo(l.variant)?.price) }}.</p>
+                <div v-if="cart.issuesFor(l.variant).length" class="flex flex-wrap items-center gap-2 text-sm text-accent" role="alert">
+                  {{ cart.issuesFor(l.variant).map((i) => issueText[i]).join(', ') }}
+                  <button class="underline" @click="cart.fix(l.variant)">{{ cart.issuesFor(l.variant).includes('quantity_above_stock') ? `Reduce to ${lineInfo(l.variant)?.available_quantity}` : 'Remove' }}</button>
                 </div>
-                <button class="hint underline" @click="cart.remove(l.variant); useTrack().push('remove_from_cart', { item: l.slug })">Remove</button>
+                <button class="mt-1 min-h-11 self-start border-b border-ink text-xs font-medium uppercase tracking-[0.14em]" @click="cart.remove(l.variant); useTrack().push('remove_from_cart', { item: l.slug })">Remove</button>
               </div>
             </div>
-            <div class="text-right">{{ taka(Number(l.price) * l.quantity) }}</div>
+            <div class="flex h-12 w-[132px] items-center border border-field bg-surface" role="group" :aria-label="`Quantity for ${l.name}`">
+              <button class="h-full w-11 text-[19px]" aria-label="Decrease quantity" @click="cart.setQty(l.variant, l.quantity - 1)">−</button>
+              <span class="flex-1 text-center">{{ l.quantity }}</span>
+              <button class="h-full w-11 text-[19px]" aria-label="Increase quantity" @click="cart.setQty(l.variant, l.quantity + 1)">+</button>
+            </div>
+            <div class="self-center text-right text-[17px] font-medium">{{ taka(Number(l.price) * l.quantity) }}</div>
           </li>
         </ul>
-        <NuxtLink to="/" class="hint mt-4 inline-block underline">← Continue shopping</NuxtLink>
-        <p class="hint mt-1">Your bag is saved on this device only.</p>
+        <div class="mt-6 flex flex-wrap items-center justify-between gap-3.5"><NuxtLink to="/" class="lnk">← Continue shopping</NuxtLink><span class="text-[13.5px] text-muted">Your bag is saved on this device only.</span></div>
       </div>
 
-      <aside class="card h-fit" aria-label="Order summary">
-        <h2 class="text-2xl">Order summary</h2>
-        <fieldset>
-          <legend class="cap">Delivery area</legend>
-          <div class="mt-2 grid grid-cols-2 gap-2">
-            <button v-for="a in ([['inside_dhaka', 'Inside Dhaka', inside], ['outside_dhaka', 'Outside Dhaka', outside]] as const)" :key="a[0]" type="button" class="border p-2 text-left text-sm" :class="cart.area === a[0] ? 'border-primary bg-primary-soft' : 'border-border'" :aria-pressed="cart.area === a[0]" @click="cart.setArea(a[0] as Area)">{{ a[1] }}<br><span class="hint">{{ taka(a[2]) }}</span></button>
+      <aside class="flex w-full flex-col gap-[22px] bg-cream p-6 md:p-9 lg:max-w-[460px] lg:flex-1" aria-label="Order summary">
+        <h2 class="font-display text-[32px]">Order summary</h2>
+        <div role="group" aria-label="Delivery area" class="flex flex-col gap-2.5">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em]">Delivery area</div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button v-for="a in ([['inside_dhaka', 'Inside Dhaka', inside], ['outside_dhaka', 'Outside Dhaka', outside]] as const)" :key="a[0]" type="button" class="min-h-14 border px-3.5 py-2.5 text-left text-[15px] transition-colors" :class="cart.area === a[0] ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="cart.area === a[0]" @click="cart.setArea(a[0] as Area)">{{ a[1] }}<br><span class="text-[13px] text-muted">{{ taka(a[2]) }}</span></button>
           </div>
-        </fieldset>
-        <div class="fld">
-          <label for="cp">Coupon code</label>
-          <div class="flex gap-2"><input id="cp" v-model="code" class="inp" placeholder="Enter code" @keyup.enter="apply"><button class="btn-secondary !px-4" @click="apply">Apply</button></div>
-          <p v-if="couponMsg && !couponMsg.valid" class="err" role="alert">{{ couponMsg.error?.message }} <button class="underline" @click="removeCoupon">Remove</button></p>
-          <p v-else-if="couponMsg?.valid" class="hint" role="status">{{ couponMsg.code }} applied. <button class="underline" @click="removeCoupon">Remove</button></p>
         </div>
-        <dl class="flex flex-col gap-2 text-sm">
+        <div class="flex flex-col gap-2.5">
+          <label for="cp" class="text-xs font-semibold uppercase tracking-[0.18em]">Coupon code</label>
+          <div class="flex"><input id="cp" v-model="code" class="h-[50px] min-w-0 flex-1 border border-r-0 border-field bg-surface px-4 text-[15px] uppercase tracking-[0.08em]" placeholder="Enter code" autocomplete="off" @keyup.enter="apply"><button class="h-[50px] border border-ink bg-ink px-[22px] text-xs font-medium uppercase tracking-[0.14em] text-bg transition-colors hover:border-accent hover:bg-accent" @click="apply">Apply</button></div>
+          <p v-if="couponMsg && !couponMsg.valid" class="border-l-[3px] border-accent bg-surface px-3.5 py-2.5 text-sm" role="alert">{{ couponMsg.error?.message }} <button class="underline" @click="removeCoupon">Remove</button></p>
+          <p v-else-if="couponMsg?.valid" class="border-l-[3px] border-success bg-surface px-3.5 py-2.5 text-sm" role="status">{{ couponMsg.code }} applied. <button class="underline" @click="removeCoupon">Remove</button></p>
+        </div>
+        <dl class="flex flex-col gap-3 border-t border-field pt-5 text-[15.5px]">
           <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ taka(subtotal) }}</dd></div>
-          <div v-if="discount" class="flex justify-between"><dt>Discount ({{ couponMsg?.code }})</dt><dd>− {{ taka(discount) }}</dd></div>
-          <div class="flex justify-between"><dt>Delivery</dt><dd>{{ fee !== null ? taka(fee) : `${taka(Math.min(inside, outside))} – ${taka(Math.max(inside, outside))}` }}</dd></div>
-          <div class="flex justify-between border-t border-border pt-2 text-lg font-medium"><dt>Total</dt><dd>{{ fee !== null ? taka(total) : `from ${taka(total + Math.min(inside, outside))}` }}</dd></div>
+          <div v-if="discount" class="flex justify-between text-rose-deep"><dt>Discount ({{ couponMsg?.code }})</dt><dd>− {{ taka(discount) }}</dd></div>
+          <div class="flex justify-between"><dt>Delivery</dt><dd class="text-muted">{{ fee !== null ? taka(fee) : `${taka(Math.min(inside, outside))} – ${taka(Math.max(inside, outside))}` }}</dd></div>
         </dl>
+        <div class="flex items-baseline justify-between border-t border-ink pt-[18px]"><span class="text-xs font-semibold uppercase tracking-[0.18em]">Total</span><span class="font-display text-4xl">{{ fee !== null ? taka(total) : `from ${taka(total + Math.min(inside, outside))}` }}</span></div>
         <p v-if="cart.blocked" class="err" role="alert">Fix the highlighted items to continue.</p>
-        <NuxtLink v-if="!cart.blocked && !cart.checking" to="/checkout" class="btn" data-track="proceed_to_checkout">Proceed to checkout</NuxtLink>
-        <button v-else class="btn" disabled>{{ cart.checking ? 'Checking your bag…' : 'Proceed to checkout' }}</button>
-        <p class="hint">Pay with bKash, Nagad or cash on delivery at the next step.</p>
+        <NuxtLink v-if="!cart.blocked && !cart.checking" to="/checkout" class="btn !h-[54px]" data-track="proceed_to_checkout">Proceed to checkout</NuxtLink>
+        <button v-else class="btn !h-[54px]" disabled>{{ cart.checking ? 'Checking your bag…' : 'Proceed to checkout' }}</button>
+        <p class="text-center text-[13px] text-body">Pay with <b class="font-medium">bKash</b>, <b class="font-medium">Nagad</b> or <b class="font-medium">cash on delivery</b> at the next step</p>
       </aside>
     </div>
   </section>

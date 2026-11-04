@@ -29,6 +29,7 @@ export default <Partial<Config>>{
         'on-dark': v('on-dark'),
         gold: v('gold'), champagne: v('champagne'), 'rose-soft': v('rose-soft'), 'rose-deep': v('rose-deep'),
         field: v('field'), body: v('body'), 'line-dark': v('line-dark'), 'line-dark-2': v('line-dark-2'),
+        success: v('success'),
         'text-dark': v('text-dark'), 'text-dark-2': v('text-dark-2'), 'text-dark-3': v('text-dark-3'),
         tile: Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [String(n), `color-mix(in srgb, var(--tile-${n}) calc(<alpha-value> * 100%), transparent)`])),
         'tile-video': 'var(--tile-video)'
