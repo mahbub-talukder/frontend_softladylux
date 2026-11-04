@@ -77,7 +77,7 @@ async function bulk(action: string, extra: Dict = {}) {
           <tr v-if="pending"><td colspan="8" class="p-4 text-muted">Loading…</td></tr>
           <tr v-for="p in data?.results" :key="p.id" class="border-t border-border">
             <td class="p-3"><input v-model="selected" type="checkbox" :value="p.id" :aria-label="`Select ${p.name}`"></td>
-            <td class="flex items-center gap-3 p-3"><NuxtImg format="webp" v-if="p.image" :src="mediaSrc(p.image)" :alt="p.name" width="36" height="48" class="h-12 w-9 object-cover" /><span class="h-12 w-9 bg-cream" :class="p.image ? 'hidden' : ''" />{{ p.name }}</td>
+            <td class="flex items-center gap-3 p-3"><NuxtImg v-if="p.image" format="webp" :src="mediaSrc(p.image)" :alt="p.name" width="36" height="48" class="h-12 w-9 object-cover" /><span class="h-12 w-9 bg-cream" :class="p.image ? 'hidden' : ''" />{{ p.name }}</td>
             <td class="p-3">{{ p.category_name }}<span v-if="p.subcategory_name" class="hint"> · {{ p.subcategory_name }}</span></td>
             <td class="p-3">{{ p.uom }}</td>
             <td class="p-3">{{ taka(p.price) }}<span v-if="p.discount_pct" class="hint"> −{{ p.discount_pct }}%</span></td>

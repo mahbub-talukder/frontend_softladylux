@@ -35,7 +35,7 @@ useSeoMeta({
       <ul class="grid grid-cols-2 gap-4 md:grid-cols-4">
         <li v-for="c in home.categories" :key="c.slug">
           <NuxtLink :to="`/shop/${c.slug}`" class="block" data-track="home_category_tile">
-            <NuxtImg format="webp" v-if="c.tile" :src="mediaSrc(c.tile.url)" :alt="c.tile.alt_text || c.name" width="400" height="500" class="aspect-[4/5] w-full object-cover" loading="lazy" />
+            <NuxtImg v-if="c.tile" format="webp" :src="mediaSrc(c.tile.url)" :alt="c.tile.alt_text || c.name" width="400" height="500" class="aspect-[4/5] w-full object-cover" loading="lazy" />
             <div v-else class="aspect-[4/5] w-full bg-cream" />
             <div class="mt-2 font-display text-xl">{{ c.name }}</div>
           </NuxtLink>
@@ -60,7 +60,7 @@ useSeoMeta({
       <div class="grid gap-4 sm:grid-cols-3">
         <!-- Links out instead of embedding, so nothing from Google/Facebook loads before cookie consent (M5). -->
         <a v-for="v in home.videos" :key="v.id" :href="v.url" target="_blank" rel="noopener" class="block border border-border bg-surface" data-track="video_open">
-          <NuxtImg format="webp" v-if="v.thumbnail" :src="mediaSrc(v.thumbnail.url)" :alt="v.thumbnail.alt_text" width="640" height="360" class="aspect-video w-full object-cover" loading="lazy" />
+          <NuxtImg v-if="v.thumbnail" format="webp" :src="mediaSrc(v.thumbnail.url)" :alt="v.thumbnail.alt_text" width="640" height="360" class="aspect-video w-full object-cover" loading="lazy" />
           <div class="p-3">{{ v.title }}</div>
         </a>
       </div>

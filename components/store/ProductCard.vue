@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Design: ProductCard board. SRS CAT-05 (discount badge, compare-at struck through), CAT-13
-// (sold out), UI-05 (explicit image size). Quick Add and the wishlist heart arrive with M3/M4.
+// Design: ProductCard board. SRS CAT-05 (discount badge, compare-at struck through), CAT-12
+// (Quick Add), CAT-13 (sold out), UI-05 (explicit image size). The wishlist heart arrives in M4.
 import type { CardProduct } from '~/types/api'
 
 const props = defineProps<{ product: CardProduct }>()
@@ -9,15 +9,18 @@ const p = computed(() => props.product)
 
 <template>
   <article class="group flex flex-col">
-    <NuxtLink :to="`/product/${p.slug}`" class="relative block bg-cream" :aria-label="p.name">
-      <NuxtImg format="webp" v-if="p.image" :src="mediaSrc(p.image.url)" :alt="p.image.alt_text || p.name" width="480" height="640" sizes="xs:50vw md:33vw lg:25vw" loading="lazy" class="aspect-[3/4] w-full object-cover" />
-      <div v-else class="aspect-[3/4] w-full" />
-      <div class="absolute left-2 top-2 flex flex-col items-start gap-1">
+    <div class="relative bg-cream">
+      <NuxtLink :to="`/product/${p.slug}`" class="block" :aria-label="p.name">
+        <NuxtImg v-if="p.image" format="webp" :src="mediaSrc(p.image.url)" :alt="p.image.alt_text || p.name" width="480" height="640" sizes="xs:50vw md:33vw lg:25vw" loading="lazy" class="aspect-[3/4] w-full object-cover" />
+        <div v-else class="aspect-[3/4] w-full" />
+      </NuxtLink>
+      <div class="pointer-events-none absolute left-2 top-2 flex flex-col items-start gap-1">
         <span v-if="p.tag" class="bg-primary px-2 py-0.5 text-[11px] uppercase tracking-widest text-primary-contrast">{{ p.tag }}</span>
         <span v-if="p.discount_pct" class="bg-accent px-2 py-0.5 text-[12px] font-semibold text-primary-contrast">−{{ p.discount_pct }}%</span>
       </div>
-      <div v-if="p.sold_out" class="absolute inset-x-0 bottom-0 bg-surface/90 py-1 text-center text-xs uppercase tracking-widest">Sold out</div>
-    </NuxtLink>
+      <div v-if="p.sold_out" class="pointer-events-none absolute inset-x-0 bottom-0 bg-surface/90 py-1 text-center text-xs uppercase tracking-widest">Sold out</div>
+      <StoreQuickAdd :product="p" />
+    </div>
     <div class="mt-3 flex flex-col gap-1">
       <NuxtLink :to="`/product/${p.slug}`" class="font-display text-lg leading-tight">{{ p.name }}</NuxtLink>
       <div class="text-sm text-muted">{{ p.subcategory?.name || p.category.name }}</div>

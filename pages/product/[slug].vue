@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Design: Product board. SRS CAT-11 (gallery, variant selectors, live price + availability,
 // details tabs, delivery info from Settings, related), CAT-13 (out-of-stock visible but disabled),
-// CAT-22 (breadcrumb Home > Category > Sub-category). Add to bag / wishlist arrive with M3/M4.
+// CAT-22 (breadcrumb Home > Category > Sub-category), CRT-02 (Add to bag, quantity 1-10).
 import type { ProductDetail, ProductVariant } from '~/types/api'
 
 const route = useRoute()
@@ -41,6 +41,22 @@ const gallery = computed(() => {
 const active = ref(0)
 watch(gallery, () => { active.value = 0 })
 
+const cart = useCartStore()
+const qty = ref(1)
+const added = ref('')
+const needSize = ref(false)
+function addToBag() {
+  const v = chosen.value
+  if (!v) { needSize.value = true; return }
+  needSize.value = false
+  const status = cart.add({
+    variant: v.id, quantity: qty.value, addedAt: Date.now(), name: p.value!.name,
+    label: [v.color_name, v.size_label].filter(Boolean).join(' / '), sku: v.sku, price: v.price,
+    image: p.value!.images[0]?.url ?? null, slug: p.value!.slug
+  }, qty.value)
+  added.value = status === 'full' ? 'Your bag is full (30 items). Remove something first.' : `${qty.value} × ${p.value!.name} (${[v.size_label, v.color_name].filter(Boolean).join(', ')}) added to your bag.`
+  useTrack().push('add_to_cart', { item: p.value!.slug, value: Number(v.price) * qty.value })
+}
 const tab = ref('description')
 const tabs = computed(() => [
   { id: 'description', label: 'Description', body: p.value!.description || p.value!.short_desc },
@@ -64,7 +80,7 @@ const tabs = computed(() => [
           </button>
         </div>
         <div class="relative flex-1 bg-cream">
-          <NuxtImg format="webp" v-if="gallery[active]" :src="mediaSrc(gallery[active].url)" :alt="gallery[active].alt_text || p.name" width="720" height="960" sizes="xs:100vw md:45vw" class="aspect-[3/4] w-full object-cover" loading="eager" />
+          <NuxtImg v-if="gallery[active]" format="webp" :src="mediaSrc(gallery[active].url)" :alt="gallery[active].alt_text || p.name" width="720" height="960" sizes="xs:100vw md:45vw" class="aspect-[3/4] w-full object-cover" loading="eager" />
           <span v-if="p.tag" class="absolute left-3 top-3 bg-primary px-2 py-0.5 text-xs uppercase tracking-widest text-primary-contrast">{{ p.tag }}</span>
         </div>
       </div>
@@ -91,6 +107,16 @@ const tabs = computed(() => [
           </div>
         </fieldset>
         <p v-if="availability" class="text-sm" role="status" :class="chosen && !chosen.in_stock ? 'text-accent' : ''">{{ availability }}</p>
+        <div v-if="!p.sold_out" class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center border border-border" role="group" aria-label="Quantity">
+            <button type="button" class="min-h-touch min-w-touch" aria-label="Decrease quantity" @click="qty = Math.max(1, qty - 1)">−</button>
+            <span class="min-w-8 text-center" aria-live="polite">{{ qty }}</span>
+            <button type="button" class="min-h-touch min-w-touch" aria-label="Increase quantity" @click="qty = Math.min(10, qty + 1)">+</button>
+          </div>
+          <button type="button" class="btn flex-1" :disabled="!!chosen && !chosen.in_stock" data-track="add_to_bag" @click="addToBag">Add to bag</button>
+        </div>
+        <p v-if="needSize" class="err" role="alert">Choose a size first.</p>
+        <p v-if="added" class="text-sm" role="status">{{ added }} <NuxtLink to="/cart" class="underline">View bag</NuxtLink></p>
         <div class="mt-4 border-t border-border">
           <div class="flex gap-5" role="tablist"><button v-for="t in tabs" :key="t.id" class="tab" :aria-pressed="tab === t.id" @click="tab = t.id">{{ t.label }}</button></div>
           <div class="py-4 text-sm leading-relaxed">

@@ -7,7 +7,8 @@ export interface PublicSettings {
   support_phones: string[]; whatsapp_number: string; support_email: string; working_hours: string
   facebook_url: string; instagram_url: string; youtube_url: string; tiktok_url: string
   messenger_link: string; footer_about: string; copyright_text: string
-  bkash_number: string; nagad_number: string; cod_enabled: boolean
+  bkash_number: string; bkash_account_type: string; nagad_number: string; nagad_account_type: string
+  payment_instructions: string; cod_enabled: boolean
   delivery_fee_inside_dhaka: string; delivery_fee_outside_dhaka: string
   delivery_time_inside_dhaka: string; delivery_time_outside_dhaka: string
   seo_title: string; seo_description: string; gtm_id: string
@@ -56,6 +57,7 @@ export interface CardProduct {
   image: { url: string; alt_text: string; width: number; height: number; color: string } | null
   category: { name: string; slug: string }; subcategory: { name: string; slug: string } | null
   colors: { name: string; hex: string }[]; sizes: string[]
+  variants: { id: number; size_label: string; color_name: string; in_stock: boolean }[]
 }
 export interface ProductVariant {
   id: number; sku: string; size_label: string; color_name: string; color_hex: string
@@ -80,3 +82,35 @@ export interface Facets {
 }
 export interface ProductPage { count: number; next: string | null; results: CardProduct[]; facets: Facets }
 export interface SizeChartData { name: string; type: string; rows: Record<string, any> } // eslint-disable-line @typescript-eslint/no-explicit-any
+
+// ---- Cart, checkout, orders (M3)
+export interface CartLineCheck {
+  variant: number; quantity: number; active: boolean; price: string | null; available_quantity: number
+  issues: ('unavailable' | 'sold_out' | 'quantity_above_stock' | 'quantity_invalid')[]
+  product_name?: string; product_slug?: string; variant_label?: string; sku?: string; image?: string | null
+}
+export interface CouponResult { code: string; valid: boolean; discount?: string; description?: string; error?: { code: string; message: string } }
+export interface CartValidation {
+  lines: CartLineCheck[]; subtotal: string; coupon: CouponResult | null
+  delivery: { inside_dhaka: string; outside_dhaka: string; selected: string | null }; total: string | null
+}
+export interface CustomerOrder {
+  number: string; status: string; status_label: string; placed_at: string; name: string; phone: string; email: string
+  area: string; district: string; thana: string; address_line: string; note: string; subtotal: string
+  coupon_code: string; coupon_discount: string; delivery_fee: string; total: string; payment_method: string
+  payment_status: string; courier: string; tracking_ref: string; can_cancel: boolean
+  items: { id: number; product_name: string; variant_label: string; sku: string; unit_price: string; quantity: number; line_total: string }[]
+  timeline: { status: string; label: string; at: string; detail: string }[]
+}
+export interface AdminOrderRow {
+  id: number; number: string; status: string; placed_at: string; name: string; phone: string; area: string
+  payment_method: string; payment_status: string; trx_id: string | null; total: string; item_count: number; is_stale: boolean
+}
+export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_status' | 'can_cancel'> {
+  id: number; is_stale: boolean; user_name: string | null; confirmed_at: string | null; shipped_at: string | null
+  cancel_reason: string; return_reason: string
+  payment: { id: number; method: string; amount: string; sender_number: string; trx_id: string | null; status: string; verified_by_name: string | null; verified_at: string | null; reject_reason: string; note: string }
+  logs: { id: number; from_status: string; to_status: string; user: string | null; note: string; created_at: string; internal: boolean }[]
+}
+export interface StockRow { id: number; sku: string; product: string; category: string; label: string; on_hand: number; level: 'in_stock' | 'low' | 'out'; is_active: boolean }
+export interface Movement { id: number; created_at: string; sku: string; delta_on_hand: number; on_hand_after: number; reason: string; order_ref: string; lot_reference: string; remarks: string; user: string | null }
