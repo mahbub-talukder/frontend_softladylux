@@ -82,7 +82,7 @@ async function bulk(action: string, extra: Dict = {}) {
             <td class="p-3">{{ p.uom }}</td>
             <td class="p-3">{{ taka(p.price) }}<span v-if="p.discount_pct" class="hint"> −{{ p.discount_pct }}%</span></td>
             <td class="p-3">{{ p.stock ?? 0 }}</td>
-            <td class="p-3">{{ p.is_active ? 'Active' : 'Draft' }}</td>
+            <td class="p-3"><span class="stage" :data-stage="p.is_active ? 'delivered' : 'cancelled'">{{ p.is_active ? 'Active' : 'Draft' }}</span></td>
             <td class="p-3"><NuxtLink :to="`/admin/products/${p.id}`" class="underline">{{ canEdit ? 'Edit' : 'View' }}</NuxtLink></td>
           </tr>
           <tr v-if="!pending && !data?.results.length"><td colspan="8" class="p-6 text-center text-muted">No products found.</td></tr>

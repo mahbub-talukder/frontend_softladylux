@@ -109,3 +109,6 @@
 .admin-main .bulk .btn-secondary { color: var(--color-bg); border-color: var(--color-line-dark-2); }
 .admin-main .bulk .btn-secondary:hover { background: var(--color-bg); color: var(--color-ink); }
 .admin-main .bulk .inp { background: transparent; color: var(--color-bg); border-color: var(--color-line-dark-2); }
+.admin-main input[type='file'] { font-size: 13px; color: var(--color-muted); }
+.admin-main input[type='file']::file-selector-button { margin-right: 14px; height: 40px; padding: 0 18px; border: 1px solid var(--color-ink); background: transparent; color: var(--color-ink); font: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.admin-main input[type='file']::file-selector-button:hover { background: var(--color-ink); color: var(--color-bg); }

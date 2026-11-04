@@ -78,7 +78,7 @@ const when = (d: string) => new Date(d).toLocaleString()
             <tbody>
               <tr v-if="pending"><td colspan="6" class="p-4 text-muted">Loading…</td></tr>
               <tr v-for="r in data?.results" :key="r.id" class="border-t border-border" :class="sel?.id === r.id ? 'bg-primary-soft' : ''">
-                <td class="p-3">{{ r.sku }}</td><td class="p-3">{{ r.product }}<br><span class="hint">{{ r.label }}</span></td><td class="p-3">{{ r.category }}</td><td class="p-3">{{ r.on_hand }}</td><td class="p-3">{{ chip[r.level] }}</td>
+                <td class="whitespace-nowrap p-3 text-[13px] tracking-[0.04em]">{{ r.sku }}</td><td class="p-3">{{ r.product }}<br><span class="hint">{{ r.label }}</span></td><td class="p-3">{{ r.category }}</td><td class="p-3">{{ r.on_hand }}</td><td class="p-3"><span class="stage" :data-stage="({ in_stock: 'delivered', low: 'draft', out: 'shipping' } as Record<string, string>)[r.level]">{{ chip[r.level] }}</span></td>
                 <td class="p-3"><button class="underline" @click="pick(r)">{{ canAdjust ? 'Adjust' : 'History' }}</button></td>
               </tr>
               <tr v-if="!pending && !data?.results.length"><td colspan="6" class="p-6 text-center text-muted">No stock rows match.</td></tr>

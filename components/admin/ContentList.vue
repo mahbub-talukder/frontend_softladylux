@@ -57,9 +57,9 @@ const setMedia = (row: Row, key: string, m: Media | null) => { row[key] = m }
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex max-w-4xl flex-col gap-4">
     <p v-if="note" class="hint">{{ note }}</p>
-    <div v-for="row in items" :key="row.id" class="card">
+    <div v-for="row in items" :key="row.id" class="card md:grid md:grid-cols-2 md:gap-x-6 [&>*:not(.fld)]:col-span-2 [&>.fld:has(textarea)]:col-span-2 [&>.fld:has(input[type=file])]:col-span-2">
       <div class="flex items-center justify-between gap-3">
         <h3 class="text-xl">{{ row[titleKey] || row.placement || `Item ${row.id}` }}</h3>
         <label class="flex items-center gap-2 text-sm">On
@@ -85,7 +85,7 @@ const setMedia = (row: Row, key: string, m: Media | null) => { row[key] = m }
     <p v-if="!items.length" class="hint">Nothing here yet.</p>
     <template v-if="canCreate">
       <button v-if="!draft" class="btn-secondary self-start" @click="startDraft">+ Add</button>
-      <div v-else class="card">
+      <div v-else class="card md:grid md:grid-cols-2 md:gap-x-6 [&>*:not(.fld)]:col-span-2 [&>.fld:has(textarea)]:col-span-2 [&>.fld:has(input[type=file])]:col-span-2">
         <h3 class="text-xl">New item</h3>
         <template v-for="f in fields" :key="f.key">
           <AdminMediaField v-if="f.type === 'media'" :model-value="draft[f.key] ?? null" :kind="f.kind || 'page'" :label="f.label" :hint="f.hint || ''" @update:model-value="setMedia(draft, f.key, $event)" />

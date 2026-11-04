@@ -101,7 +101,7 @@ async function save() {
     <div class="mb-4 flex flex-wrap border-b border-border" role="tablist">
       <button v-for="t in TABS" :key="t.id" class="tab" :aria-pressed="tab === t.id" @click="tab = t.id">{{ t.label }}</button>
     </div>
-    <div class="card max-w-2xl">
+    <div class="card max-w-4xl md:grid md:grid-cols-2 md:gap-x-6 [&>*:not(.fld)]:col-span-2 [&>.fld:has(textarea)]:col-span-2 [&>.fld:has(input[type=file])]:col-span-2">
       <h2 class="text-2xl">{{ current.title }}</h2>
       <template v-if="tab === 'company'">
         <AdminMediaField v-model="logo" kind="logo" label="Logo" hint="SVG-like PNG with transparent background, about 400 × 120 px" />
