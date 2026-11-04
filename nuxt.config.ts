@@ -10,7 +10,9 @@ export default defineNuxtConfig({
     apiBaseInternal: 'http://localhost:8000/api/v1',
     public: {
       // Browser-side base URL (same origin behind nginx).
-      apiBase: '/api/v1'
+      apiBase: '/api/v1',
+      // Public origin for sitemap, canonical and structured data (NUXT_PUBLIC_SITE_URL). Empty = use the request host.
+      siteUrl: ''
     }
   },
   // SRS ARC-03: storefront SSR for SEO, admin client-rendered.

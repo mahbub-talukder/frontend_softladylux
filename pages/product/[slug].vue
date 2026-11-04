@@ -3,6 +3,7 @@
 // details tabs, delivery info from Settings, related), CAT-13 (out-of-stock visible but disabled),
 // CAT-22 (breadcrumb Home > Category > Sub-category), CRT-02 (Add to bag, quantity 1-10).
 import type { ProductDetail, ProductVariant } from '~/types/api'
+import { breadcrumbJsonLd, ldScript, productJsonLd, siteOrigin } from '~/utils/seo'
 
 const route = useRoute()
 const { api } = useApi()
@@ -10,7 +11,18 @@ const { data: p, error } = await useAsyncData(`product-${route.params.slug}`, ()
 if (error.value || !p.value) throw createError({ statusCode: 404, statusMessage: 'Product not found' })
 const { data: s } = await useSiteSettings()
 
-useSeoMeta({ title: () => p.value?.seo_title || p.value?.name, description: () => p.value?.seo_description || p.value?.short_desc })
+const reqUrl = useRequestURL()
+const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, reqUrl.host, reqUrl.protocol.replace(':', ''))
+useSeoMeta({
+  title: () => p.value?.seo_title || p.value?.name, description: () => p.value?.seo_description || p.value?.short_desc,
+  ogTitle: () => p.value?.seo_title || p.value?.name, ogDescription: () => p.value?.seo_description || p.value?.short_desc,
+  ogImage: () => (p.value?.image ? origin + p.value.image.url : undefined), ogType: 'website'
+})
+// §9 SEO: Product and BreadcrumbList structured data
+useHead({ script: [
+  { type: 'application/ld+json', innerHTML: ldScript(productJsonLd(origin, p.value!)) },
+  { type: 'application/ld+json', innerHTML: ldScript(breadcrumbJsonLd(origin, p.value!)) }
+] })
 
 const colours = computed(() => {
   const seen = new Map<string, string>()
@@ -57,6 +69,7 @@ function addToBag() {
   added.value = status === 'full' ? 'Your bag is full (30 items). Remove something first.' : `${qty.value} × ${p.value!.name} (${[v.size_label, v.color_name].filter(Boolean).join(', ')}) added to your bag.`
   useTrack().push('add_to_cart', { item: p.value!.slug, value: Number(v.price) * qty.value })
 }
+onMounted(() => useTrack().push('view_item', { items: [useTrack().item(p.value!)], value: Number(p.value!.price) }))
 const tab = ref('description')
 const tabs = computed(() => [
   { id: 'description', label: 'Description', body: p.value!.description || p.value!.short_desc },

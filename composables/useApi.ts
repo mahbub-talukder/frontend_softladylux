@@ -26,7 +26,7 @@ export function useApi() {
       if (t) headers['X-CSRFToken'] = t
     }
     if (import.meta.server) Object.assign(headers, useRequestHeaders(['cookie']))
-    return await $fetch<T>(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)
+    return (await $fetch(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)) as T
   }
 
   async function api<T>(path: string, opts: FetchOptions = {}): Promise<T> {

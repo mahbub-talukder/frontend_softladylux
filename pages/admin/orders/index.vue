@@ -9,7 +9,7 @@ const { api, errorOf } = useApi()
 const route = useRoute()
 
 const STATUSES = ['', 'draft', 'confirmed', 'shipping', 'delivered', 'cancelled', 'returned']
-const f = reactive({ status: '', q: '', payment_method: '', payment_status: '', area: '', date_from: '', date_to: '', stale: false })
+const f = reactive({ status: '', q: '', payment_method: '', payment_status: '', area: '', date_from: '', date_to: '', stale: !!route.query.stale, ...(route.query.verify ? { status: 'draft', payment_status: 'pending' } : {}) })
 const page = ref(1)
 const selected = ref<number[]>([])
 const openId = ref<number | null>(Number(route.query.open) || null)

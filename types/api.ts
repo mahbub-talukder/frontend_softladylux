@@ -11,7 +11,7 @@ export interface PublicSettings {
   payment_instructions: string; cod_enabled: boolean
   delivery_fee_inside_dhaka: string; delivery_fee_outside_dhaka: string
   delivery_time_inside_dhaka: string; delivery_time_outside_dhaka: string
-  seo_title: string; seo_description: string; gtm_id: string
+  seo_title: string; seo_description: string; seo_share_image: Media | null; gtm_id: string
 }
 
 export interface Slide {
@@ -119,3 +119,33 @@ export interface Movement { id: number; created_at: string; sku: string; delta_o
 export interface CustomerMe { id: number; full_name: string; phone: string; email: string | null; birthday: string | null; phone_verified: boolean }
 export interface Address { id: number; label: string; recipient_name: string; phone: string; area: 'inside_dhaka' | 'outside_dhaka'; district: string; thana: string; address_line: string; is_default: boolean }
 export interface ContactMessage { id: number; created_at: string; name: string; phone: string; email: string; subject: string; message: string; is_handled: boolean; handled_by_name: string | null }
+
+// ---- Reports, dashboard, insights (M5)
+export interface DayPoint { day: string; revenue: string; orders: number }
+export interface Dashboard {
+  today?: { orders: number; revenue: string }; awaiting_confirmation?: number; stale_drafts?: number
+  sales_7d?: DayPoint[]; top_products?: { name: string; units: number; revenue: string }[]
+  orders_by_stage?: Record<string, number>
+  recent_orders?: { id: number; number: string; name: string; payment_method: string; total: string; status: string }[]
+  payments_to_verify?: { id: number; number: string; name: string; method: string; trx_id: string | null; total: string; placed_at: string }[]
+  stock?: { threshold: number; low: number; out: number; low_items: { sku: string; name: string; on_hand: number }[] }
+}
+export interface Period { range: string; from: string; to: string }
+export interface SalesReport {
+  period: Period
+  summary: { orders: number; revenue: string; average_order_value: string; returns: number; coupon_discounts: string }
+  by_day: DayPoint[]; by_category: { name: string; revenue: string; units: number }[]
+  top_products: { name: string; category: string; units: number; revenue: string }[]
+  by_payment_method: { key: string; orders: number; revenue: string }[]; by_area: { key: string; orders: number; revenue: string }[]
+}
+export interface FunnelRow { stage: string; count: number; rate: number }
+export interface InventoryReport {
+  period: Period; threshold: number
+  stock: { sku: string; product: string; category: string; label: string; on_hand: number; level: string }[]
+  low: InventoryReport['stock']; out: InventoryReport['stock']; movements: { reason: string; movements: number; units: number }[]
+}
+export interface CouponRow { code: string; uses: number; discount: string; revenue: string }
+export interface WishlistInsight {
+  kpis: { saves: number; customers: number; products: number }
+  products: { product: number; name: string; category: string; saved_by: number; bought_by_savers: number; units_sold: number; conversion: number }[]
+}

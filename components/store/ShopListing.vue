@@ -50,6 +50,13 @@ const clearAll = () => router.push({ query: toQuery({ ...emptyFilters(), q: filt
 const priceMax = computed(() => Math.ceil(Number(facets.value?.price.max ?? 0)))
 const priceMin = computed(() => Math.floor(Number(facets.value?.price.min ?? 0)))
 const chipList = computed(() => chips(filters.value))
+// INS-05: view_item_list (and search on /search) once results are in
+const { push, item } = useTrack()
+watch(() => data.value?.results, (r) => {
+  if (!r || import.meta.server) return
+  push('view_item_list', { item_list_name: props.title, items: r.slice(0, 20).map((p) => item(p)) })
+  if (route.path === '/search' && filters.value.q) push('search', { search_term: filters.value.q, results: data.value?.count })
+}, { immediate: true })
 </script>
 
 <template>
