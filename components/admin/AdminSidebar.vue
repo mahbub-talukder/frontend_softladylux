@@ -9,6 +9,7 @@ const ITEMS: Item[] = [
   { label: 'Dashboard', to: '/admin', d: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z', permission: 'dashboard.view' },
   { label: 'Products', to: '/admin/products', d: 'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8', permission: 'products.view' },
   { label: 'Categories', to: '/admin/categories', d: 'M4 6h16M4 12h16M4 18h10', permission: 'products.view' },
+  { label: 'Size charts', to: '/admin/size-charts', d: 'M3 17l4-4 3 3 5-6 6 7M3 21h18', permission: 'products.view' },
   { label: 'Website content', to: '/admin/website', d: 'M3 5h18v14H3zM3 9h18', permission: 'website.manage' },
   { label: 'Theme colours', to: '/admin/theme', d: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z', permission: 'theme.manage' },
   { label: 'Settings', to: '/admin/settings', d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1V5h-4v2l-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1v2h4v-2l2-1 2 1 2-4-2-1z', permission: 'settings.manage' },
