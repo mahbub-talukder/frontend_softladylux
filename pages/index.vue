@@ -55,7 +55,7 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
       <StoreSection eyebrow="Shop by category" title="The wardrobe, edited">
         <div class="hidden gap-2.5 md:flex"><button class="arrow-btn" aria-label="Previous categories" :disabled="!canPrev" @click="scrollRail(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button><button class="arrow-btn" aria-label="Next categories" :disabled="!canNext" @click="scrollRail(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button></div>
       </StoreSection>
-      <ul ref="rail" class="-mx-5 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 pb-2 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden" @scroll.passive="measure">
+      <ul ref="rail" class="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto scroll-smooth px-5 pb-2 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden" @scroll.passive="measure">
         <li v-for="(c, k) in home.categories" :key="c.slug" class="w-[44%] shrink-0 snap-start sm:w-[30%] lg:w-[calc((100%-100px)/6)]">
           <NuxtLink :to="`/shop/${c.slug}`" class="group flex flex-col gap-3.5 transition-transform duration-500 hover:-translate-y-1" data-track="home_category_tile">
             <StoreTile :src="c.tile?.url" :alt="c.tile?.alt_text || c.name" ratio="4/5" :tile-key="k" :category="c.slug" :width="400" :height="500" art-width="62%" />

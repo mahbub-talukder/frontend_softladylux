@@ -12,8 +12,8 @@ const items = computed(() => [
 </script>
 
 <template>
-  <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-surface sm:hidden" aria-label="Main">
-    <NuxtLink v-for="i in items" :key="i.label" :to="i.to" class="relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px]" active-class="text-accent" :data-track="`bottom_nav_${i.label.toLowerCase()}`">
+  <nav class="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] sm:hidden" aria-label="Main">
+    <NuxtLink v-for="i in items" :key="i.label" :to="i.to" class="relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px]" :active-class="i.to === '/' ? '' : 'text-accent'" exact-active-class="text-accent" :data-track="`bottom_nav_${i.label.toLowerCase()}`">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path :d="i.d" /></svg>{{ i.label }}
       <span v-if="i.badge" class="absolute right-4 top-1 flex h-4 min-w-4 items-center justify-center bg-accent px-1 text-[10px] text-primary-contrast">{{ i.badge }}</span>
     </NuxtLink>
