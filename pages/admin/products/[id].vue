@@ -67,10 +67,13 @@ function payload(publish: boolean) {
 }
 async function uploadPending(id: number) {
   if (!pending.value.length) return
-  const fd = new FormData()
-  pending.value.forEach((f) => fd.append('files', f))
-  fd.append('alt_text', form.value.name)
-  await api(`/admin/products/${id}/images/`, { method: 'POST', body: fd })
+  // Upload in small batches: a proxy body limit (nginx) can then never reject a whole product's photos.
+  for (let i = 0; i < pending.value.length; i += 2) {
+    const fd = new FormData()
+    pending.value.slice(i, i + 2).forEach((f) => fd.append('files', f))
+    fd.append('alt_text', form.value.name)
+    await api(`/admin/products/${id}/images/`, { method: 'POST', body: fd })
+  }
   pending.value = []
 }
 async function save(publish = false) {

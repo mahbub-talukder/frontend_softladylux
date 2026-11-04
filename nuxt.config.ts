@@ -17,7 +17,7 @@ export default defineNuxtConfig({
   },
   // SRS ARC-03: storefront SSR for SEO, admin client-rendered.
   routeRules: {
-    '/admin/**': { ssr: false } // admin is client-rendered (ARC-03)
+    '/admin/**': { ssr: false } // admin is client-rendered (ARC-03); /_nuxt caching is set by nginx
   },
   // SRS ARC-07 / SD-02: request-time WebP resizing by Nuxt Image.
   // Originals live in the shared media volume; NUXT_IMAGE_DIR points IPX at it (mounted at /media in Docker).

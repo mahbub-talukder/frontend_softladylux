@@ -11,9 +11,11 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 FROM base AS build
 RUN npm run build
 
+# Production image: only the built server output, run as the unprivileged `node` user.
 FROM node:20-alpine AS prod
 WORKDIR /app
-COPY --from=build /app/.output ./.output
+COPY --from=build --chown=node:node /app/.output ./.output
 ENV HOST=0.0.0.0 PORT=3000 NODE_ENV=production
+USER node
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]
