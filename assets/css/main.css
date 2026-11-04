@@ -84,3 +84,28 @@
 .page-leave-to { opacity: 0; }
 @keyframes sl-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fade-in { animation: sl-fade-in 0.35s ease both; }
+
+/* Admin tables (AdminDashboard / AdminOrders boards). Unlayered so they apply to every admin table
+   without touching each page: uppercase muted headers, 14px cells, hairline rows, hover tint. */
+.admin-main table { border-collapse: collapse; width: 100%; }
+.admin-main th { padding: 12px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--color-border); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-muted); }
+.admin-main td { padding: 13px 14px; border-bottom: 1px solid var(--color-border); font-size: 14.5px; vertical-align: middle; }
+.admin-main tbody tr { transition: background-color 0.15s; }
+.admin-main tbody tr:hover { background: color-mix(in srgb, var(--color-cream) 55%, transparent); }
+.admin-main .card { padding: 24px; }
+.admin-main h1 { font-size: clamp(34px, 5vw, 46px); line-height: 1.1; }
+.admin-main h2 { font-size: 26px; }
+.admin-main .btn, .admin-main .btn-secondary, .admin-main .btn-o { height: 44px; padding: 0 20px; font-size: 12px; letter-spacing: 0.14em; }
+.admin-main .btn-secondary, .admin-main .btn-o { background: transparent; color: var(--color-ink); border-color: var(--color-ink); }
+.admin-main .btn-secondary:hover, .admin-main .btn-o:hover { background: var(--color-ink); color: var(--color-bg); }
+.admin-main .btn:disabled, .admin-main .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+.admin-main input[type='checkbox'], .admin-main input[type='radio'] { width: 18px; height: 18px; accent-color: var(--color-ink); cursor: pointer; }
+.admin-main .inp { height: 44px; border-color: var(--color-field); }
+.admin-main .inp:focus { border-color: var(--color-ink); outline-offset: 0; }
+.admin-main .tab { min-height: 48px; padding: 0 14px; font-size: 13px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink); white-space: nowrap; margin-bottom: -1px; transition: border-color 0.2s, color 0.2s; }
+.admin-main .tab[aria-pressed='false'] { color: var(--color-muted); }
+.admin-main .tab:hover { color: var(--color-ink); }
+.admin-main .tab[aria-pressed='true'] { border-bottom-color: var(--color-accent); font-weight: 600; }
+.admin-main .bulk .btn-secondary { color: var(--color-bg); border-color: var(--color-line-dark-2); }
+.admin-main .bulk .btn-secondary:hover { background: var(--color-bg); color: var(--color-ink); }
+.admin-main .bulk .inp { background: transparent; color: var(--color-bg); border-color: var(--color-line-dark-2); }

@@ -33,28 +33,28 @@ async function signOut() {
 </script>
 
 <template>
-  <nav aria-label="Admin" class="flex min-h-screen w-64 shrink-0 flex-col gap-1.5 bg-dark px-4 py-7 text-on-dark">
+  <nav aria-label="Admin" class="flex min-h-full w-[264px] shrink-0 flex-col gap-1.5 bg-dark px-[18px] py-7 text-text-dark">
     <NuxtLink to="/admin" class="flex flex-col gap-1.5 px-3 pb-6">
-      <span class="font-display text-3xl leading-none tracking-wide">SoftLady<em class="text-accent">Lux</em></span>
-      <span class="text-[10px] uppercase tracking-[0.34em] opacity-70">Admin panel</span>
+      <span class="font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">SoftLady<em class="text-rose-soft">Lux</em></span>
+      <span class="text-[10px] uppercase tracking-[0.34em] text-champagne">Admin panel</span>
     </NuxtLink>
     <NuxtLink
       v-for="i in visible" :key="i.to" :to="i.to"
-      class="flex min-h-[46px] items-center gap-3.5 border-l-2 px-3 text-[14.5px]"
-      :class="active(i.to) ? 'border-accent bg-primary-hover/40' : 'border-transparent opacity-80 hover:opacity-100'"
+      class="flex min-h-[46px] items-center gap-3.5 border-l-2 px-3 text-[14.5px] tracking-[0.02em] transition-colors"
+      :class="active(i.to) ? 'border-champagne bg-line-dark text-on-dark' : 'border-transparent text-text-dark-2 hover:bg-line-dark/50 hover:text-on-dark'" :aria-current="active(i.to) ? 'page' : undefined"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path :d="i.d" /></svg>
       <span>{{ i.label }}</span>
     </NuxtLink>
     <div class="min-h-10 flex-1" />
-    <NuxtLink to="/" class="flex min-h-touch items-center gap-3 border border-primary-hover px-3 text-[13px] uppercase tracking-widest">View storefront <span aria-hidden="true">↗</span></NuxtLink>
-    <div class="mt-3 flex items-center gap-3 border-t border-primary-hover px-3 pt-4">
-      <span class="flex h-9 w-9 items-center justify-center bg-primary-hover/40 font-display text-lg">{{ initials }}</span>
+    <NuxtLink to="/" class="flex min-h-11 items-center gap-3 border border-line-dark px-3 text-[13px] uppercase tracking-[0.1em] text-champagne transition-colors hover:border-champagne">View storefront <span aria-hidden="true">↗</span></NuxtLink>
+    <div class="mt-3 flex items-center gap-3 border-t border-line-dark px-3 pt-4">
+      <span class="flex h-[38px] w-[38px] items-center justify-center bg-line-dark font-display text-[19px] text-on-dark">{{ initials }}</span>
       <span class="flex flex-1 flex-col leading-tight">
-        <span class="text-sm">{{ auth.me?.full_name || 'Staff' }}</span>
-        <span class="text-xs opacity-60">{{ auth.isOwner ? 'Owner · all permissions' : 'Staff' }}</span>
+        <span class="text-sm text-on-dark">{{ auth.me?.full_name || 'Staff' }}</span>
+        <span class="text-xs text-text-dark-3">{{ auth.isOwner ? 'Owner · all permissions' : 'Staff' }}</span>
       </span>
     </div>
-    <button type="button" class="min-h-touch px-3 text-left text-xs uppercase tracking-widest opacity-70 hover:opacity-100" @click="signOut">Sign out</button>
+    <button type="button" class="min-h-11 px-3 text-left text-xs uppercase tracking-[0.14em] text-text-dark-3 transition-colors hover:text-on-dark" @click="signOut">Sign out</button>
   </nav>
 </template>

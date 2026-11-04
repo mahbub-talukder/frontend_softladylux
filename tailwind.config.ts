@@ -26,6 +26,7 @@ export default <Partial<Config>>{
         ink: v('ink'),
         muted: v('muted'),
         dark: v('dark'),
+        'admin-bg': v('admin-bg'),
         'on-dark': v('on-dark'),
         gold: v('gold'), champagne: v('champagne'), 'rose-soft': v('rose-soft'), 'rose-deep': v('rose-deep'),
         field: v('field'), body: v('body'), 'line-dark': v('line-dark'), 'line-dark-2': v('line-dark-2'),

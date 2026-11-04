@@ -51,12 +51,12 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
     <AdminHeading eyebrow="Order management" title="Orders">
       <NuxtLink v-if="selected.length" :to="slipsUrl" class="btn-secondary" target="_blank">Print delivery slips ({{ selected.length }})</NuxtLink>
     </AdminHeading>
-    <div class="mb-3 flex flex-wrap items-center gap-1 border-b border-border" role="tablist">
+    <div class="mb-3 flex items-center overflow-x-auto border-b border-field" role="tablist">
       <button v-for="s in STATUSES" :key="s" class="tab" :aria-pressed="f.status === s && !f.stale && !f.payment_status" @click="tab(s)">{{ s ? s[0].toUpperCase() + s.slice(1) : 'All' }} {{ s ? data?.counts[s] ?? 0 : total }}</button>
       <button class="tab ml-auto" :aria-pressed="f.payment_status === 'pending'" @click="toVerify">Payments to verify</button>
       <button class="tab" :aria-pressed="f.stale" @click="stale">Stale drafts</button>
     </div>
-    <form class="mb-4 flex flex-wrap gap-2" @submit.prevent="apply">
+    <form class="mb-5 flex flex-wrap gap-3" @submit.prevent="apply">
       <input v-model="f.q" class="inp !w-64" placeholder="Search order, customer, mobile, TrxID…" aria-label="Search orders">
       <select v-model="f.payment_method" class="inp !w-40" aria-label="Payment method"><option value="">All payments</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="cod">Cash on delivery</option></select>
       <select v-model="f.area" class="inp !w-40" aria-label="Area"><option value="">All areas</option><option value="inside_dhaka">Inside Dhaka</option><option value="outside_dhaka">Outside Dhaka</option></select>
@@ -64,9 +64,9 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
       <button class="btn-secondary">Filter</button>
     </form>
 
-    <div v-if="canManage && selected.length" class="card mb-4">
-      <p class="text-sm">{{ selected.length }} selected</p>
-      <div class="flex flex-wrap items-end gap-2">
+    <div v-if="canManage && selected.length" class="fade-in mb-4 flex flex-col gap-3 bg-dark px-[18px] py-3.5 text-on-dark">
+      <p class="text-[14.5px]">{{ selected.length }} selected for packing &amp; delivery</p>
+      <div class="bulk flex flex-wrap items-end gap-2">
         <button class="btn-secondary" @click="bulk('confirmed')">Confirm</button>
         <input v-model="courier" class="inp !w-44" placeholder="Courier (for Ship)" aria-label="Courier"><button class="btn-secondary" @click="bulk('shipping')">Ship</button>
         <input v-model="reason" class="inp !w-56" placeholder="Reason (for Cancel)" aria-label="Cancel reason"><button class="btn-secondary" @click="bulk('cancelled')">Cancel</button>
@@ -82,16 +82,16 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
       <div>
         <div class="overflow-x-auto border border-border bg-surface">
           <table class="w-full text-left text-sm">
-            <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Order</th><th class="p-3">Customer</th><th class="p-3">Payment</th><th class="p-3">Total</th><th class="p-3">Stage</th></tr></thead>
+            <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Order</th><th class="p-3">Customer</th><th class="p-3">Payment</th><th class="p-3 !text-right">Total</th><th class="p-3">Stage</th></tr></thead>
             <tbody>
               <tr v-if="pending"><td colspan="6" class="p-4 text-muted">Loading…</td></tr>
-              <tr v-for="o in data?.results" :key="o.id" class="cursor-pointer border-t border-border" :class="[openId === o.id ? 'bg-primary-soft' : '', o.is_stale ? 'border-l-4 border-l-accent' : '']" @click="openId = o.id">
+              <tr v-for="o in data?.results" :key="o.id" class="cursor-pointer" :class="[openId === o.id ? '!bg-cream' : '', o.is_stale ? 'shadow-[inset_3px_0_0_var(--color-accent)]' : '']" @click="openId = o.id">
                 <td class="p-3" @click.stop><input v-model="selected" type="checkbox" :value="o.id" :aria-label="`Select ${o.number}`"></td>
-                <td class="p-3"><button class="underline" @click.stop="openId = o.id">{{ o.number }}</button><br><span class="hint">{{ d(o.placed_at) }}<template v-if="o.is_stale"> · Draft over limit</template></span></td>
-                <td class="p-3">{{ o.name }}<br><span class="hint">{{ o.phone }}</span></td>
-                <td class="p-3">{{ o.payment_method === 'cod' ? 'COD' : o.payment_method }} <span class="hint">· {{ o.payment_status }}</span></td>
-                <td class="p-3">{{ taka(o.total) }}</td>
-                <td class="p-3 capitalize">{{ o.status }}</td>
+                <td class="p-3"><button class="font-semibold underline underline-offset-[3px]" @click.stop="openId = o.id">{{ o.number }}</button><br><span class="text-xs text-muted">{{ d(o.placed_at) }}<template v-if="o.is_stale"> · <b class="text-accent">Draft over limit</b></template></span></td>
+                <td class="p-3">{{ o.name }}<br><span class="text-xs text-muted">{{ o.phone }}</span></td>
+                <td class="p-3"><span class="uppercase">{{ o.payment_method }}</span> <span class="text-xs text-muted">· {{ o.payment_status }}</span></td>
+                <td class="p-3 text-right">{{ taka(o.total) }}</td>
+                <td class="p-3"><span class="stage" :data-stage="o.status">{{ o.status }}</span></td>
               </tr>
               <tr v-if="!pending && !data?.results.length"><td colspan="6" class="p-6 text-center text-muted">No orders match.</td></tr>
             </tbody>
@@ -103,7 +103,10 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
           <button class="btn-secondary" :disabled="page >= pages" @click="page++">Next</button>
         </div>
       </div>
-      <AdminOrderPanel v-if="openId" :id="openId" @changed="refresh()" />
+      <div v-if="openId" class="max-xl:fixed max-xl:inset-0 max-xl:z-30 max-xl:overflow-y-auto max-xl:bg-admin-bg max-xl:p-4 max-xl:pb-24">
+        <button class="mb-3 flex h-11 items-center gap-2 text-xs font-medium uppercase tracking-[0.14em] xl:hidden" @click="openId = null">← Back to orders</button>
+        <AdminOrderPanel :id="openId" @changed="refresh()" />
+      </div>
     </div>
   </section>
 </template>

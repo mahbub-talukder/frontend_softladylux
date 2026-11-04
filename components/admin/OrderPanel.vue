@@ -22,9 +22,12 @@ const NEXT: Record<string, { to: string; label: string } | undefined> = {
 const next = computed(() => (order.value ? NEXT[order.value.status] : undefined))
 const needsVerify = computed(() => !!order.value && ['bkash', 'nagad'].includes(order.value.payment_method) && order.value.payment?.status !== 'verified' && order.value.status === 'draft')
 
+const loadFailed = ref(false)
 async function load() {
-  order.value = await api<AdminOrder>(`/admin/orders/${props.id}/`)
+  loadFailed.value = false
+  try { order.value = await api<AdminOrder>(`/admin/orders/${props.id}/`) } catch { order.value = null; loadFailed.value = true; return }
   mode.value = ''; error.value = ''
+  if (!order.value) return
   Object.assign(f, { reason: '', courier: '', tracking: '', trx_id: order.value.payment?.trx_id ?? '', sender_number: order.value.payment?.sender_number ?? '', note: '', phone: order.value.phone, address_line: order.value.address_line, thana: order.value.thana, district: order.value.district, name: order.value.name })
 }
 watch(() => props.id, load, { immediate: true })
@@ -50,13 +53,13 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
 </script>
 
 <template>
-  <aside v-if="order" class="card" aria-label="Order detail">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="text-2xl">{{ order.number }}</h2><span class="border border-border px-2 py-1 text-xs uppercase tracking-widest">{{ order.status_label }}</span>
+  <aside v-if="order" class="card fade-in !gap-[22px] !p-6 md:!p-7 xl:sticky xl:top-6" aria-label="Order detail">
+    <div class="flex items-baseline justify-between gap-2">
+      <h2 class="font-display !text-[28px]">{{ order.number }}</h2><span class="stage" :data-stage="order.status">{{ order.status_label }}</span>
     </div>
     <p v-if="order.is_stale" class="text-sm text-accent" role="status">Draft older than the stale limit: follow up or cancel.</p>
-    <ol class="flex gap-1 text-xs">
-      <li v-for="st in STAGES" :key="st" class="flex-1 border px-1 py-1 text-center uppercase" :class="STAGES.indexOf(st) <= STAGES.indexOf(order.status) ? 'border-primary bg-primary-soft' : 'border-border'">{{ st }}</li>
+    <ol class="flex gap-0.5">
+      <li v-for="st in STAGES" :key="st" class="flex flex-1 flex-col gap-2"><span class="h-[3px]" :class="STAGES.indexOf(st) <= STAGES.indexOf(order.status) ? 'bg-gold' : 'bg-field'" /><span class="text-[11px] uppercase tracking-[0.1em]" :class="st === order.status ? 'font-semibold' : STAGES.indexOf(st) < STAGES.indexOf(order.status) ? '' : 'text-muted'">{{ st }}</span></li>
     </ol>
     <section>
       <div class="cap">Customer</div>
@@ -79,7 +82,7 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
         <div class="flex justify-between font-medium"><dt>Total</dt><dd>{{ taka(order.total) }}</dd></div>
       </dl>
     </section>
-    <section v-if="order.payment" class="border border-border bg-cream p-3 text-sm">
+    <section v-if="order.payment" class="flex flex-col gap-1.5 bg-admin-bg p-4 text-[14.5px]">
       <div class="cap">Payment · {{ order.payment.method === 'cod' ? 'Cash on delivery' : order.payment.method }} · {{ order.payment.status }}</div>
       <template v-if="order.payment.method !== 'cod'">
         <p>Transaction ID <b>{{ order.payment.trx_id }}</b> · sender {{ order.payment.sender_number }}</p>
@@ -96,7 +99,7 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <form v-if="mode === 'reject'" class="mt-2 flex flex-col gap-2" @submit.prevent="reject"><label for="rj">Rejection reason</label><input id="rj" v-model="f.reason" class="inp" required><button class="btn-secondary">Reject payment</button></form>
       <form v-if="mode === 'trx'" class="mt-2 flex flex-col gap-2" @submit.prevent="editTrx"><input v-model="f.trx_id" class="inp uppercase" aria-label="Transaction ID"><input v-model="f.sender_number" class="inp" aria-label="Sender number"><button class="btn-secondary">Save correction</button></form>
     </section>
-    <div class="flex flex-wrap gap-2">
+    <div class="grid grid-cols-2 gap-2.5">
       <NuxtLink :to="`/admin/orders/${order.id}/invoice`" class="btn-secondary !px-4" target="_blank">Print invoice</NuxtLink>
       <NuxtLink :to="`/admin/orders/${order.id}/slip`" class="btn-secondary !px-4" target="_blank">Delivery slip</NuxtLink>
     </div>
@@ -104,7 +107,7 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <button v-if="next" class="btn" :disabled="busy || needsVerify" data-track="order_advance" @click="advance">{{ next.label }}</button>
       <p v-if="needsVerify" class="hint">Verify the payment first (bKash/Nagad orders can’t be confirmed until it is verified).</p>
       <form v-if="mode === 'ship'" class="flex flex-col gap-2" @submit.prevent="transition('shipping', { courier: f.courier, tracking: f.tracking })"><input v-model="f.courier" class="inp" placeholder="Courier name (e.g. Steadfast)" aria-label="Courier"><input v-model="f.tracking" class="inp" placeholder="Tracking number" aria-label="Tracking number"><button class="btn">Move to Shipping</button></form>
-      <button v-if="['draft', 'confirmed'].includes(order.status)" class="btn-secondary" @click="mode = 'cancel'">Cancel order</button>
+      <button v-if="['draft', 'confirmed'].includes(order.status)" class="btn-secondary !border-accent !text-accent hover:!bg-accent hover:!text-primary-contrast" @click="mode = 'cancel'">Cancel order</button>
       <button v-if="['shipping', 'delivered'].includes(order.status)" class="btn-secondary" @click="mode = 'return'">Mark whole order returned</button>
       <form v-if="mode === 'cancel' || mode === 'return'" class="flex flex-col gap-2" @submit.prevent="transition(mode === 'cancel' ? 'cancelled' : 'returned', { reason: f.reason })">
         <label for="why">{{ mode === 'cancel' ? 'Cancellation' : 'Return' }} reason (required)</label><input id="why" v-model="f.reason" class="inp" required minlength="3" maxlength="300">
@@ -121,5 +124,6 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <form v-if="canManage" class="mt-2 flex gap-2" @submit.prevent="addNote"><input v-model="f.note" class="inp" placeholder="Add an internal note" aria-label="Internal note"><button class="btn-secondary !px-4">Add</button></form>
     </section>
   </aside>
-  <p v-else class="hint">Loading…</p>
+  <p v-else-if="loadFailed" class="card text-sm" role="alert">This order could not be loaded. It may have been removed. <button class="underline" @click="load">Try again</button></p>
+  <div v-else class="skeleton h-72" aria-busy="true" />
 </template>
