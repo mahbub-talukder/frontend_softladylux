@@ -72,18 +72,18 @@ async function bulk(action: string, extra: Dict = {}) {
 
     <div class="overflow-x-auto border border-border bg-surface">
       <table class="w-full text-left text-sm">
-        <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Product</th><th class="p-3">Category</th><th class="p-3">UoM</th><th class="p-3">Price</th><th class="p-3">In stock</th><th class="p-3">Status</th><th /></tr></thead>
+        <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Product</th><th class="p-3">Category</th><th class="p-3">UoM</th><th class="p-3 !text-right">Price</th><th class="p-3 !text-right">In stock</th><th class="p-3">Status</th><th /></tr></thead>
         <tbody>
           <tr v-if="pending"><td colspan="8" class="p-4 text-muted">Loading…</td></tr>
           <tr v-for="p in data?.results" :key="p.id" class="border-t border-border">
             <td class="p-3"><input v-model="selected" type="checkbox" :value="p.id" :aria-label="`Select ${p.name}`"></td>
-            <td class="flex items-center gap-3 p-3"><NuxtImg v-if="p.image" format="webp" :src="mediaSrc(p.image)" :alt="p.name" width="36" height="48" class="h-12 w-9 object-cover" /><span class="h-12 w-9 bg-cream" :class="p.image ? 'hidden' : ''" />{{ p.name }}</td>
+            <td class="p-3"><div class="flex items-center gap-3.5"><StoreTile :src="p.image" :alt="p.name" :tile-key="p.id" :category="p.category_name" ratio="44/56" :width="44" :height="56" art-width="62%" class="w-11 flex-none" /><NuxtLink :to="`/admin/products/${p.id}`" class="font-display text-xl leading-tight hover:underline">{{ p.name }}</NuxtLink></div></td>
             <td class="p-3">{{ p.category_name }}<span v-if="p.subcategory_name" class="hint"> · {{ p.subcategory_name }}</span></td>
             <td class="p-3">{{ p.uom }}</td>
-            <td class="p-3">{{ taka(p.price) }}<span v-if="p.discount_pct" class="hint"> −{{ p.discount_pct }}%</span></td>
-            <td class="p-3">{{ p.stock ?? 0 }}</td>
+            <td class="whitespace-nowrap p-3 text-right">{{ taka(p.price) }}<span v-if="p.discount_pct" class="text-xs text-muted"> −{{ p.discount_pct }}%</span></td>
+            <td class="p-3 text-right"><span :class="(p.stock ?? 0) <= 5 ? 'bg-[var(--stage-shipping-bg)] px-[9px] py-1 font-semibold text-[var(--stage-shipping-fg)]' : ''">{{ p.stock ?? 0 }}</span></td>
             <td class="p-3"><span class="stage" :data-stage="p.is_active ? 'delivered' : 'cancelled'">{{ p.is_active ? 'Active' : 'Draft' }}</span></td>
-            <td class="p-3"><NuxtLink :to="`/admin/products/${p.id}`" class="underline">{{ canEdit ? 'Edit' : 'View' }}</NuxtLink></td>
+            <td class="p-3"><NuxtLink :to="`/admin/products/${p.id}`" class="inline-flex min-h-11 items-center text-xs font-semibold uppercase tracking-[0.12em] text-accent">{{ canEdit ? 'Edit' : 'View' }}</NuxtLink></td>
           </tr>
           <tr v-if="!pending && !data?.results.length"><td colspan="8" class="p-6 text-center text-muted">No products found.</td></tr>
         </tbody>

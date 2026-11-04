@@ -14,13 +14,14 @@ const total = computed(() => props.points.reduce((n, p) => n + Number(p.revenue)
 
 <template>
   <figure v-if="tall" :aria-label="label" class="flex flex-col gap-1.5">
-    <div class="flex h-[240px] items-end gap-3 border-b border-field pt-2.5 sm:gap-[18px]" role="img" :aria-label="`${label}: total ${taka(total)}`">
+    <div class="flex h-[240px] items-end border-b border-field pt-2.5" :class="points.length > 14 ? 'gap-1 sm:gap-1.5' : 'gap-3 sm:gap-[18px]'" role="img" :aria-label="`${label}: total ${taka(total)}`">
       <div v-for="(p, i) in points" :key="p.day" class="flex h-full flex-1 flex-col items-center justify-end gap-1.5" :title="`${short(p.day)}: ${taka(p.revenue)} · ${p.orders} orders`">
-        <span class="text-[13px] text-body">{{ thousands(p.revenue) }}</span>
-        <div class="w-full max-w-14 transition-[height] duration-500" :class="i === points.length - 1 ? 'bg-accent' : 'bg-champagne'" :style="{ height: `${Math.max(2, (Number(p.revenue) / max) * 190)}px` }" />
+        <span v-if="points.length <= 14" class="text-[13px] text-body">{{ thousands(p.revenue) }}</span>
+        <div class="w-full max-w-14 transition-[height] duration-500"  :class="i === points.length - 1 ? 'bg-accent' : 'bg-champagne'" :style="{ height: `${Math.max(2, (Number(p.revenue) / max) * 190)}px` }" />
       </div>
     </div>
-    <div class="flex gap-3 sm:gap-[18px]"><span v-for="p in points" :key="p.day" class="flex-1 text-center text-[12.5px] text-muted">{{ day(p.day) }}</span></div>
+    <div v-if="points.length <= 14" class="flex gap-3 sm:gap-[18px]"><span v-for="p in points" :key="p.day" class="flex-1 text-center text-[12.5px] text-muted">{{ day(p.day) }}</span></div>
+    <div v-else class="flex justify-between text-[12.5px] text-muted"><span>{{ short(points[0]?.day ?? '') }}</span><span>{{ short(points[Math.floor(points.length / 2)]?.day ?? '') }}</span><span>{{ short(points[points.length - 1]?.day ?? '') }}</span></div>
     <table class="sr-only"><caption>{{ label }}</caption><tbody><tr v-for="p in points" :key="p.day"><td>{{ short(p.day) }}</td><td>{{ taka(p.revenue) }}</td></tr></tbody></table>
   </figure>
   <figure v-else :aria-label="label">

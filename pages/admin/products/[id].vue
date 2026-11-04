@@ -115,7 +115,7 @@ const fieldErr = (k: string) => errors.value[k] ?? []
 
 <template>
   <section>
-    <NuxtLink to="/admin/products" class="hint underline">← All products</NuxtLink>
+    <NuxtLink to="/admin/products" class="inline-flex min-h-11 items-center text-xs font-semibold uppercase tracking-[0.14em] text-muted transition-colors hover:text-ink">← All products</NuxtLink>
     <AdminHeading eyebrow="Catalogue" :title="isNew ? 'Add product' : form.name || 'Edit product'">
       <template v-if="canEdit">
         <button class="btn-secondary" :disabled="busy" data-track="product_save_draft" @click="save(false)">{{ isNew || !form.is_active ? 'Save draft' : 'Save' }}</button>
@@ -126,20 +126,22 @@ const fieldErr = (k: string) => errors.value[k] ?? []
     <p v-if="error" class="err mb-3" role="alert">{{ error }}</p>
     <p v-if="message" class="hint mb-3" role="status">{{ message }}</p>
 
-    <form class="grid max-w-4xl gap-6" @submit.prevent="save(false)">
+    <form class="flex flex-col gap-6 xl:flex-row xl:items-start" @submit.prevent="save(false)">
+      <div class="flex min-w-0 flex-1 flex-col gap-6">
       <fieldset class="card" :disabled="!canEdit">
         <h2 class="text-2xl">Basic information</h2>
-        <div class="fld"><label for="pn">Product name</label><input id="pn" v-model="form.name" class="inp" required><p v-for="m in fieldErr('name')" :key="m" class="err">{{ m }}</p></div>
-        <div class="fld"><label for="ps">URL slug (optional)</label><input id="ps" v-model="form.slug" class="inp" placeholder="Generated from the name"><p v-for="m in fieldErr('slug')" :key="m" class="err">{{ m }}</p></div>
+        <div class="grid gap-[18px] sm:grid-cols-2"><div class="fld"><label for="pn">Product name</label><input id="pn" v-model="form.name" class="inp" required><p v-for="m in fieldErr('name')" :key="m" class="err">{{ m }}</p></div>
+        <div class="fld"><label for="ps">URL slug (optional)</label><input id="ps" v-model="form.slug" class="inp" placeholder="Generated from the name"><p v-for="m in fieldErr('slug')" :key="m" class="err">{{ m }}</p></div></div>
         <div class="fld"><label for="psd">Short description</label><input id="psd" v-model="form.short_desc" class="inp"></div>
         <div class="fld"><label for="pd">Description</label><textarea id="pd" v-model="form.description" class="inp" placeholder="Describe the fit, fabric and feel…" /></div>
         <div class="fld"><label for="pcare">Fabric &amp; care</label><textarea id="pcare" v-model="form.care_notes" class="inp" /></div>
-        <div class="fld"><label for="pcol">Collection / brand</label><input id="pcol" v-model="form.collection" class="inp"></div>
-        <div class="fld"><label for="ptags">Tags (comma separated)</label><input id="ptags" v-model="tags" class="inp"></div>
+        <div class="grid gap-[18px] sm:grid-cols-2"><div class="fld"><label for="pcol">Collection / brand</label><input id="pcol" v-model="form.collection" class="inp"></div>
+        <div class="fld"><label for="ptags">Tags (comma separated)</label><input id="ptags" v-model="tags" class="inp"></div></div>
       </fieldset>
 
       <fieldset class="card" :disabled="!canEdit">
         <h2 class="text-2xl">Category, unit &amp; SKU</h2>
+        <div class="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
         <div class="fld"><label for="pc">Category</label>
           <select id="pc" v-model="form.category" class="inp" required @change="onCategory"><option :value="null" disabled>Choose a category</option><option v-for="c in cats" :key="c.id" :value="c.id">{{ c.name }}</option></select></div>
         <div class="fld"><label for="psc">Sub-category</label>
@@ -149,17 +151,14 @@ const fieldErr = (k: string) => errors.value[k] ?? []
           <p v-for="m in fieldErr('subcategory')" :key="m" class="err">{{ m }}</p></div>
         <div class="fld"><label for="pu">Unit of measure</label>
           <select id="pu" v-model="form.uom" class="inp"><option value="pc">Piece (pcs)</option><option value="set">Set</option><option value="pack">Pack</option><option value="pair">Pair</option></select></div>
-        <div class="fld"><label for="pfx">SKU prefix</label><input id="pfx" v-model="form.sku_prefix" class="inp" placeholder="Generated from the name"><p class="hint">Variant SKUs add colour and size. Capital letters, digits and dashes only.</p></div>
+        </div>
+        <div class="fld max-w-sm"><label for="pfx">SKU prefix</label><input id="pfx" v-model="form.sku_prefix" class="inp" placeholder="Generated from the name"><p class="hint">Variant SKUs add colour and size. Capital letters, digits and dashes only.</p></div>
       </fieldset>
 
       <fieldset class="card" :disabled="!canEdit">
-        <h2 class="text-2xl">Pricing &amp; flags</h2>
-        <div class="fld"><label for="pp">Price (৳)</label><input id="pp" v-model="form.price" type="number" min="0" step="0.01" class="inp" required><p v-for="m in fieldErr('price')" :key="m" class="err">{{ m }}</p></div>
+        <h2 class="text-2xl">Pricing</h2>
+        <div class="grid gap-[18px] sm:grid-cols-2"><div class="fld"><label for="pp">Price (৳)</label><input id="pp" v-model="form.price" type="number" min="0" step="0.01" class="inp" required><p v-for="m in fieldErr('price')" :key="m" class="err">{{ m }}</p></div>
         <div class="fld"><label for="pcmp">Compare-at price (৳)</label><input id="pcmp" v-model="form.compare_at_price" type="number" min="0" step="0.01" class="inp" placeholder="Optional, must be higher than the price"><p v-for="m in fieldErr('compare_at_price')" :key="m" class="err">{{ m }}</p></div>
-        <div class="flex flex-wrap gap-6 text-sm">
-          <label class="flex items-center gap-2"><input v-model="form.is_new" type="checkbox">New arrival</label>
-          <label class="flex items-center gap-2"><input v-model="form.is_signature" type="checkbox">Signature</label>
-          <label class="flex items-center gap-2"><input v-model="form.is_offer" type="checkbox">Offer</label>
         </div>
       </fieldset>
 
@@ -193,16 +192,22 @@ const fieldErr = (k: string) => errors.value[k] ?? []
       <fieldset class="card" :disabled="!canEdit">
         <h2 class="text-2xl">Images</h2>
         <p class="hint">JPG, PNG or WebP, max 5 MB, at least 600 px on the long side. Portrait 3:4 recommended. The first is the cover.</p>
-        <ul class="flex flex-wrap gap-3">
-          <li v-for="(im, i) in form.images" :key="im.id" class="flex w-36 flex-col gap-1 border border-border p-2">
+        <ul class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
+          <li v-for="(im, i) in form.images" :key="im.id" class="relative flex flex-col gap-1.5 border border-border p-2">
             <NuxtImg format="webp" :src="mediaSrc(im.media.url)" :alt="im.media.alt_text" width="128" height="170" class="h-[170px] w-full object-cover" />
-            <span v-if="im.is_primary" class="cap">Cover</span><button v-else type="button" class="hint underline" @click="setPrimary(im)">Make cover</button>
+            <span v-if="im.is_primary" class="absolute left-3 top-3 bg-ink px-[7px] py-1 text-[10px] uppercase tracking-[0.12em] text-bg">Cover</span><button v-else type="button" class="min-h-9 self-start text-xs font-semibold uppercase tracking-[0.1em] text-accent" @click="setPrimary(im)">Make cover</button>
             <select class="inp !h-9 !px-1 text-xs" :value="im.color" :aria-label="`Colour for photo ${i + 1}`" @change="setColor(im, ($event.target as HTMLSelectElement).value)"><option value="">Any colour</option><option v-for="c in colourNames" :key="c">{{ c }}</option></select>
             <div class="flex justify-between"><button type="button" aria-label="Move earlier" @click="moveImage(i, -1)">←</button><button type="button" aria-label="Move later" @click="moveImage(i, 1)">→</button><button type="button" aria-label="Delete photo" @click="removeImage(im)">×</button></div>
           </li>
-          <li v-for="f in pending" :key="f.name + f.size" class="flex w-36 items-center justify-center border border-dashed border-border p-2 text-xs">{{ f.name }}<br>(uploads on save)</li>
+          <li v-for="f in pending" :key="f.name + f.size" class="flex min-h-[200px] items-center justify-center border border-dashed border-field p-2 text-center text-xs text-muted">{{ f.name }}<br>(uploads on save)</li>
+          <li class="col-span-2 sm:col-span-1">
+            <label class="flex min-h-[200px] cursor-pointer flex-col items-center justify-center gap-2.5 border border-dashed border-text-dark-3 bg-admin-bg p-5 text-center transition-colors hover:border-ink">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" class="text-gold" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16" /></svg>
+              <span class="text-[15px]">Add photos <span class="border-b border-ink">browse</span></span><span class="text-[12.5px] text-muted">JPG or PNG, portrait 3:4</span>
+              <input type="file" class="sr-only" multiple accept="image/jpeg,image/png,image/webp" @change="onFiles">
+            </label>
+          </li>
         </ul>
-        <label class="btn-secondary cursor-pointer self-start">Add photos<input type="file" class="sr-only" multiple accept="image/jpeg,image/png,image/webp" @change="onFiles"></label>
         <p v-for="m in fieldErr('is_active')" :key="m" class="err">{{ m }}</p>
       </fieldset>
 
@@ -211,6 +216,22 @@ const fieldErr = (k: string) => errors.value[k] ?? []
         <div class="fld"><label for="seot">SEO title</label><input id="seot" v-model="form.seo_title" class="inp"></div>
         <div class="fld"><label for="seod">SEO description</label><textarea id="seod" v-model="form.seo_description" class="inp" /></div>
       </fieldset>
+      </div>
+
+      <aside class="flex w-full flex-col gap-6 xl:sticky xl:top-6 xl:w-[320px] xl:flex-none">
+        <fieldset class="card !gap-1.5" :disabled="!canEdit">
+          <h2 class="mb-2 text-2xl">Show in sections</h2>
+          <label v-for="fl in ([['is_new', 'New arrival'], ['is_signature', 'Signature'], ['is_offer', 'Special offer']] as const)" :key="fl[0]" class="flex min-h-11 cursor-pointer items-center gap-3 text-[14.5px]"><input v-model="form[fl[0]]" type="checkbox">{{ fl[1] }}</label>
+          <p class="hint mt-1">Controls which home-page and listing sections show this product.</p>
+        </fieldset>
+        <div class="card !gap-3.5" aria-label="Storefront preview">
+          <div class="cap">Storefront preview</div>
+          <StoreTile :src="form.images?.[0]?.media?.url" :alt="form.name" :tile-key="form.id ?? 1" :category="(cats ?? []).find((c: Dict) => c.id === form.category)?.name" ratio="3/4" :width="300" :height="400" art-width="50%" />
+          <div class="text-[11px] uppercase tracking-[0.16em] text-muted">{{ (cats ?? []).find((c: Dict) => c.id === form.category)?.name || 'Category' }}</div>
+          <div class="font-display text-2xl leading-[1.15]">{{ form.name || 'Product name' }}</div>
+          <div class="text-[15px]">{{ form.price ? taka(form.price) : '৳ 0' }}<s v-if="form.compare_at_price" class="ml-2 text-sm text-muted">{{ taka(form.compare_at_price) }}</s></div>
+        </div>
+      </aside>
     </form>
   </section>
 </template>

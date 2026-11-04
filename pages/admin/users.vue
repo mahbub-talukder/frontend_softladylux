@@ -110,15 +110,17 @@ async function resetPassword() {
       <div v-if="current" class="card">
         <h2 class="text-2xl">{{ current.full_name || current.email }} — permissions</h2>
         <p v-if="isOwnerRow" class="hint">The Owner always has every permission. These cannot be changed or removed.</p>
-        <div v-for="[group, perms] in groups" :key="group" class="flex flex-col gap-2">
-          <h3 class="cap">{{ group }}</h3>
+        <div v-for="[group, perms] in groups" :key="group" class="flex flex-col gap-1">
+          <h3 class="cap mt-2">{{ group }}</h3>
+          <div class="grid gap-x-6 sm:grid-cols-2 2xl:grid-cols-3">
           <button
             v-for="p in perms" :key="p.code" type="button" role="checkbox" :aria-checked="isOwnerRow || checked.has(p.code)"
-            class="flex min-h-touch items-start gap-3 border border-border p-3 text-left" @click="toggle(p)"
+            class="flex min-h-12 items-start gap-3 border-b border-border py-2.5 text-left transition-colors hover:bg-cream/50" @click="toggle(p)"
           >
-            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border border-primary" :class="isOwnerRow || checked.has(p.code) ? 'bg-primary text-primary-contrast' : ''">{{ isOwnerRow || checked.has(p.code) ? '✓' : '' }}</span>
-            <span><span class="block text-sm font-medium">{{ p.code }}<span v-if="p.sensitive" title="Sensitive permission" aria-label="Sensitive permission"> ⚠</span></span><span class="hint">{{ p.description }}</span></span>
+            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border text-[13px] text-bg" :class="isOwnerRow || checked.has(p.code) ? 'border-ink bg-ink' : 'border-text-dark-3'">{{ isOwnerRow || checked.has(p.code) ? '✓' : '' }}</span>
+            <span><span class="block text-[14.5px]">{{ p.description }}</span><span class="block text-xs text-muted">{{ p.code }}</span><span v-if="p.sensitive" class="block text-xs text-accent">Sensitive: confirm before granting</span></span>
           </button>
+          </div>
         </div>
         <p class="hint">Changes apply the next time the staff member opens a page. Users, permissions and the audit log are Owner-only. Every change is written to the audit log.</p>
         <div v-if="!isOwnerRow" class="flex flex-wrap gap-3">
