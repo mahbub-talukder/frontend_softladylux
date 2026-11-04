@@ -17,7 +17,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | quick_add | product card, Quick Add |
 | header_bag, header_wishlist, header_account, header_track_order, header_find_size | header |
 | bottom_nav_home, bottom_nav_shop, bottom_nav_wishlist, bottom_nav_bag, bottom_nav_account | mobile bottom navigation |
-| hero_cta, home_banner, home_category_tile, home_size_finder, video_open | home page |
+| hero_cta, hero_find_size, home_signature, home_banner, home_category_tile, home_size_finder, video_open | home page |
 | load_more | listing |
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
