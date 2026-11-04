@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // SRS CAT-06: Offers is a virtual view (compare-at above price, or flagged as an offer).
 useSeoMeta({ title: 'Offers' })
+definePageMeta({ layout: 'bleed' })
 </script>
 
 <template>

@@ -70,82 +70,97 @@ function addToBag() {
   useTrack().push('add_to_cart', { item: p.value!.slug, value: Number(v.price) * qty.value })
 }
 onMounted(() => useTrack().push('view_item', { items: [useTrack().item(p.value!)], value: Number(p.value!.price) }))
-const tab = ref('description')
+const open = ref(0)
 const tabs = computed(() => [
-  { id: 'description', label: 'Description', body: p.value!.description || p.value!.short_desc },
+  { id: 'description', label: 'Details', body: p.value!.description || p.value!.short_desc },
   { id: 'care', label: 'Fabric & care', body: p.value!.care_notes },
-  { id: 'delivery', label: 'Delivery', body: '' }
+  { id: 'delivery', label: 'Delivery & payment', body: '' }
 ].filter((t) => t.id === 'delivery' || t.body))
 </script>
 
 <template>
   <div v-if="p">
-    <nav class="text-sm text-muted" aria-label="Breadcrumb">
-      <NuxtLink to="/">Home</NuxtLink>
-      <template v-for="(b, i) in p.breadcrumb" :key="b.slug"> / <NuxtLink v-if="i === 0" :to="`/shop/${b.slug}`">{{ b.name }}</NuxtLink><NuxtLink v-else :to="`/shop/${p.breadcrumb[0].slug}?sub=${b.slug}`">{{ b.name }}</NuxtLink></template>
-      / <span>{{ p.name }}</span>
+    <nav class="text-[13px] text-muted" aria-label="Breadcrumb">
+      <NuxtLink to="/" class="hover:text-ink">Home</NuxtLink>
+      <template v-for="(b, i) in p.breadcrumb" :key="b.slug"><span class="px-2">/</span><NuxtLink v-if="i === 0" :to="`/shop/${b.slug}`" class="hover:text-ink">{{ b.name }}</NuxtLink><NuxtLink v-else :to="`/shop/${p.breadcrumb[0].slug}?sub=${b.slug}`" class="hover:text-ink">{{ b.name }}</NuxtLink></template>
+      <span class="px-2">/</span><span class="text-ink">{{ p.name }}</span>
     </nav>
-    <section class="mt-6 grid gap-10 md:grid-cols-2">
-      <div class="flex flex-col-reverse gap-3 md:flex-row">
-        <div class="flex gap-2 md:flex-col">
-          <button v-for="(im, i) in gallery" :key="im.url" class="border" :class="i === active ? 'border-primary' : 'border-border'" :aria-label="`Photo ${i + 1}`" @click="active = i">
-            <NuxtImg format="webp" :src="mediaSrc(im.url)" :alt="im.alt_text" width="64" height="85" class="h-[85px] w-16 object-cover" />
+
+    <section class="mt-5 grid gap-8 md:mt-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
+      <!-- Gallery: thumb rail + large image -->
+      <div class="flex min-w-0 flex-col-reverse gap-3 md:flex-row md:gap-4">
+        <div class="flex gap-2.5 overflow-x-auto md:flex-none md:flex-col md:overflow-visible" role="group" aria-label="Product photos">
+          <button v-for="(im, i) in gallery" :key="im.url" type="button" class="w-16 flex-none border bg-transparent p-0 transition-colors md:w-[84px]" :class="i === active ? 'border-ink' : 'border-border hover:border-field'" :aria-label="`Photo ${i + 1}`" :aria-pressed="i === active" @click="active = i">
+            <StoreTile :src="im.url" :alt="im.alt_text" :tile-key="p.id + i" :category="p.category.name" ratio="84/104" :width="84" :height="104" art-width="60%" />
           </button>
+          <button v-if="!gallery.length" type="button" class="w-16 flex-none border border-ink md:w-[84px]" aria-label="Photo 1"><StoreTile :tile-key="p.id" :category="p.category.name" ratio="84/104" art-width="60%" /></button>
         </div>
-        <div class="relative flex-1 bg-cream">
-          <NuxtImg v-if="gallery[active]" format="webp" :src="mediaSrc(gallery[active].url)" :alt="gallery[active].alt_text || p.name" width="720" height="960" sizes="xs:100vw md:45vw" class="aspect-[3/4] w-full object-cover" loading="eager" />
-          <span v-if="p.tag" class="absolute left-3 top-3 bg-primary px-2 py-0.5 text-xs uppercase tracking-widest text-primary-contrast">{{ p.tag }}</span>
-        </div>
+        <StoreTile :src="gallery[active]?.url" :alt="gallery[active]?.alt_text || p.name" :tile-key="p.id + active" :category="p.category.name" ratio="4/5" :width="720" :height="900" sizes="xs:100vw lg:50vw" eager class="min-w-0 flex-1" art-width="52%">
+          <div v-if="!gallery[active]" class="pointer-events-none absolute inset-5 border border-gold/30 md:inset-7" />
+          <span v-if="p.tag" class="absolute right-4 top-4 bg-bg px-2.5 py-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] md:right-7 md:top-7">{{ p.tag }}</span>
+        </StoreTile>
       </div>
-      <div class="flex flex-col gap-4">
-        <div class="cap">{{ p.category.name }}<template v-if="p.collection"> · {{ p.collection }}</template></div>
-        <h1 class="text-4xl">{{ p.name }}</h1>
-        <div class="flex items-baseline gap-3 text-xl">
-          <span>{{ taka(price) }}</span>
-          <template v-if="p.discount_pct"><s class="text-muted">{{ taka(p.compare_at_price) }}</s><span class="bg-accent px-2 py-0.5 text-sm font-semibold text-primary-contrast">−{{ p.discount_pct }}%</span></template>
-          <span v-if="chosen" class="hint">SKU {{ chosen.sku }}</span>
+
+      <!-- Info -->
+      <div class="flex min-w-0 flex-col gap-6 lg:max-w-[560px] lg:gap-[26px]">
+        <div class="flex flex-col gap-3">
+          <div class="eyebrow">{{ p.category.name }}<template v-if="p.collection"> · {{ p.collection }}</template></div>
+          <h1 class="font-display text-[38px] leading-[1.05] md:text-[54px]">{{ p.name }}</h1>
+          <div class="flex flex-wrap items-baseline gap-x-3.5 gap-y-1 text-2xl">
+            <span class="font-medium">{{ taka(price) }}</span>
+            <template v-if="p.discount_pct"><s class="text-base text-muted">{{ taka(p.compare_at_price) }}</s><span class="bg-accent px-2 py-0.5 text-sm font-semibold text-primary-contrast">−{{ p.discount_pct }}%</span></template>
+            <span v-if="chosen" class="text-[13px] tracking-[0.06em] text-muted">SKU {{ chosen.sku }}</span>
+          </div>
+          <p v-if="p.short_desc" class="text-base leading-[1.7] text-body">{{ p.short_desc }}</p>
         </div>
-        <p v-if="p.short_desc" class="text-muted">{{ p.short_desc }}</p>
-        <div v-if="p.sold_out" class="border border-border bg-cream p-3 text-center uppercase tracking-widest">Sold out</div>
-        <fieldset v-if="colours.length">
-          <legend class="cap">Colour <span class="text-ink normal-case">{{ colour }}</span></legend>
-          <div class="mt-2 flex gap-2">
-            <button v-for="c in colours" :key="c.name" type="button" :title="c.name" :aria-label="c.name" :aria-pressed="colour === c.name" class="h-9 w-9 border-2" :class="colour === c.name ? 'border-primary' : 'border-border'" :style="{ backgroundColor: c.hex }" @click="colour = c.name" />
+        <div v-if="p.sold_out" class="border border-border bg-cream p-3 text-center text-sm uppercase tracking-[0.16em]">Sold out</div>
+
+        <div v-if="colours.length" role="group" aria-label="Colour" class="flex flex-col gap-3 border-t border-border pt-[22px]">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em]">Colour <span class="ml-2 text-[15px] font-normal normal-case tracking-[0.04em] text-body">{{ colour }}</span></div>
+          <div class="flex gap-2.5">
+            <button v-for="c in colours" :key="c.name" type="button" :title="c.name" :aria-label="c.name" :aria-pressed="colour === c.name" class="flex h-12 w-12 items-center justify-center" @click="colour = c.name">
+              <span class="h-[30px] w-[30px] rounded-full transition-shadow" :class="colour === c.name ? 'ring-[1.5px] ring-ink ring-offset-[3px] ring-offset-bg' : 'ring-1 ring-ink/25'" :style="{ backgroundColor: c.hex }" />
+            </button>
           </div>
-        </fieldset>
-        <fieldset v-if="sizes.some((v) => v.size_label)">
-          <legend class="cap">Size <NuxtLink to="/size-guide" class="ml-2 normal-case underline">Size chart &amp; calculator</NuxtLink></legend>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <button v-for="v in sizes" :key="v.id" type="button" :disabled="!v.in_stock" class="min-h-touch min-w-[56px] border px-3 text-sm disabled:text-muted disabled:line-through" :class="size === v.size_label ? 'border-primary bg-primary text-primary-contrast' : 'border-border'" :aria-pressed="size === v.size_label" @click="size = v.size_label">{{ v.size_label }}</button>
-          </div>
-        </fieldset>
-        <p v-if="availability" class="text-sm" role="status" :class="chosen && !chosen.in_stock ? 'text-accent' : ''">{{ availability }}</p>
-        <div v-if="!p.sold_out" class="flex flex-wrap items-center gap-3">
-          <div class="flex items-center border border-border" role="group" aria-label="Quantity">
-            <button type="button" class="min-h-touch min-w-touch" aria-label="Decrease quantity" @click="qty = Math.max(1, qty - 1)">−</button>
-            <span class="min-w-8 text-center" aria-live="polite">{{ qty }}</span>
-            <button type="button" class="min-h-touch min-w-touch" aria-label="Increase quantity" @click="qty = Math.min(10, qty + 1)">+</button>
-          </div>
-          <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" />
-          <button type="button" class="btn flex-1" :disabled="!!chosen && !chosen.in_stock" data-track="add_to_bag" @click="addToBag">Add to bag</button>
         </div>
-        <p v-if="needSize" class="err" role="alert">Choose a size first.</p>
-        <p v-if="added" class="text-sm" role="status">{{ added }} <NuxtLink to="/cart" class="underline">View bag</NuxtLink></p>
-        <div class="mt-4 border-t border-border">
-          <div class="flex gap-5" role="tablist"><button v-for="t in tabs" :key="t.id" class="tab" :aria-pressed="tab === t.id" @click="tab = t.id">{{ t.label }}</button></div>
-          <div class="py-4 text-sm leading-relaxed">
-            <template v-if="tab === 'delivery'">
-              <p>Inside Dhaka: {{ taka(s?.delivery_fee_inside_dhaka) }} <span v-if="s?.delivery_time_inside_dhaka">· {{ s.delivery_time_inside_dhaka }}</span></p>
-              <p>Outside Dhaka: {{ taka(s?.delivery_fee_outside_dhaka) }} <span v-if="s?.delivery_time_outside_dhaka">· {{ s.delivery_time_outside_dhaka }}</span></p>
-            </template>
-            <p v-else class="whitespace-pre-line">{{ tabs.find((t) => t.id === tab)?.body }}</p>
+        <div v-if="sizes.some((v) => v.size_label)" role="group" aria-label="Size" class="flex flex-col gap-3">
+          <div class="flex items-baseline justify-between"><div class="text-xs font-semibold uppercase tracking-[0.18em]">Size</div><NuxtLink to="/size-guide" class="border-b border-ink pb-px text-[13px]">Size chart &amp; calculator</NuxtLink></div>
+          <div class="flex flex-wrap gap-2">
+            <button v-for="v in sizes" :key="v.id" type="button" :disabled="!v.in_stock" class="chip-size" :aria-pressed="size === v.size_label" @click="size = v.size_label; needSize = false">{{ v.size_label }}</button>
+          </div>
+        </div>
+        <p v-if="availability" class="-mt-2 text-sm" role="status" :class="chosen && !chosen.in_stock ? 'text-accent' : 'text-body'">{{ availability }}</p>
+
+        <div v-if="!p.sold_out" class="flex items-stretch gap-3 max-md:sticky max-md:bottom-[60px] max-md:z-10 max-md:-mx-5 max-md:border-t max-md:border-border max-md:bg-bg max-md:px-5 max-md:py-3">
+          <div class="flex h-[54px] items-center border border-field bg-surface" role="group" aria-label="Quantity">
+            <button type="button" class="h-full w-12 text-xl" aria-label="Decrease quantity" @click="qty = Math.max(1, qty - 1)">−</button>
+            <span class="w-9 text-center text-base" aria-live="polite">{{ qty }}</span>
+            <button type="button" class="h-full w-12 text-xl" aria-label="Increase quantity" @click="qty = Math.min(10, qty + 1)">+</button>
+          </div>
+          <button type="button" class="btn !h-[54px] min-w-0 flex-1 !px-4" :disabled="!!chosen && !chosen.in_stock" data-track="add_to_bag" @click="addToBag">Add to bag</button>
+          <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" class="!h-[54px] !w-[54px] border border-field bg-surface" />
+        </div>
+        <p v-if="needSize" class="err -mt-2" role="alert">Choose a size first.</p>
+        <div v-if="added" class="flex items-center justify-between gap-3 border-l-[3px] border-gold bg-cream px-[18px] py-4 text-[15px]" role="status"><span>{{ added }}</span><NuxtLink to="/cart" class="whitespace-nowrap border-b border-ink text-xs font-medium uppercase tracking-[0.14em]">View bag</NuxtLink></div>
+
+        <div class="flex flex-col border-t border-border">
+          <div v-for="(t, i) in tabs" :key="t.id" class="border-b border-border">
+            <button type="button" class="flex min-h-14 w-full items-center justify-between text-left text-[12.5px] font-semibold uppercase tracking-[0.16em]" :aria-expanded="open === i" @click="open = open === i ? -1 : i">{{ t.label }}<span class="text-xl font-light" aria-hidden="true">{{ open === i ? '−' : '+' }}</span></button>
+            <div v-if="open === i" class="pb-[22px] text-[15px] leading-[1.7] text-body">
+              <template v-if="t.id === 'delivery'">
+                <p>Inside Dhaka: {{ taka(s?.delivery_fee_inside_dhaka) }} <span v-if="s?.delivery_time_inside_dhaka">· {{ s.delivery_time_inside_dhaka }}</span></p>
+                <p>Outside Dhaka: {{ taka(s?.delivery_fee_outside_dhaka) }} <span v-if="s?.delivery_time_outside_dhaka">· {{ s.delivery_time_outside_dhaka }}</span></p>
+              </template>
+              <p v-else class="whitespace-pre-line">{{ t.body }}</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
-    <section v-if="p.related.length" class="mt-16">
-      <div class="cap">Complete the set</div><h2 class="mb-4 text-3xl">You may also love</h2>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-4"><StoreProductCard v-for="r in p.related" :key="r.id" :product="r" /></div>
+
+    <section v-if="p.related.length" class="pt-16 md:pt-24">
+      <div class="mb-8 flex items-end justify-between md:mb-9"><div class="flex flex-col gap-3"><div class="eyebrow">Complete the set</div><h2 class="font-display text-[34px] md:text-[44px]">You may also love</h2></div><NuxtLink :to="`/shop/${p.category.slug}`" class="lnk">View all</NuxtLink></div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-6"><StoreProductCard v-for="r in p.related" :key="r.id" :product="r" /></div>
     </section>
   </div>
 </template>

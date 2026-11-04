@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { CardProduct } from '~/types/api'
 // Design: Main + MobileHome boards. Fixed layout (SRS WEB-06): hero, trust strip, category carousel,
 // New arrivals, Signature collection, Offers tabs, Video gallery, Size-finder band. Each block shows
 // only when it has content; New / Signature / Offers fill from product flags (CAT-07).
@@ -35,7 +36,7 @@ watchEffect(() => { if (tabs.value.length && !tabs.value.some((t) => t.id === ta
 const vi = ref(0)
 const video = computed(() => home.value?.videos[vi.value])
 const sig = computed(() => home.value?.signature ?? [])
-const sigLead = computed(() => sig.value[0])
+const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: string; short_desc?: string }) | undefined)
 </script>
 
 <template>

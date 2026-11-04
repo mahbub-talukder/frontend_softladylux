@@ -3,6 +3,7 @@
 const route = useRoute()
 const q = computed(() => String(route.query.q ?? ''))
 useSeoMeta({ title: () => (q.value ? `Search: ${q.value}` : 'Search'), robots: 'noindex' })
+definePageMeta({ layout: 'bleed' })
 </script>
 
 <template>

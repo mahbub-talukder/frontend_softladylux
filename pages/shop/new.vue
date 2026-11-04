@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // SRS CAT-07: New arrivals.
 useSeoMeta({ title: 'New arrivals' })
+definePageMeta({ layout: 'bleed' })
 </script>
 
 <template>

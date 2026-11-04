@@ -6,6 +6,7 @@ const { data: cats } = await useCategories()
 const cat = computed(() => cats.value?.find((c) => c.slug === slug.value))
 if (!cat.value) throw createError({ statusCode: 404, statusMessage: 'Category not found' })
 useSeoMeta({ title: () => cat.value?.name, description: () => cat.value?.description })
+definePageMeta({ layout: 'bleed' })
 </script>
 
 <template>
