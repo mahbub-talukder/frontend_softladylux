@@ -11,7 +11,9 @@ const couponMsg = computed(() => cart.check?.coupon ?? null)
 
 onMounted(() => { code.value = cart.coupon; cart.validate() }) // CRT-03: re-validate on load
 let timer: ReturnType<typeof setTimeout> | undefined
-watch(() => [cart.lines.map((l) => `${l.variant}:${l.quantity}`).join(), cart.area, cart.coupon], () => {
+// One string key: a getter returning a fresh array fires on every re-run, and validate() itself
+// replaces the lines, which made the check loop forever (the button kept flashing).
+watch(() => `${cart.lines.map((l) => `${l.variant}:${l.quantity}`).join()}|${cart.area}|${cart.coupon}`, () => {
   clearTimeout(timer)
   timer = setTimeout(() => cart.validate(), 250)
 })

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Design: Main board, hero carousel. Two columns: a cream text panel (eyebrow, 72px headline,
 // paragraph, two buttons, prev/next squares and bar dots) and a tinted image panel with an inner
-// frame and a caption. SRS WEB-01: at most 8 active slides, no scheduling. Slides change only when
-// the visitor asks (no autoplay), with a soft cross-fade.
+// frame and a caption. SRS WEB-01: at most 8 active slides, no scheduling. Slides advance on their own
+// every 6 s with a soft cross-fade; hover, keyboard focus, a hidden tab or reduced-motion pause it.
 import type { Slide } from '~/types/api'
 
 const props = defineProps<{ slides: Slide[] }>()
@@ -10,11 +10,18 @@ const i = ref(0)
 const n = computed(() => props.slides.length)
 const s = computed(() => props.slides[i.value % Math.max(n.value, 1)])
 const go = (k: number) => { i.value = (k + n.value) % n.value }
+const paused = ref(false)
+let timer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  timer = setInterval(() => { if (n.value > 1 && !paused.value && !document.hidden) go(i.value + 1) }, 6000)
+})
+onBeforeUnmount(() => clearInterval(timer))
 const href = (x: Slide) => (x.link_type === 'category' ? `/shop/${x.link_value}` : x.link_type === 'product' ? `/product/${x.link_value}` : x.link_value || '/shop/new')
 </script>
 
 <template>
-  <section v-if="s" class="grid min-h-[560px] bg-cream md:min-h-[640px] lg:grid-cols-[5fr_7fr]" aria-roledescription="carousel" aria-label="Featured">
+  <section v-if="s" class="grid min-h-[560px] bg-cream md:min-h-[640px] lg:grid-cols-[5fr_7fr]" aria-roledescription="carousel" aria-label="Featured" @mouseenter="paused = true" @mouseleave="paused = false" @focusin="paused = true" @focusout="paused = false">
     <div class="order-2 flex flex-col justify-center gap-6 px-5 py-12 md:px-10 lg:order-1 lg:py-0 lg:pl-[max(40px,calc((100vw-1320px)/2+40px))] lg:pr-[72px]">
       <Transition mode="out-in" enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-200 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
         <div :key="s.id" class="flex flex-col gap-[26px]" aria-live="polite">

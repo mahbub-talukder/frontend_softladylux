@@ -48,7 +48,7 @@ const active = (slug: string) => route.path === `/shop/${slug}`
         <NuxtLink to="/track" class="hidden whitespace-nowrap text-xs font-medium uppercase leading-tight tracking-[0.14em] transition-colors hover:text-accent lg:block" data-track="header_track_order">Track<br>order</NuxtLink>
         <NuxtLink to="/size-guide" class="hidden whitespace-nowrap text-xs font-medium uppercase leading-tight tracking-[0.14em] transition-colors hover:text-accent lg:block" data-track="header_find_size">Find my<br>size</NuxtLink>
         <span class="hidden h-[22px] w-px bg-field lg:block" />
-        <NuxtLink to="/account?tab=wishlist" class="relative hidden h-11 w-11 items-center justify-center transition-colors hover:text-accent sm:flex" :aria-label="`Wishlist, ${customer.wishIds.length} items`" data-track="header_wishlist">
+        <NuxtLink to="/wishlist" class="relative hidden h-11 w-11 items-center justify-center transition-colors hover:text-accent sm:flex" :aria-label="`Wishlist, ${customer.wishIds.length} items`" data-track="header_wishlist">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.7 3.7 4.5 7 4.5c2 0 3.7 1.1 5 3 1.3-1.9 3-3 5-3 3.3 0 5.3 3.2 4.2 6.6C19.5 15.9 12 20.5 12 20.5z" /></svg>
           <span v-if="customer.wishIds.length" class="absolute right-0.5 top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-accent px-1 text-[10.5px] font-medium text-primary-contrast">{{ customer.wishIds.length }}</span>
         </NuxtLink>

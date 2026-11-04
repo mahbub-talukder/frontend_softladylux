@@ -54,11 +54,15 @@ export const useCartStore = defineStore('cart', {
           body: { lines: this.lines.map((l) => ({ variant: l.variant, quantity: l.quantity })), area: this.area, coupon_code: this.coupon || undefined }
         })
         // refresh the display snapshot with what the server says now
-        this.lines = this.lines.map((l) => {
+        let changed = false
+        const next = this.lines.map((l) => {
           const c = this.check!.lines.find((x) => x.variant === l.variant)
-          return c && c.price ? { ...l, price: c.price, name: c.product_name || l.name, label: c.variant_label ?? l.label, image: c.image ?? l.image } : l
+          if (!c || !c.price) return l
+          const u = { ...l, price: c.price, name: c.product_name || l.name, label: c.variant_label ?? l.label, image: c.image ?? l.image }
+          if (u.price !== l.price || u.name !== l.name || u.label !== l.label || u.image !== l.image) changed = true
+          return changed ? u : l
         })
-        this.persist()
+        if (changed) { this.lines = next; this.persist() }
       } catch { this.checkFailed = true } finally { this.checking = false }
       return this.check
     },

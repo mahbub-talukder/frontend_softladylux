@@ -20,6 +20,8 @@ const social = computed(() => ([['Facebook', s.value?.facebook_url, 'Fb'], ['Ins
 const { data: cats } = await useCategories()
 const words = computed(() => { const n = s.value?.company_name || 'SoftLadyLux'; const i = n.search(/[A-Z][a-z]+$/); return i > 0 ? [n.slice(0, i), n.slice(i)] : [n, ''] })
 const { errorOf } = useApi()
+// Newsletter band is hidden for now (owner request); flip to show it again.
+const showNewsletter = false
 const email = ref('')
 const nlMsg = ref('')
 const nlErr = ref('')
@@ -33,7 +35,7 @@ async function subscribe() {
 <template>
   <footer class="bg-dark text-text-dark">
     <!-- Newsletter band -->
-    <div class="border-b border-line-dark">
+    <div v-if="showNewsletter" class="border-b border-line-dark">
       <div class="wrap grid items-center gap-6 py-10 md:grid-cols-2 md:gap-10 md:py-14">
         <div><h3 class="font-display text-[30px] font-medium text-on-dark md:text-[38px]">Join the inner circle</h3><p class="mt-2.5 text-[15px] text-text-dark-2">New collections and private offers, delivered to your inbox.</p></div>
         <form class="flex flex-col sm:flex-row" @submit.prevent="subscribe">
@@ -45,29 +47,29 @@ async function subscribe() {
       </div>
     </div>
 
-    <div class="wrap grid gap-10 pb-12 pt-12 md:grid-cols-[4fr_2fr_2fr_3fr] md:gap-12 md:pt-16">
-      <div class="flex flex-col gap-[18px]">
-        <div class="font-display text-[34px] leading-none tracking-[0.06em] text-on-dark">{{ words[0] }}<span v-if="words[1]" class="italic text-rose-soft">{{ words[1] }}</span></div>
-        <p class="max-w-[330px] text-[14.5px] leading-[1.7] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
+    <div class="wrap grid grid-cols-2 gap-x-6 gap-y-8 pb-8 pt-9 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-10 md:pt-11">
+      <div class="col-span-2 flex flex-col gap-3.5 md:col-span-1">
+        <div class="font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">{{ words[0] }}<span v-if="words[1]" class="italic text-rose-soft">{{ words[1] }}</span></div>
+        <p class="max-w-[330px] text-sm leading-[1.6] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
         <div class="mt-1 flex gap-2.5"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-11 w-11 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
       </div>
-      <nav class="flex flex-col gap-1.5" aria-label="Shop"><div class="mb-2.5 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="text-[14.5px] leading-normal transition-colors hover:text-white">{{ c.name }}</NuxtLink></nav>
-      <nav class="flex flex-col gap-1.5" aria-label="Help"><div class="mb-2.5 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
-        <NuxtLink to="/size-guide" class="text-[14.5px] leading-normal transition-colors hover:text-white">Size chart</NuxtLink><NuxtLink to="/size-guide" class="text-[14.5px] leading-normal transition-colors hover:text-white">Size calculator</NuxtLink><NuxtLink to="/track" class="text-[14.5px] leading-normal transition-colors hover:text-white">Track my order</NuxtLink><NuxtLink to="/account?tab=wishlist" class="text-[14.5px] leading-normal transition-colors hover:text-white">Wishlist</NuxtLink><NuxtLink to="/login" class="text-[14.5px] leading-normal transition-colors hover:text-white">Login / Register</NuxtLink><NuxtLink to="/contact" class="text-[14.5px] leading-normal transition-colors hover:text-white">Contact us</NuxtLink>
-        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="text-[14.5px] leading-normal transition-colors hover:text-white">{{ p.title }}</NuxtLink>
+      <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">{{ c.name }}</NuxtLink></nav>
+      <nav class="flex flex-col md:grid md:grid-cols-2 md:content-start md:gap-x-6" aria-label="Help"><div class="mb-2 md:col-span-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
+        <NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Size chart</NuxtLink><NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Size calculator</NuxtLink><NuxtLink to="/track" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Track my order</NuxtLink><NuxtLink to="/wishlist" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Wishlist</NuxtLink><NuxtLink to="/login" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Login / Register</NuxtLink><NuxtLink to="/contact" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Contact us</NuxtLink>
+        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">{{ p.title }}</NuxtLink>
       </nav>
-      <address class="flex flex-col gap-1.5 text-[14.5px] not-italic"><div class="mb-2.5 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
+      <address class="col-span-2 flex flex-col gap-1 text-sm not-italic md:col-span-1"><div class="mb-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
         <span class="leading-[1.6]">{{ ph(s?.address_line1, 'STORE ADDRESS') }}<template v-if="s?.address_line2">, {{ s.address_line2 }}</template><br>{{ ph(s?.city, 'CITY') }}, {{ s?.country || 'Bangladesh' }}</span>
-        <span class="mt-2">{{ s?.support_phones?.length ? s.support_phones.join(', ') : '[PHONE NUMBER]' }}</span><span>{{ ph(s?.support_email, 'EMAIL ADDRESS') }}</span>
-        <span class="mt-2">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
+        <span class="mt-1">{{ s?.support_phones?.length ? s.support_phones.join(', ') : '[PHONE NUMBER]' }}</span><span>{{ ph(s?.support_email, 'EMAIL ADDRESS') }}</span>
+        <span class="mt-1">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
         <span class="mt-1.5 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="min-h-6 border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="min-h-6 border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
       </address>
     </div>
 
     <div class="border-t border-line-dark">
-      <div class="wrap flex flex-wrap items-center justify-between gap-5 py-[22px] text-[13px] text-text-dark-3">
+      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4 text-[13px] text-text-dark-3">
         <span>{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
-        <span class="flex items-center gap-3">We accept <b v-if="s?.bkash_number || !s" class="border border-line-dark-2 px-3 py-[5px] font-medium tracking-[0.08em] text-text-dark">bKash</b><b v-if="s?.nagad_number || !s" class="border border-line-dark-2 px-3 py-[5px] font-medium tracking-[0.08em] text-text-dark">Nagad</b><b v-if="s?.cod_enabled" class="border border-line-dark-2 px-3 py-[5px] font-medium tracking-[0.08em] text-text-dark">Cash on delivery</b></span>
+        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </div>
     </div>
   </footer>

@@ -22,7 +22,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
 | login_submit, register_submit, otp_verify, track_submit, contact_submit, newsletter_subscribe | account and engagement forms |
-| footer_whatsapp, footer_messenger | footer contact links |
+| footer_whatsapp, footer_messenger, footer_credit | footer contact links |
 | cookie_accept, cookie_decline | cookie notice |
 | dashboard_stale_drafts, open_ga4 | admin dashboard and insights |
 | admin_login, settings_save, theme_publish, permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance | admin actions |

@@ -5,7 +5,7 @@ const customer = useCustomerStore()
 const items = computed(() => [
   { label: 'Home', to: '/', d: 'M3 11l9-8 9 8M5 10v10h14V10' },
   { label: 'Shop', to: '/shop/offers', d: 'M3 7h18l-2 13H5zM8 7a4 4 0 0 1 8 0' },
-  { label: 'Wishlist', to: '/account?tab=wishlist', d: 'M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.7 3.7 4.5 7 4.5c2 0 3.7 1.1 5 3 1.3-1.9 3-3 5-3 3.3 0 5.3 3.2 4.2 6.6C19.5 15.9 12 20.5 12 20.5z', badge: customer.wishIds.length },
+  { label: 'Wishlist', to: '/wishlist', d: 'M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.7 3.7 4.5 7 4.5c2 0 3.7 1.1 5 3 1.3-1.9 3-3 5-3 3.3 0 5.3 3.2 4.2 6.6C19.5 15.9 12 20.5 12 20.5z', badge: customer.wishIds.length },
   { label: 'Bag', to: '/cart', d: 'M5 8h14l-1 12H6zM9 8V6.5a3 3 0 0 1 6 0V8', badge: cart.count },
   { label: 'Account', to: customer.isIn ? '/account' : '/login', d: 'M16 8a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c1-4.5 4.2-6.5 8-6.5s7 2 8 6.5' }
 ])
