@@ -22,6 +22,25 @@
   --color-dark: #231e1c;
   --color-on-dark: #f8f4ec;
 
+  /* DesignSystem board neutrals (fixed in v1, THM-03) */
+  --color-gold: #7c6036;        /* eyebrow / bronze accent text */
+  --color-champagne: #c9b28d;   /* accent on dark */
+  --color-rose-soft: #c9a39d;   /* italic wordmark accent on dark */
+  --color-rose-deep: #6b3f3b;
+  --color-field: #d8ccb9;       /* input and chip borders */
+  --color-body: #4a413d;        /* body copy */
+  --color-line-dark: #3b322d;   /* hairlines on dark surfaces */
+  --color-line-dark-2: #5b4f47;
+  --color-text-dark: #d9cfc2;
+  --color-text-dark-2: #bfb3a5;
+  --color-text-dark-3: #9c9185;
+  --color-admin-bg: #f4efe6;
+  /* tinted product/category tiles (placeholder art backgrounds) */
+  --tile-1: #e9dccb; --tile-2: #e6d2ca; --tile-3: #dcd2c3; --tile-4: #e2d6c6;
+  --tile-5: #ebd7d0; --tile-6: #e3dacb; --tile-7: #dfd1c0; --tile-8: #e8d6cd;
+  --tile-video: #2a2320;
+  --shadow-pop: 0 18px 40px rgb(35 30 28 / 12%);
+
   /* order status badges: fixed, not part of the palette */
   --status-draft-fg: #6e5a3a;
   --status-draft-bg: #efe3cf;
