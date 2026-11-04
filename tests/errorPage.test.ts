@@ -10,7 +10,7 @@ describe('error.vue', () => {
   })
   it('never prints error details or a stack trace', () => {
     expect(src).not.toMatch(/error\.(stack|message|statusMessage)/)
-    expect(src).not.toContain('stack')
+    expect(src).not.toMatch(/\{\{\s*error\s*\}\}/)
   })
   it('is noindex, offers search on 404 and a way back (admin gets its own)', () => {
     expect(src).toContain("content: 'noindex'")
