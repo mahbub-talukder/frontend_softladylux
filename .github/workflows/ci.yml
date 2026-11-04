@@ -18,3 +18,5 @@ jobs:
       - run: npx nuxt typecheck
       - run: npx vitest run
       - run: npm run build
+      - name: Production image builds
+        run: docker build --target prod -t sll-frontend:ci .

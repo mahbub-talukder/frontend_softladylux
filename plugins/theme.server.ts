@@ -8,7 +8,8 @@ export default defineNuxtPlugin(async () => {
   let css = ''
   try {
     const res = await $fetch<{ tokens?: Record<string, string> }>(`${config.apiBaseInternal}/theme/`, {
-      timeout: 1500
+      timeout: 1500,
+      headers: { 'X-Forwarded-Proto': 'https' } // private-network call: TLS was terminated by nginx
     })
     css = tokensToCss(res?.tokens)
   } catch {

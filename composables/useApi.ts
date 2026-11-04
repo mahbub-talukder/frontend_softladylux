@@ -25,7 +25,12 @@ export function useApi() {
       const t = csrfToken()
       if (t) headers['X-CSRFToken'] = t
     }
-    if (import.meta.server) Object.assign(headers, useRequestHeaders(['cookie']))
+    if (import.meta.server) {
+      Object.assign(headers, useRequestHeaders(['cookie']))
+      // Server-side calls go straight to Django over the private network: say the original request was
+      // HTTPS so production's SSL redirect doesn't bounce them (nginx did the TLS).
+      headers['X-Forwarded-Proto'] = 'https'
+    }
     return (await $fetch(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)) as T
   }
 
