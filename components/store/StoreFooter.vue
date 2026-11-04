@@ -20,10 +20,24 @@ const social = computed(() => [
   ['Facebook', s.value?.facebook_url], ['Instagram', s.value?.instagram_url],
   ['YouTube', s.value?.youtube_url], ['TikTok', s.value?.tiktok_url]
 ].filter(([, u]) => u) as [string, string][])
+const { errorOf } = useApi()
+const email = ref('')
+const nlMsg = ref('')
+const nlErr = ref('')
+async function subscribe() {
+  nlMsg.value = ''; nlErr.value = ''
+  try { await api('/newsletter/', { method: 'POST', body: { email: email.value } }); nlMsg.value = 'Thank you! Check your inbox for a welcome note.'; email.value = '' }
+  catch (e) { nlErr.value = Object.values(errorOf(e).fields).flat().join(' ') || errorOf(e).message }
+}
 </script>
 
 <template>
   <footer class="bg-dark px-4 py-10 text-sm text-on-dark">
+    <div class="mx-auto mb-10 flex max-w-screen-xl flex-col gap-4 border-b border-primary-hover pb-8 md:flex-row md:items-center md:justify-between">
+      <div><div class="font-display text-3xl">Join the inner circle</div><p class="opacity-80">New collections and private offers, delivered to your inbox.</p></div>
+      <form class="flex w-full max-w-md" @submit.prevent="subscribe"><label for="nl" class="sr-only">Email address</label><input id="nl" v-model="email" type="email" required placeholder="Your email address" class="min-h-touch flex-1 border border-primary-hover bg-transparent px-3 text-on-dark placeholder:opacity-60"><button class="min-h-touch bg-surface px-5 text-xs uppercase tracking-widest text-ink" data-track="newsletter_subscribe">Subscribe</button></form>
+      <p v-if="nlMsg" class="text-sm" role="status">{{ nlMsg }}</p><p v-if="nlErr" class="text-sm" role="alert">{{ nlErr }}</p>
+    </div>
     <div class="mx-auto grid max-w-screen-xl gap-8 md:grid-cols-4">
       <div>
         <div class="font-display text-2xl">{{ s?.company_name }}</div>

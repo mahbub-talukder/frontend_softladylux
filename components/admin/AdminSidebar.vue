@@ -13,6 +13,7 @@ const ITEMS: Item[] = [
   { label: 'Size charts', to: '/admin/size-charts', d: 'M3 17l4-4 3 3 5-6 6 7M3 21h18', permission: 'products.view' },
   { label: 'Inventory', to: '/admin/inventory', d: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5', permission: 'inventory.view' },
   { label: 'Coupons', to: '/admin/coupons', d: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10', permission: 'coupons.manage' },
+  { label: 'Messages', to: '/admin/messages', d: 'M3 5h18v14H3zM3 7l9 6 9-6', permission: 'contact.manage' },
   { label: 'Website content', to: '/admin/website', d: 'M3 5h18v14H3zM3 9h18', permission: 'website.manage' },
   { label: 'Theme colours', to: '/admin/theme', d: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z', permission: 'theme.manage' },
   { label: 'Settings', to: '/admin/settings', d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1V5h-4v2l-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1v2h4v-2l2-1 2 1 2-4-2-1z', permission: 'settings.manage' },

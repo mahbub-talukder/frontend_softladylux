@@ -113,6 +113,7 @@ const tabs = computed(() => [
             <span class="min-w-8 text-center" aria-live="polite">{{ qty }}</span>
             <button type="button" class="min-h-touch min-w-touch" aria-label="Increase quantity" @click="qty = Math.min(10, qty + 1)">+</button>
           </div>
+          <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" />
           <button type="button" class="btn flex-1" :disabled="!!chosen && !chosen.in_stock" data-track="add_to_bag" @click="addToBag">Add to bag</button>
         </div>
         <p v-if="needSize" class="err" role="alert">Choose a size first.</p>

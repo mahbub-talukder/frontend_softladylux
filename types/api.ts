@@ -99,7 +99,7 @@ export interface CustomerOrder {
   area: string; district: string; thana: string; address_line: string; note: string; subtotal: string
   coupon_code: string; coupon_discount: string; delivery_fee: string; total: string; payment_method: string
   payment_status: string; courier: string; tracking_ref: string; can_cancel: boolean
-  items: { id: number; product_name: string; variant_label: string; sku: string; unit_price: string; quantity: number; line_total: string }[]
+  items: { id: number; variant: number; product_name: string; variant_label: string; sku: string; unit_price: string; quantity: number; line_total: string }[]
   timeline: { status: string; label: string; at: string; detail: string }[]
 }
 export interface AdminOrderRow {
@@ -114,3 +114,8 @@ export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_st
 }
 export interface StockRow { id: number; sku: string; product: string; category: string; label: string; on_hand: number; level: 'in_stock' | 'low' | 'out'; is_active: boolean }
 export interface Movement { id: number; created_at: string; sku: string; delta_on_hand: number; on_hand_after: number; reason: string; order_ref: string; lot_reference: string; remarks: string; user: string | null }
+
+// ---- Accounts (M4)
+export interface CustomerMe { id: number; full_name: string; phone: string; email: string | null; birthday: string | null; phone_verified: boolean }
+export interface Address { id: number; label: string; recipient_name: string; phone: string; area: 'inside_dhaka' | 'outside_dhaka'; district: string; thana: string; address_line: string; is_default: boolean }
+export interface ContactMessage { id: number; created_at: string; name: string; phone: string; email: string; subject: string; message: string; is_handled: boolean; handled_by_name: string | null }

@@ -2,7 +2,7 @@
 // Design: Checkout board. SRS CHK-01..CHK-09, CRT-03/09, §11. Guest or logged-in; the server
 // recomputes every price (CHK-06) and the form keeps what the customer typed on any error (UI-06).
 import type { ApiError } from '~/composables/useApi'
-import type { CustomerOrder } from '~/types/api'
+import type { Address, CustomerOrder } from '~/types/api'
 
 useSeoMeta({ title: 'Checkout', robots: 'noindex' })
 const cart = useCartStore()
@@ -19,8 +19,21 @@ const changedTotal = ref<string | null>(null)
 // CHK-09: one key per checkout attempt; a retry of the same attempt returns the same order
 const key = ref('')
 
+const customer = useCustomerStore()
+const saved = ref<Address[]>([])
+function useAddress(a: Address) {
+  Object.assign(form, { name: a.recipient_name, phone: a.phone, district: a.district, thana: a.thana, address_line: a.address_line })
+  cart.setArea(a.area)
+}
 onMounted(async () => {
   key.value = crypto.randomUUID()
+  // Signed-in customers: prefill from the account and the default saved address (guests type it in)
+  if (customer.me) {
+    Object.assign(form, { name: customer.me.full_name, phone: customer.me.phone, email: customer.me.email ?? '' })
+    saved.value = await api<Address[]>('/me/addresses/').catch(() => [])
+    const d = saved.value.find((x) => x.is_default) ?? saved.value[0]
+    if (d) useAddress(d)
+  }
   if (!cart.lines.length) return navigateTo('/cart')
   await cart.validate() // CRT-03: before checkout
   if (cart.blocked) return navigateTo('/cart')
@@ -85,6 +98,7 @@ async function place() {
         <section class="card">
           <h2 class="text-2xl">Contact &amp; delivery</h2>
           <p class="hint">Have an account? <NuxtLink to="/login" class="underline">Log in</NuxtLink> — or just check out as a guest.</p>
+          <div v-if="saved.length" class="fld"><label for="sa">Saved address</label><select id="sa" class="inp" @change="useAddress(saved[Number(($event.target as HTMLSelectElement).value)])"><option v-for="(a, i) in saved" :key="a.id" :value="i" :selected="a.is_default">{{ a.label }} — {{ a.address_line }}</option></select></div>
           <div class="fld"><label for="fn">Full name</label><input id="fn" v-model="form.name" class="inp" autocomplete="name" required><p v-if="errors.name" class="err">{{ errors.name }}</p></div>
           <div class="fld"><label for="ph">Mobile number</label><input id="ph" v-model="form.phone" class="inp" inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required><p v-if="errors.phone" class="err">{{ errors.phone }}</p></div>
           <div class="fld"><label for="em">Email (optional)</label><input id="em" v-model="form.email" type="email" class="inp" autocomplete="email" placeholder="name@email.com"><p v-if="errors.email" class="err">{{ errors.email }}</p></div>

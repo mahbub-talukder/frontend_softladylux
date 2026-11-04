@@ -45,7 +45,11 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
     { key: 'gtm_id', label: 'Google Tag Manager ID', ph: 'GTM-XXXXXXX' }] },
   { id: 'sms', label: 'SMS', title: 'SMS provider (MiMSMS)', note: 'Used for OTP messages. Environment variables take priority. The key is never shown again after saving.', fields: [
     { key: 'mimsms_api_key', label: 'MiMSMS API key', type: 'password', ph: 'Leave blank to keep the saved key' },
-    { key: 'mimsms_sender_id', label: 'Sender ID' }] },
+    { key: 'mimsms_sender_id', label: 'Sender ID' },
+    { key: 'mimsms_endpoint', label: 'API endpoint URL', ph: 'From your MiMSMS documentation' },
+    { key: 'mimsms_method', label: 'HTTP method', ph: 'POST or GET' },
+    { key: 'mimsms_params', label: 'Parameter names (JSON)', type: 'textarea', ph: '{"api_key":"…","to":"…","text":"…","sender":"…"}', note: 'Names of the fields your MiMSMS API expects.' },
+    { key: 'mimsms_success_contains', label: 'Success marker in the response (optional)' }] },
   { id: 'seo', label: 'SEO', title: 'SEO', fields: [
     { key: 'seo_title', label: 'Default page title' },
     { key: 'seo_description', label: 'Default description', type: 'textarea' }] }
@@ -66,6 +70,7 @@ async function load() {
   logo.value = d.logo; favicon.value = d.favicon; share.value = d.seo_share_image
   keySet.value = d.mimsms_api_key_set
   d.support_phones = (d.support_phones || []).join(', ')
+  d.mimsms_params = JSON.stringify(d.mimsms_params || {})
   d.mimsms_api_key = ''
   form.value = d
 }
@@ -75,6 +80,7 @@ async function save() {
   error.value = ''; fieldErrors.value = {}; saved.value = false
   const body: Dict = { ...form.value }
   body.support_phones = String(body.support_phones || '').split(',').map((s) => s.trim()).filter(Boolean)
+  try { body.mimsms_params = JSON.parse(String(body.mimsms_params || '{}')) } catch { error.value = 'Parameter names must be valid JSON.'; return }
   if (!body.mimsms_api_key) delete body.mimsms_api_key
   body.logo = logo.value?.id ?? null; body.favicon = favicon.value?.id ?? null
   body.seo_share_image = share.value?.id ?? null

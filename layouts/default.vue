@@ -9,7 +9,8 @@ useHead({
 <template>
   <div class="min-h-screen bg-bg text-ink">
     <StoreHeader />
-    <main class="mx-auto max-w-screen-xl px-4 py-8"><slot /></main>
+    <main class="mx-auto max-w-screen-xl px-4 py-8 pb-24 sm:pb-8"><slot /></main>
     <StoreFooter />
+    <StoreBottomNav />
   </div>
 </template>

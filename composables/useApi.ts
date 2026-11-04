@@ -34,10 +34,14 @@ export function useApi() {
       return await raw<T>(path, opts)
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode
-      const isAuthCall = path.startsWith('/admin/auth/')
-      if (import.meta.client && status === 401 && path.startsWith('/admin/') && !isAuthCall) {
-        await raw('/admin/auth/refresh/', { method: 'POST' })
-        return await raw<T>(path, opts)
+      const isAuthCall = path.startsWith('/admin/auth/') || path.startsWith('/auth/')
+      if (import.meta.client && status === 401 && !isAuthCall) {
+        // Admin and customer sessions each rotate their own refresh cookie once, then retry.
+        const refresh = path.startsWith('/admin/') ? '/admin/auth/refresh/' : (path.startsWith('/me') || path.startsWith('/orders') ? '/auth/refresh/' : null)
+        if (refresh) {
+          await raw(refresh, { method: 'POST' })
+          return await raw<T>(path, opts)
+        }
       }
       throw e
     }
