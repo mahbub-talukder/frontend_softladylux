@@ -3,6 +3,8 @@
 // holds its permission; Users and Audit log are Owner-only. Later milestones add their items here.
 const auth = useAuthStore()
 const route = useRoute()
+// Brand comes from Settings (SET-08), passed in by the admin layout.
+defineProps<{ siteName?: string }>()
 
 interface Item { label: string; to: string; d: string; permission?: string; ownerOnly?: boolean }
 const ITEMS: Item[] = [
@@ -35,7 +37,7 @@ async function signOut() {
 <template>
   <nav aria-label="Admin" class="flex min-h-full w-[264px] shrink-0 flex-col gap-1.5 bg-dark px-[18px] py-7 text-text-dark">
     <NuxtLink to="/admin" class="flex flex-col gap-1.5 px-3 pb-6">
-      <span class="font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">SoftLady<em class="text-rose-soft">Lux</em></span>
+      <span class="break-words font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">{{ siteName || 'SoftLadyLux' }}</span>
       <span class="text-[10px] uppercase tracking-[0.34em] text-champagne">Admin panel</span>
     </NuxtLink>
     <NuxtLink

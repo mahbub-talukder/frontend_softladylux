@@ -6,8 +6,8 @@ import type { Dict, Movement, Paged, StockRow } from '~/types/api'
 definePageMeta({ layout: 'admin', permission: 'inventory.view' })
 const auth = useAuthStore()
 const canAdjust = computed(() => auth.can('inventory.adjust'))
-const { api, errorOf } = useApi()
-const config = useRuntimeConfig()
+const { api, errorOf, toast } = useApi()
+const { download } = useDownload()
 
 const q = ref('')
 const status = ref('')
@@ -20,6 +20,21 @@ const lot = ref('')
 const remarks = ref('')
 const error = ref('')
 const message = ref('')
+const busy = ref(false)
+// INV-12 / UI-06: quantity is a whole number (non-zero for a correction, positive otherwise), lot is required except for a
+// correction, remarks 3-300 characters. The server also refuses a result below zero.
+const { required, between, maxLength, custom } = rules
+const iv = useFormValidation(() => ({ amount: amount.value, lot: lot.value, remarks: remarks.value }), {
+  amount: [custom((x) => {
+    const n = Number(x)
+    if (x === '' || x === null || Number.isNaN(n)) return 'Enter a quantity.'
+    if (!Number.isInteger(n)) return 'Use a whole number.'
+    if (kind.value === 'correction') return n === 0 ? 'A correction cannot be 0.' : null
+    return n < 1 ? 'Enter 1 or more.' : null
+  })],
+  lot: [custom((x) => (kind.value !== 'correction' && !String(x ?? '').trim() ? 'Enter the lot or shipment reference.' : null)), maxLength(80)],
+  remarks: [required('Explain why you are adjusting the stock.'), between(3, 300, 'Use 3-300 characters.')]
+})
 
 type StockPage = Paged<StockRow> & { summary: { in_stock: number; low: number; out: number; threshold: number } }
 const { data: cats } = await useAsyncData('inv-cats', () => api<Dict[]>('/admin/categories/'))
@@ -37,7 +52,7 @@ const newQty = computed(() => {
   const d = kind.value === 'stock_in' ? Math.abs(amount.value) : kind.value === 'correction' ? amount.value : -Math.abs(amount.value)
   return sel.value.on_hand + d
 })
-const exportUrl = computed(() => `${config.public.apiBase}/admin/inventory/export/?${new URLSearchParams({ ...(q.value && { q: q.value }), ...(status.value && { status: status.value }), ...(category.value && { category: category.value }) })}`)
+const exportCsv = () => download('/admin/inventory/export/', { q: q.value, status: status.value, category: category.value }, 'stock-levels.csv')
 
 function search() { page.value = 1; refresh() }
 async function pick(r: StockRow) {
@@ -46,21 +61,24 @@ async function pick(r: StockRow) {
 }
 async function save() {
   error.value = ''; message.value = ''
-  if (!sel.value) return
+  if (!sel.value) { toast.error('Select a SKU first', ['Choose a row in the stock list to adjust.']); return }
+  if (!iv.validateAll()) { toast.error('Please fix the highlighted fields', iv.summary.value.slice(0, 3)); return }
+  if (newQty.value < 0) { toast.error('Stock cannot go below zero', [`This would leave ${newQty.value} on hand.`]); return }
+  busy.value = true
   try {
-    await api('/admin/inventory/adjust/', { method: 'POST', body: { variant: sel.value.id, kind: kind.value, quantity: amount.value, lot_reference: lot.value, remarks: remarks.value } })
-    message.value = 'Adjustment saved.'; lot.value = ''; remarks.value = ''
+    await api('/admin/inventory/adjust/', { method: 'POST', body: { variant: sel.value.id, kind: kind.value, quantity: amount.value, lot_reference: lot.value, remarks: remarks.value }, successMessage: 'Stock adjustment saved' })
+    message.value = 'Adjustment saved.'; lot.value = ''; remarks.value = ''; iv.reset()
     await refresh(); await refreshNuxtData('inv-by-cat'); const row = data.value?.results.find((r) => r.id === sel.value!.id); if (row) await pick(row)
   } catch (e) {
-    const er = errorOf(e); error.value = Object.values(er.fields).flat().join(' ') || er.message
-  }
+    const er = errorOf(e); iv.setServerErrors(er); error.value = er.flat.join(' ')
+  } finally { busy.value = false }
 }
 const when = (d: string) => new Date(d).toLocaleString()
 </script>
 
 <template>
   <section>
-    <AdminHeading eyebrow="Inventory & stock" title="Stock levels"><a class="btn-secondary" :href="exportUrl">Export CSV</a></AdminHeading>
+    <AdminHeading eyebrow="Inventory & stock" title="Stock levels"><button type="button" class="btn-secondary" @click="exportCsv">Export CSV</button></AdminHeading>
     <div class="mb-6 grid gap-3 sm:grid-cols-3">
       <button v-for="k in ([['in_stock', 'In stock'], ['low', `Low (≤ ${data?.summary.threshold ?? 5})`], ['out', 'Out of stock']] as const)" :key="k[0]" class="card text-left" :class="status === k[0] ? '!border-primary' : ''" @click="status = status === k[0] ? '' : k[0]; search()">
         <span class="cap">{{ k[1] }}</span><span class="font-display text-4xl">{{ data?.summary[k[0]] ?? 0 }}</span>
@@ -96,17 +114,23 @@ const when = (d: string) => new Date(d).toLocaleString()
         </div>
       </div>
       <div class="flex flex-col gap-6">
-        <form v-if="canAdjust" class="card" @submit.prevent="save">
+        <form v-if="canAdjust" class="card" novalidate @submit.prevent="save">
           <h2 class="text-2xl">Adjust inventory</h2>
           <div v-if="sel" class="bg-admin-bg px-4 py-3.5"><div class="cap">Selected SKU</div><div class="mt-1 text-base">{{ sel.sku }} · <b class="font-semibold">{{ sel.on_hand }}</b> on hand</div><div class="text-[13.5px] text-body">{{ sel.product }} · {{ sel.label }}</div></div>
           <p v-else class="bg-admin-bg px-4 py-3.5 text-sm text-muted">Select a SKU from the list to adjust its stock.</p>
-          <div class="grid grid-cols-2 border border-ink" role="group" aria-label="Adjustment type"><button v-for="k in KINDS" :key="k[0]" type="button" class="h-11 text-xs font-medium uppercase tracking-[0.1em] transition-colors" :class="kind === k[0] ? 'bg-ink text-bg' : 'hover:bg-cream'" :aria-pressed="kind === k[0]" @click="kind = k[0]">{{ k[1] }}</button></div>
-          <div class="fld"><label for="aq">Quantity</label><input id="aq" v-model.number="amount" type="number" class="inp"></div>
-          <div class="fld"><label for="ar">Lot / shipment reference{{ kind === 'correction' ? ' (optional)' : '' }}</label><input id="ar" v-model="lot" class="inp" placeholder="e.g. LOT-2611-A or SHIP-0042"></div>
-          <div class="fld"><label for="am">Remarks</label><textarea id="am" v-model="remarks" class="inp" placeholder="Reason for this adjustment" /></div>
+          <div class="grid grid-cols-2 border border-ink" role="group" aria-label="Adjustment type"><button v-for="k in KINDS" :key="k[0]" type="button" class="h-11 text-xs font-medium uppercase tracking-[0.1em] transition-colors" :class="kind === k[0] ? 'bg-ink text-bg' : 'hover:bg-cream'" :aria-pressed="kind === k[0]" @click="kind = k[0]; iv.onInput('amount'); iv.onInput('lot')">{{ k[1] }}</button></div>
+          <AdminFormField name="amount" :label="kind === 'correction' ? 'Quantity (+ or −)' : 'Quantity'" required :hint="kind === 'correction' ? 'Use a negative number to remove stock.' : ''" :error="iv.errorFor('amount')">
+            <template #default="f"><input :id="f.id" v-model.number="amount" type="number" step="1" class="inp" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="iv.onInput('amount')" @blur="iv.touch('amount')"></template>
+          </AdminFormField>
+          <AdminFormField name="lot" label="Lot / shipment reference" :required="kind !== 'correction'" :error="iv.errorFor('lot')">
+            <template #default="f"><input :id="f.id" v-model="lot" class="inp" maxlength="80" placeholder="e.g. LOT-2611-A or SHIP-0042" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="iv.onInput('lot')" @blur="iv.touch('lot')"></template>
+          </AdminFormField>
+          <AdminFormField name="remarks" label="Remarks" required :error="iv.errorFor('remarks')" :counter="{ value: remarks, max: 300 }">
+            <template #default="f"><textarea :id="f.id" v-model="remarks" class="inp" placeholder="Reason for this adjustment" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="iv.onInput('remarks')" @blur="iv.touch('remarks')" /></template>
+          </AdminFormField>
           <p v-if="sel" class="flex justify-between border-t border-border pt-3.5 text-[14.5px]"><span>New quantity</span><b class="font-semibold" :class="newQty < 0 ? 'text-accent' : ''">{{ newQty }}</b></p>
           <p v-if="error" class="err" role="alert">{{ error }}</p><p v-if="message" class="hint" role="status">{{ message }}</p>
-          <button class="btn" :disabled="!sel || newQty < 0" data-track="stock_adjust">Save adjustment</button>
+          <button class="btn btn-spin" :disabled="!sel || newQty < 0 || busy" :aria-busy="busy" data-track="stock_adjust">Save adjustment</button>
         </form>
         <div v-if="sel" class="card">
           <h2 class="text-2xl">History · {{ sel.sku }}</h2>

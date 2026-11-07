@@ -32,7 +32,7 @@ const when = (d: string) => new Date(d).toLocaleString('en-GB', { day: '2-digit'
 
 <template>
   <section class="mx-auto flex max-w-[680px] flex-col gap-8 py-2 md:py-6">
-    <div class="flex flex-col gap-3"><div class="eyebrow">Order tracking</div><h1 class="font-display text-[42px] leading-none md:text-[56px]">Track your order</h1>
+    <div class="flex flex-col gap-3"><div class="eyebrow">Order tracking</div><h1 class="font-display text-h1 leading-none md:text-h1-lg">Track your order</h1>
       <p class="text-base leading-[1.65] text-body">Enter your order number and the mobile number you used at checkout. No account needed.</p></div>
     <form class="flex flex-col gap-[18px] bg-cream p-6 md:p-8" @submit.prevent="track">
       <div class="fld"><label class="sf-lbl" for="tn">Order number</label><input id="tn" v-model="number" class="sf-inp uppercase" placeholder="SLL-261104-0001" required></div>
@@ -42,7 +42,7 @@ const when = (d: string) => new Date(d).toLocaleString('en-GB', { day: '2-digit'
     </form>
 
     <div v-if="order" class="fade-in flex flex-col gap-6 border border-border bg-surface p-6 md:p-[34px]" aria-live="polite">
-      <div class="flex flex-wrap items-baseline justify-between gap-2"><h2 class="font-display text-[28px] md:text-[32px]">{{ order.number }}</h2><span class="stage" :data-stage="order.status">{{ order.status_label }}</span></div>
+      <div class="flex flex-wrap items-baseline justify-between gap-2"><h2 class="font-display text-h3 md:text-h3-lg">{{ order.number }}</h2><span class="stage" :data-stage="order.status">{{ order.status_label }}</span></div>
       <p v-if="order.status === 'cancelled'" class="border-l-[3px] border-accent bg-cream px-5 py-[18px] text-[15px] leading-relaxed">This order was cancelled. If you already paid, we will contact you about the refund.</p>
       <ol class="flex flex-col">
         <li v-for="(t, i) in order.timeline" :key="t.at + t.status" class="flex min-h-16 gap-[18px]">
@@ -51,7 +51,7 @@ const when = (d: string) => new Date(d).toLocaleString('en-GB', { day: '2-digit'
         </li>
       </ol>
       <ul class="flex flex-col gap-2 border-t border-border pt-5 text-[15px]"><li v-for="i in order.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
-      <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-[28px]">{{ taka(order.total) }}</span></div>
+      <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-h3">{{ taka(order.total) }}</span></div>
       <p class="-mt-3 text-[13.5px] text-muted">Payment: {{ order.payment_status }}</p>
       <div v-if="order.can_cancel" class="flex flex-col gap-3 border-t border-border pt-5">
         <button v-if="!cancelling" class="h-12 border border-accent text-xs font-medium uppercase tracking-[0.16em] text-accent transition-colors hover:bg-accent hover:text-primary-contrast" @click="cancelling = true">Cancel this order</button>

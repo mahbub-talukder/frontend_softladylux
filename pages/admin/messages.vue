@@ -5,7 +5,7 @@ import type { ContactMessage, Dict, Paged } from '~/types/api'
 
 definePageMeta({ layout: 'admin', permission: 'contact.manage' })
 const { api } = useApi()
-const config = useRuntimeConfig()
+const { download } = useDownload()
 const tab = ref<'messages' | 'newsletter'>('messages')
 const handled = ref('')
 const page = ref(1)
@@ -14,14 +14,16 @@ const { data, refresh } = await useAsyncData('contact-messages', () => api<Paged
 const { data: subs } = await useAsyncData('newsletter', () => api<Paged<Dict>>('/admin/newsletter/'))
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / 20)))
 const when = (d: string) => new Date(d).toLocaleString()
-const exportUrl = `${config.public.apiBase}/admin/newsletter/export/`
+const exportCsv = () => download('/admin/newsletter/export/', {}, 'newsletter-subscribers.csv')
 function filter(v: string) { handled.value = v; page.value = 1; refresh() }
-async function mark(m: ContactMessage, v: boolean) { open.value = await api<ContactMessage>(`/admin/contact-messages/${m.id}/`, { method: 'PATCH', body: { is_handled: v } }); await refresh() }
+async function mark(m: ContactMessage, v: boolean) {
+  try { open.value = await api<ContactMessage>(`/admin/contact-messages/${m.id}/`, { method: 'PATCH', body: { is_handled: v }, successMessage: v ? 'Marked as handled' : 'Reopened' }); await refresh() } catch { /* toast shown by api() */ }
+}
 </script>
 
 <template>
   <section>
-    <AdminHeading eyebrow="Customers" title="Messages & newsletter"><a v-if="tab === 'newsletter'" class="btn-secondary" :href="exportUrl">Export CSV</a></AdminHeading>
+    <AdminHeading eyebrow="Customers" title="Messages & newsletter"><button v-if="tab === 'newsletter'" type="button" class="btn-secondary" @click="exportCsv">Export CSV</button></AdminHeading>
     <div class="mb-4 flex border-b border-border" role="tablist"><button class="tab" :aria-pressed="tab === 'messages'" @click="tab = 'messages'">Contact messages {{ data?.count ?? 0 }}</button><button class="tab" :aria-pressed="tab === 'newsletter'" @click="tab = 'newsletter'">Newsletter {{ subs?.count ?? 0 }}</button></div>
 
     <div v-if="tab === 'messages'" class="grid gap-6 xl:grid-cols-[1fr_420px]">

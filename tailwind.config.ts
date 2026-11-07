@@ -35,8 +35,18 @@ export default <Partial<Config>>{
         tile: Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [String(n), `color-mix(in srgb, var(--tile-${n}) calc(<alpha-value> * 100%), transparent)`])),
         'tile-video': 'var(--tile-video)'
       },
+      // Task 11 (SRS UI-01/UI-02): heading scale in one place, about 18% tighter than before. Body copy stays 16 px,
+      // controls stay 44 px, nothing is below 12 px. Use .h-display / .h-section / .h-card (main.css) or these directly.
+      fontSize: {
+        display: ['36px', { lineHeight: '1.04' }], 'display-lg': ['58px', { lineHeight: '1.02' }],
+        h1: ['34px', { lineHeight: '1.06' }], 'h1-lg': ['48px', { lineHeight: '1.04' }],
+        h2: ['28px', { lineHeight: '1.1' }], 'h2-lg': ['38px', { lineHeight: '1.08' }],
+        h3: ['24px', { lineHeight: '1.15' }], 'h3-lg': ['28px', { lineHeight: '1.15' }],
+        card: ['18px', { lineHeight: '1.2' }], 'card-lg': ['19px', { lineHeight: '1.2' }]
+      },
       fontFamily: {
         display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        // display: ["Hind Siliguri", "sans-serif"],
         sans: ['Jost', 'system-ui', 'sans-serif']
       },
       borderRadius: { DEFAULT: '0', sm: '0', md: '0', lg: '0' },

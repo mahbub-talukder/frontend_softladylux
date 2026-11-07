@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Design: Checkout board. SRS CHK-01..CHK-09, CRT-03/09, §11. Guest or logged-in; the server
 // recomputes every price (CHK-06) and the form keeps what the customer typed on any error (UI-06).
-import type { ApiError } from '~/composables/useApi'
+import type { ApiError } from '~/utils/apiError'
 import type { Address, CustomerOrder } from '~/types/api'
 
 useSeoMeta({ title: 'Checkout', robots: 'noindex' })
@@ -101,7 +101,7 @@ async function place() {
     <form v-if="cart.lines.length" class="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-16" @submit.prevent="place">
       <div class="flex min-w-0 flex-1 flex-col gap-10 md:gap-11">
         <section class="flex flex-col gap-5">
-          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink pb-3.5"><h2 class="font-display text-[28px] md:text-[34px]">Contact &amp; delivery</h2><span class="text-sm text-body">Have an account? <NuxtLink to="/login" class="border-b border-ink">Log in</NuxtLink></span></div>
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Contact &amp; delivery</h2><span class="text-sm text-body">Have an account? <NuxtLink to="/login" class="border-b border-ink">Log in</NuxtLink></span></div>
           <p class="-mt-2 text-sm text-muted">Or just check out as a guest.</p>
           <div v-if="saved.length" class="fld"><label class="sf-lbl" for="sa">Saved address</label><select id="sa" class="sf-inp" @change="useAddress(saved[Number(($event.target as HTMLSelectElement).value)])"><option v-for="(a, i) in saved" :key="a.id" :value="i" :selected="a.is_default">{{ a.label }} — {{ a.address_line }}</option></select></div>
           <div class="grid gap-[18px] sm:grid-cols-2">
@@ -116,7 +116,7 @@ async function place() {
         </section>
 
         <section class="flex flex-col gap-5">
-          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-[28px] md:text-[34px]">Delivery method</h2></div>
+          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Delivery method</h2></div>
           <div class="flex flex-col gap-3" role="group" aria-label="Delivery area">
             <button v-for="a in ([['inside_dhaka', 'Inside Dhaka', s?.delivery_fee_inside_dhaka, s?.delivery_time_inside_dhaka], ['outside_dhaka', 'Outside Dhaka', s?.delivery_fee_outside_dhaka, s?.delivery_time_outside_dhaka]] as const)" :key="a[0]" type="button" class="flex w-full items-center justify-between gap-3.5 border px-[18px] py-5 text-left transition-colors md:px-[22px]" :class="cart.area === a[0] ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="cart.area === a[0]" @click="cart.setArea(a[0])">
               <span class="flex items-center gap-3.5"><span class="h-[18px] w-[18px] flex-none rounded-full border border-ink" :class="cart.area === a[0] ? 'bg-[radial-gradient(var(--color-ink)_0_45%,transparent_50%)]' : ''" /><span><span class="block text-base">{{ a[1] }}</span><span v-if="a[3]" class="mt-0.5 block text-[13.5px] text-muted">{{ a[3] }}</span></span></span>
@@ -127,17 +127,17 @@ async function place() {
         </section>
 
         <section class="flex flex-col gap-5">
-          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-[28px] md:text-[34px]">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash or Nagad and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
+          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash or Nagad and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
           <div class="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" role="group" aria-label="Payment method">
             <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[64px] items-center gap-3.5 border px-[18px] py-5 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().push('add_payment_info', { payment_type: m })">
               <span class="h-[18px] w-[18px] flex-none rounded-full border border-ink" :class="form.payment_method === m ? 'bg-[radial-gradient(var(--color-ink)_0_45%,transparent_50%)]' : ''" />
-              <span class="font-display text-[26px] font-semibold leading-[1.1]">{{ m === 'cod' ? 'Cash on Delivery' : m === 'bkash' ? 'bKash' : 'Nagad' }}</span>
+              <span class="font-display text-h3 font-semibold leading-[1.1]">{{ m === 'cod' ? 'Cash on Delivery' : m === 'bkash' ? 'bKash' : 'Nagad' }}</span>
             </button>
           </div>
           <p v-if="!enabled.length" class="err" role="alert">No payment method is available right now. Please contact us.</p>
           <div v-if="form.payment_method === 'cod'" class="flex flex-col gap-2.5 bg-cream p-6 md:p-7"><div class="sf-lbl">Cash on delivery</div><p class="text-[15px] leading-[1.7] text-body">Pay <b class="font-medium text-ink">{{ taka(total) }}</b> in cash to the courier when your order arrives. No transaction ID is needed. Please keep the exact amount ready.</p></div>
           <div v-if="isMobile" class="flex flex-col gap-[18px] bg-cream p-6 md:p-7">
-            <div class="flex flex-wrap items-baseline justify-between gap-3"><div class="sf-lbl">{{ payName }} merchant number<span v-if="(form.payment_method === 'bkash' ? s?.bkash_account_type : s?.nagad_account_type)" class="ml-2 font-normal normal-case tracking-normal text-muted">({{ form.payment_method === 'bkash' ? s?.bkash_account_type : s?.nagad_account_type }})</span></div><div class="font-display text-[28px] tracking-[0.06em] md:text-[32px]">{{ merchant || '[MERCHANT NUMBER]' }}</div></div>
+            <div class="flex flex-wrap items-baseline justify-between gap-3"><div class="sf-lbl">{{ payName }} merchant number<span v-if="(form.payment_method === 'bkash' ? s?.bkash_account_type : s?.nagad_account_type)" class="ml-2 font-normal normal-case tracking-normal text-muted">({{ form.payment_method === 'bkash' ? s?.bkash_account_type : s?.nagad_account_type }})</span></div><div class="font-display text-h3 tracking-[0.06em] md:text-h3-lg">{{ merchant || '[MERCHANT NUMBER]' }}</div></div>
             <ol class="list-decimal pl-5 text-[15px] leading-[1.8] text-body"><li>Open the {{ payName }} app and choose <b class="font-medium">Payment</b> or <b class="font-medium">Send Money</b>.</li><li>Send <b class="font-medium">{{ taka(total) }}</b> to the number above.</li><li>Enter the sender number and transaction ID below.</li></ol>
             <p v-if="s?.payment_instructions" class="whitespace-pre-line text-[15px] text-body">{{ s.payment_instructions }}</p>
             <div class="grid gap-[18px] sm:grid-cols-2">
@@ -150,7 +150,7 @@ async function place() {
       </div>
 
       <aside class="flex w-full flex-col gap-[22px] border border-border bg-surface p-6 md:p-[34px] lg:sticky lg:top-24 lg:max-w-[480px] lg:flex-1" aria-label="Your order">
-        <h2 class="font-display text-[32px]">Your order</h2>
+        <h2 class="font-display text-h2">Your order</h2>
         <ul class="flex flex-col gap-[18px]">
           <li v-for="l in cart.lines" :key="l.variant" class="flex items-center gap-4">
             <div class="relative w-[72px] flex-none"><StoreTile :src="l.image" :alt="l.name" :tile-key="l.variant" ratio="3/4" :width="72" :height="96" art-width="56%" /><span class="absolute -right-2 -top-2 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-ink text-xs text-bg">{{ l.quantity }}</span></div>
@@ -162,7 +162,7 @@ async function place() {
           <div v-if="discount" class="flex justify-between text-rose-deep"><dt>Coupon {{ cart.check?.coupon?.code }}</dt><dd>− {{ taka(discount) }}</dd></div>
           <div class="flex justify-between"><dt>Delivery</dt><dd>{{ fee !== null ? taka(fee) : 'Choose an area' }}</dd></div>
         </dl>
-        <div class="flex items-baseline justify-between border-t border-ink pt-4"><span class="sf-lbl">Total</span><span class="font-display text-4xl">{{ fee !== null ? taka(total) : '—' }}</span></div>
+        <div class="flex items-baseline justify-between border-t border-ink pt-4"><span class="sf-lbl">Total</span><span class="font-display text-h2">{{ fee !== null ? taka(total) : '—' }}</span></div>
         <ul v-if="lineProblems.length" class="err flex flex-col gap-1" role="alert">
           <li v-for="p in lineProblems" :key="p.variant">{{ nameOf(p.variant) }} {{ issueText[p.issue] ?? 'needs attention' }}. <NuxtLink to="/cart" class="underline">Fix in bag</NuxtLink></li>
         </ul>

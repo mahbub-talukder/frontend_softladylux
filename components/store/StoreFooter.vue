@@ -47,29 +47,29 @@ async function subscribe() {
       </div>
     </div>
 
-    <div class="wrap grid grid-cols-2 gap-x-6 gap-y-8 pb-8 pt-9 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-10 md:pt-11">
+    <div class="wrap grid grid-cols-2 gap-x-6 gap-y-6 pb-6 pt-8 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-8 md:pt-9">
       <div class="col-span-2 flex flex-col gap-3.5 md:col-span-1">
         <div class="font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">{{ words[0] }}<span v-if="words[1]" class="italic text-rose-soft">{{ words[1] }}</span></div>
         <p class="max-w-[330px] text-sm leading-[1.6] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
         <div class="mt-1 flex gap-2.5"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-11 w-11 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
       </div>
-      <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">{{ c.name }}</NuxtLink></nav>
-      <nav class="flex flex-col md:grid md:grid-cols-2 md:content-start md:gap-x-6" aria-label="Help"><div class="mb-2 md:col-span-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
-        <NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Size chart</NuxtLink><NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Size calculator</NuxtLink><NuxtLink to="/track" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Track my order</NuxtLink><NuxtLink to="/wishlist" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Wishlist</NuxtLink><NuxtLink to="/login" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Login / Register</NuxtLink><NuxtLink to="/contact" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">Contact us</NuxtLink>
-        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="text-sm leading-normal transition-colors hover:text-white inline-block py-[3px]">{{ p.title }}</NuxtLink>
+      <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">{{ c.name }}</NuxtLink></nav>
+      <nav class="flex flex-col md:grid md:grid-cols-2 md:content-start md:gap-x-6" aria-label="Help"><div class="mb-2 md:col-span-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
+        <NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Size chart</NuxtLink><NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Size calculator</NuxtLink><NuxtLink to="/track" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Track my order</NuxtLink><NuxtLink to="/wishlist" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Wishlist</NuxtLink><NuxtLink to="/login" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Login / Register</NuxtLink><NuxtLink to="/contact" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Contact us</NuxtLink>
+        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">{{ p.title }}</NuxtLink>
       </nav>
-      <address class="col-span-2 flex flex-col gap-1 text-sm not-italic md:col-span-1"><div class="mb-2 text-[11.5px] font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
+      <address class="col-span-2 flex flex-col gap-1 text-sm not-italic md:col-span-1"><div class="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
         <span class="leading-[1.6]">{{ ph(s?.address_line1, 'STORE ADDRESS') }}<template v-if="s?.address_line2">, {{ s.address_line2 }}</template><br>{{ ph(s?.city, 'CITY') }}, {{ s?.country || 'Bangladesh' }}</span>
         <span class="mt-1">{{ s?.support_phones?.length ? s.support_phones.join(', ') : '[PHONE NUMBER]' }}</span><span>{{ ph(s?.support_email, 'EMAIL ADDRESS') }}</span>
         <span class="mt-1">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
-        <span class="mt-1.5 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="min-h-6 border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="min-h-6 border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
+        <span class="mt-1.5 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
       </address>
     </div>
 
     <div class="border-t border-line-dark">
-      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4 text-[13px] text-text-dark-3">
-        <span>{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
-        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
+      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-2 text-[13px] text-text-dark-3">
+        <span class="py-2">{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
+        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </div>
     </div>
   </footer>

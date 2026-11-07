@@ -12,7 +12,7 @@ useSeoMeta({ title: () => page.value?.title })
 
 <template>
   <article v-if="page" class="mx-auto max-w-2xl">
-    <h1 class="text-4xl">{{ page.title }}</h1>
+    <h1 class="text-h2">{{ page.title }}</h1>
     <!-- eslint-disable-next-line vue/no-v-html -->
     <div class="mt-4 leading-relaxed" v-html="page.body" />
     <p v-if="!page.body" class="hint mt-4">[PAGE CONTENT — the owner adds this in Admin → Website content → Static pages]</p>

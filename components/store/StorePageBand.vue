@@ -5,9 +5,9 @@ defineProps<{ eyebrow?: string; title: string; blurb?: string }>()
 
 <template>
   <section class="border-b border-border bg-cream">
-    <div class="wrap flex flex-col gap-3.5 py-10 md:py-14">
+    <div class="wrap flex flex-col gap-3.5 py-8 md:py-11">
       <div v-if="eyebrow" class="eyebrow">{{ eyebrow }}</div>
-      <h1 class="font-display text-[42px] leading-none md:text-[64px]">{{ title }}</h1>
+      <h1 class="font-display text-h1 leading-none md:text-h1-lg">{{ title }}</h1>
       <p v-if="blurb" class="max-w-[600px] text-base leading-[1.65] text-body md:text-[17px]">{{ blurb }}</p>
     </div>
   </section>

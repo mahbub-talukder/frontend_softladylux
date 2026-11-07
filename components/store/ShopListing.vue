@@ -66,10 +66,10 @@ watch(() => data.value?.results, (r) => {
     <!-- Banner band (Listing board) -->
     <section class="border-b border-border bg-cream">
       <div class="wrap flex flex-col gap-2.5 py-8 md:gap-3 md:py-11">
-        <nav v-if="crumbs" class="text-[13px] text-muted" aria-label="Breadcrumb">
-          <template v-for="(c, i) in crumbs" :key="c.name"><NuxtLink v-if="c.to" :to="c.to" class="transition-colors hover:text-ink">{{ c.name }}</NuxtLink><span v-else class="text-ink">{{ c.name }}</span><span v-if="i < crumbs.length - 1" class="px-2">/</span></template>
+        <nav v-if="crumbs" class="flex flex-wrap items-center text-[13px] text-muted" aria-label="Breadcrumb">
+          <template v-for="(c, i) in crumbs" :key="c.name"><NuxtLink v-if="c.to" :to="c.to" class="inline-flex min-h-11 min-w-11 items-center justify-center transition-colors hover:text-ink">{{ c.name }}</NuxtLink><span v-else class="text-ink">{{ c.name }}</span><span v-if="i < crumbs.length - 1" class="px-0.5">/</span></template>
         </nav>
-        <h1 class="font-display text-[40px] leading-none md:text-[56px]">{{ title }}</h1>
+        <h1 class="font-display text-h1 leading-none md:text-h1-lg">{{ title }}</h1>
         <p class="max-w-[560px] text-[15px] leading-relaxed text-body md:text-base">{{ blurb || 'Filter by sub-category, size, colour and price to find exactly what you need.' }}</p>
       </div>
     </section>
@@ -77,7 +77,7 @@ watch(() => data.value?.results, (r) => {
     <div class="wrap flex flex-col gap-6 pb-16 pt-6 lg:flex-row lg:items-start lg:gap-14 lg:pb-24 lg:pt-12">
       <!-- Mobile: sticky filter + sort bar -->
       <div class="sticky top-0 z-20 -mx-5 flex gap-3 border-b border-border bg-bg px-5 py-3 md:-mx-10 md:px-10 lg:hidden">
-        <button class="btn-secondary !h-11 flex-1 !px-4" aria-haspopup="dialog" @click="drawer = true">Filters<span v-if="chipList.length" class="ml-2 bg-ink px-1.5 text-[11px] text-bg">{{ chipList.length }}</span></button>
+        <button class="btn-secondary !h-11 flex-1 !px-4" aria-haspopup="dialog" @click="drawer = true">Filters<span v-if="chipList.length" class="ml-2 bg-ink px-1.5 text-xs text-bg">{{ chipList.length }}</span></button>
         <label class="sr-only" for="sort-m">Sort by</label>
         <select id="sort-m" class="sf-inp !h-11 flex-1 !text-sm" :value="filters.sort" @change="update({ sort: ($event.target as HTMLSelectElement).value as Filters['sort'] })">
           <option value="featured">Featured</option><option value="newest">Newest</option>
@@ -93,15 +93,15 @@ watch(() => data.value?.results, (r) => {
         @keydown.esc="drawer = false"
       >
         <div class="flex items-baseline justify-between border-b border-ink pb-4">
-          <h2 class="font-display text-[28px]">Filters</h2>
+          <h2 class="font-display text-h3">Filters</h2>
           <span class="flex items-center gap-5">
-            <button class="py-2 text-xs font-medium uppercase tracking-[0.14em] text-accent" @click="clearAll">Clear all</button>
+            <button class="min-h-11 text-xs font-medium uppercase tracking-[0.14em] text-accent" @click="clearAll">Clear all</button>
             <button class="flex h-11 w-11 items-center justify-center text-2xl lg:hidden" aria-label="Close filters" @click="drawer = false">×</button>
           </span>
         </div>
 
         <div v-if="showSubs || showCats" role="group" class="border-b border-border py-6">
-          <div class="mb-4 text-[11.5px] font-semibold uppercase tracking-[0.2em]">{{ showSubs ? 'Sub-category' : 'Category' }}</div>
+          <div class="mb-4 text-xs font-semibold uppercase tracking-[0.2em]">{{ showSubs ? 'Sub-category' : 'Category' }}</div>
           <label v-for="s in (showSubs ? facets!.subcategories : facets!.categories)" :key="s.slug" class="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
             <input type="checkbox" class="peer sr-only" :checked="(showSubs ? filters.sub : filters.category).includes(s.slug)" @change="showSubs ? update({ sub: toggleIn(filters.sub, s.slug) }) : update({ category: toggleIn(filters.category, s.slug) })">
             <span class="flex h-5 w-5 flex-none items-center justify-center border border-text-dark-3 text-[13px] text-bg peer-checked:border-ink peer-checked:bg-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent" aria-hidden="true"><span v-if="(showSubs ? filters.sub : filters.category).includes(s.slug)">✓</span></span>
@@ -110,14 +110,14 @@ watch(() => data.value?.results, (r) => {
         </div>
 
         <div v-if="facets?.sizes.length" role="group" class="border-b border-border py-6">
-          <div class="mb-4 text-[11.5px] font-semibold uppercase tracking-[0.2em]">Size</div>
+          <div class="mb-4 text-xs font-semibold uppercase tracking-[0.2em]">Size</div>
           <div class="flex flex-wrap gap-2">
             <button v-for="z in facets.sizes" :key="z" type="button" class="chip-size !h-11 !min-w-12 !text-sm" :aria-pressed="filters.size.includes(z)" @click="update({ size: toggleIn(filters.size, z) })">{{ z }}</button>
           </div>
         </div>
 
         <div v-if="facets?.colours.length" role="group" class="border-b border-border py-6">
-          <div class="mb-3 text-[11.5px] font-semibold uppercase tracking-[0.2em]">Colour</div>
+          <div class="mb-3 text-xs font-semibold uppercase tracking-[0.2em]">Colour</div>
           <div class="flex flex-wrap gap-x-3.5 gap-y-1.5">
             <button v-for="c in facets.colours" :key="c.name" type="button" :title="c.name" :aria-label="c.name" class="flex h-11 w-11 items-center justify-center" :aria-pressed="filters.colour.includes(c.name)" @click="update({ colour: toggleIn(filters.colour, c.name) })">
               <span class="h-7 w-7 rounded-full transition-shadow" :class="filters.colour.includes(c.name) ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : 'ring-1 ring-ink/25'" :style="{ backgroundColor: c.hex }" />
@@ -127,7 +127,7 @@ watch(() => data.value?.results, (r) => {
         </div>
 
         <div v-if="facets?.collections.length" role="group" class="border-b border-border py-6">
-          <div class="mb-4 text-[11.5px] font-semibold uppercase tracking-[0.2em]">Collection</div>
+          <div class="mb-4 text-xs font-semibold uppercase tracking-[0.2em]">Collection</div>
           <label v-for="c in facets.collections" :key="c" class="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
             <input type="checkbox" class="peer sr-only" :checked="filters.collection.includes(c)" @change="update({ collection: toggleIn(filters.collection, c) })">
             <span class="flex h-5 w-5 flex-none items-center justify-center border border-text-dark-3 text-[13px] text-bg peer-checked:border-ink peer-checked:bg-ink peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent" aria-hidden="true"><span v-if="filters.collection.includes(c)">✓</span></span>
@@ -136,7 +136,7 @@ watch(() => data.value?.results, (r) => {
         </div>
 
         <div v-if="priceMax > priceMin" class="py-6">
-          <label for="pr" class="mb-4 block text-[11.5px] font-semibold uppercase tracking-[0.2em]">Price up to</label>
+          <label for="pr" class="mb-4 block text-xs font-semibold uppercase tracking-[0.2em]">Price up to</label>
           <input id="pr" type="range" class="w-full accent-accent" :min="priceMin" :max="priceMax" :value="filters.priceMax ?? priceMax" @change="update({ priceMax: Number(($event.target as HTMLInputElement).value) >= priceMax ? null : Number(($event.target as HTMLInputElement).value) })">
           <div class="mt-1.5 flex justify-between text-sm"><span class="text-muted">{{ taka(priceMin) }}</span><b class="font-medium">{{ taka(filters.priceMax ?? priceMax) }}</b></div>
         </div>
@@ -167,7 +167,7 @@ watch(() => data.value?.results, (r) => {
         <div v-if="error" class="err" role="alert">We couldn’t load products. <button class="underline" @click="() => refresh()">Try again</button></div>
         <div v-else-if="pending && !items.length" class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6" aria-busy="true"><div v-for="n in 8" :key="n" class="skeleton aspect-[4/5]" /></div>
         <div v-else-if="!items.length" class="flex flex-col items-center gap-3.5 bg-cream px-5 py-20 text-center">
-          <h3 class="font-display text-[28px] md:text-[32px]">Nothing matches these filters</h3><p class="text-body">Try removing a size or colour.</p>
+          <h3 class="font-display text-h3 md:text-h3-lg">Nothing matches these filters</h3><p class="text-body">Try removing a size or colour.</p>
           <button class="btn" @click="clearAll">Clear all filters</button>
         </div>
         <div v-else class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 md:gap-y-10">

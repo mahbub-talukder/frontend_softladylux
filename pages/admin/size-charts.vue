@@ -6,18 +6,20 @@ import type { Dict } from '~/types/api'
 definePageMeta({ layout: 'admin', permission: 'products.view' })
 const auth = useAuthStore()
 const canEdit = computed(() => auth.can('products.manage'))
-const { api, errorOf } = useApi()
+const { api, errorOf, toast } = useApi()
 const charts = ref<Dict[]>([])
 const id = ref<number | null>(null)
 const rows = ref<Dict>({})
 const error = ref('')
 const message = ref('')
+const showProblems = ref(false)
+const busy = ref(false)
 
 const current = computed(() => charts.value.find((c) => c.id === id.value))
 function pick(c: Dict | undefined) {
   id.value = c?.id ?? null
   rows.value = c ? JSON.parse(JSON.stringify(c.rows)) : {}
-  error.value = ''; message.value = ''
+  error.value = ''; message.value = ''; showProblems.value = false
 }
 async function load() {
   charts.value = await api<Dict[]>('/admin/size-charts/')
@@ -41,15 +43,46 @@ function clean(): Dict {
   }
   return r
 }
+// CAT-08 / UI-06: mirror of the server's chart rules, shown as one list so every problem is visible before saving:
+// every range is 0 < from <= to, labels are filled in, and rows run from smallest to largest.
+const problems = computed<string[]>(() => {
+  const out: string[] = []
+  const r = rows.value
+  const good = (a: unknown, b: unknown) => { const x = num(a), y = num(b); return !Number.isNaN(x) && !Number.isNaN(y) && x > 0 && x <= y }
+  if (current.value?.type === 'bra') {
+    if (!r.bands?.length) out.push('Add at least one band.')
+    ;(r.bands ?? []).forEach((b: Dict, i: number) => {
+      if (!Number.isInteger(num(b.size)) || num(b.size) <= 0) out.push(`Band row ${i + 1}: enter the band size (e.g. 34).`)
+      if (!good(b.min, b.max)) out.push(`Band ${b.size || i + 1}: "from" must be above 0 and not more than "to".`)
+    })
+    if (!r.cups?.length) out.push('Add at least one cup.')
+    ;(r.cups ?? []).forEach((c: Dict, i: number) => {
+      if (!String(c.cup ?? '').trim()) out.push(`Cup row ${i + 1}: enter the cup letter.`)
+      if (!good(c.min, c.max)) out.push(`Cup ${String(c.cup || i + 1).toUpperCase()}: "from" must be above 0 and not more than "to".`)
+      if (i && num(c.max) < num(r.cups[i - 1].max)) out.push(`Cup ${String(c.cup || i + 1).toUpperCase()}: keep cups ordered from smallest to largest.`)
+    })
+  } else if (current.value) {
+    if (!r.rows?.length) out.push('Add at least one size.')
+    ;(r.rows ?? []).forEach((x: Dict, i: number) => {
+      const name = String(x.size ?? '').trim() || `row ${i + 1}`
+      if (!String(x.size ?? '').trim()) out.push(`Row ${i + 1}: enter the size label.`)
+      for (const k of ['bust', 'waist', 'hip']) if (!good(x[k][0], x[k][1])) out.push(`${name}: ${k} "from" must be above 0 and not more than "to".`)
+      if (i && num(x.hip[1]) < num(r.rows[i - 1].hip[1])) out.push(`${name}: keep sizes ordered from smallest to largest hip.`)
+    })
+  }
+  return out
+})
 async function save() {
-  error.value = ''; message.value = ''
+  error.value = ''; message.value = ''; showProblems.value = true
+  if (problems.value.length) { toast.error('Please fix the size chart', problems.value.slice(0, 3)); return }
+  busy.value = true
   try {
-    await api(`/admin/size-charts/${id.value}/`, { method: 'PATCH', body: { rows: clean() } })
-    message.value = 'Saved. The size guide now uses these values.'; await load()
+    await api(`/admin/size-charts/${id.value}/`, { method: 'PATCH', body: { rows: clean() }, successMessage: 'Size chart saved', toast: true })
+    message.value = 'Saved. The size guide now uses these values.'; showProblems.value = false; await load()
   } catch (e) {
     const er = errorOf(e)
-    error.value = Object.values(er.fields).flat().join(' ') || er.message
-  }
+    error.value = er.flat.join(' ')
+  } finally { busy.value = false }
 }
 </script>
 
@@ -57,12 +90,12 @@ async function save() {
   <section>
     <AdminHeading eyebrow="Catalogue" title="Size charts">
       <NuxtLink to="/size-guide" class="btn-secondary" target="_blank">Preview size guide</NuxtLink>
-      <button v-if="canEdit" class="btn" data-track="size_chart_save" @click="save">Save chart</button>
+      <button v-if="canEdit" class="btn btn-spin" :disabled="busy" :aria-busy="busy" data-track="size_chart_save" @click="save">Save chart</button>
     </AdminHeading>
     <div class="mb-4 flex border-b border-border" role="tablist">
       <button v-for="c in charts" :key="c.id" class="tab" :aria-pressed="c.id === id" @click="pick(c)">{{ c.name }}</button>
     </div>
-    <p class="hint mb-4 max-w-2xl">All measurements are in centimetres. The calculator picks the band from the under-bust measurement and the cup from the bust minus under-bust difference, using these ranges. Keep rows ordered from smallest to largest.</p>
+    <p class="hint mb-4 max-w-2xl">All fields on this page are required. All measurements are in centimetres. The calculator picks the band from the under-bust measurement and the cup from the bust minus under-bust difference, using these ranges. Keep rows ordered from smallest to largest.</p>
 
     <div v-if="current?.type === 'bra'" class="grid max-w-3xl gap-6 md:grid-cols-2">
       <fieldset class="card" :disabled="!canEdit">
@@ -105,6 +138,7 @@ async function save() {
       <button type="button" class="btn-secondary self-start" @click="addSize">+ Add size</button>
     </fieldset>
 
+    <ul v-if="showProblems && problems.length" class="err mt-4 list-disc pl-5" role="alert" aria-label="Problems to fix"><li v-for="m in problems" :key="m">{{ m }}</li></ul>
     <p v-if="error" class="err mt-4" role="alert">{{ error }}</p>
     <p v-if="message" class="hint mt-4" role="status">{{ message }}</p>
   </section>

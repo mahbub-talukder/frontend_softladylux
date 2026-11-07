@@ -14,29 +14,46 @@
 @layer components {
   /* Buttons: square corners, 1px border, 48px high, hover shifts to the accent (rosewood in Signature) */
   .btn {
-    @apply inline-flex h-12 items-center justify-center gap-2.5 border border-primary bg-primary px-[30px] text-xs font-medium uppercase tracking-[0.16em] text-primary-contrast transition-colors duration-200 hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex h-11 items-center justify-center gap-2.5 border border-primary bg-primary px-[30px] text-xs font-medium uppercase tracking-[0.16em] text-primary-contrast transition-colors duration-200 hover:border-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary, .btn-o {
-    @apply inline-flex h-12 items-center justify-center gap-2.5 border border-primary bg-transparent px-[30px] text-xs font-medium uppercase tracking-[0.16em] text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-contrast disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex h-11 items-center justify-center gap-2.5 border border-primary bg-transparent px-[30px] text-xs font-medium uppercase tracking-[0.16em] text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-contrast disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-light { @apply border-bg bg-bg text-ink hover:border-accent hover:bg-accent hover:text-primary-contrast; }
-  .eyebrow { @apply text-[11.5px] font-medium uppercase tracking-[0.22em] text-gold; }
-  .lnk { @apply border-b border-current pb-0.5 text-xs font-medium uppercase tracking-[0.16em]; }
-  .arrow-btn { @apply inline-flex h-12 w-12 items-center justify-center border border-primary bg-transparent text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-contrast disabled:opacity-40; }
+  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.22em] text-gold; }
+  /* 44 px tall hit area (UI-02); the underline is a text decoration so the box can grow without moving it */
+  .lnk { @apply inline-flex min-h-touch items-center text-xs font-medium uppercase tracking-[0.16em] underline decoration-1 underline-offset-[6px]; }
+  /* Task 11 heading scale (tokens in tailwind.config.ts). Headings only; body copy stays 16 px. */
+  .h-display { @apply text-display md:text-display-lg; }
+  .h-page { @apply text-h1 md:text-h1-lg; }
+  .h-section { @apply text-h2 md:text-h2-lg; }
+  .h-sub { @apply text-h3 md:text-h3-lg; }
+  .h-card { @apply text-card md:text-card-lg; }
+  /* Task 2 (WEB-09): non-hero photos fill a fixed box from the centre */
+  .media-cover { object-fit: cover; object-position: center; }
+  /* Task 10 (CAT-12): hover only reveals the bar on mouse devices; touch devices get .qa-touch instead */
+  .qa-touch { display: flex; }
+  .qa-bar { display: none; }
+  @media (hover: hover) and (pointer: fine) {
+    .qa-touch { display: none; }
+    .qa-bar { display: block; transform: translateY(100%); transition: transform 350ms ease-out; }
+    .group:hover .qa-bar, .group:focus-within .qa-bar { transform: translateY(0); }
+  }
+  .arrow-btn { @apply inline-flex h-11 w-11 items-center justify-center border border-primary bg-transparent text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-contrast disabled:opacity-40; }
   /* Page container: 1320px content, 40px gutters (DesignSystem "Grid") */
   .wrap { @apply mx-auto w-full max-w-wrap px-5 md:px-10; }
-  .section { @apply py-12 md:py-24; }
+  .section { @apply py-9 md:py-[72px]; }
   /* Storefront fields: 52px, field-colour border, surface fill */
-  .sf-inp { @apply box-border h-[52px] w-full border border-field bg-surface px-4 text-[15.5px] text-ink placeholder:text-muted; }
+  .sf-inp { @apply box-border h-[52px] w-full border border-field bg-surface px-4 text-base text-ink placeholder:text-muted; }
   textarea.sf-inp { @apply h-auto min-h-[150px] py-3.5; }
   .sf-lbl { @apply text-xs font-semibold uppercase tracking-[0.16em]; }
   /* Order stage chip (Account board): data-stage = draft | confirmed | shipping | delivered | cancelled | returned */
-  .stage { @apply inline-block whitespace-nowrap px-2.5 py-[5px] text-[11px] font-semibold uppercase tracking-[0.14em]; color: var(--stage-draft-fg); background: var(--stage-draft-bg); }
+  .stage { @apply inline-block whitespace-nowrap px-2.5 py-[5px] text-xs font-semibold uppercase tracking-[0.14em]; color: var(--stage-draft-fg); background: var(--stage-draft-bg); }
   .stage[data-stage='confirmed'] { color: var(--stage-confirmed-fg); background: var(--stage-confirmed-bg); }
   .stage[data-stage='shipping'] { color: var(--stage-shipping-fg); background: var(--stage-shipping-bg); }
   .stage[data-stage='delivered'] { color: var(--stage-delivered-fg); background: var(--stage-delivered-bg); }
   .stage[data-stage='cancelled'], .stage[data-stage='returned'] { color: var(--stage-cancelled-fg); background: var(--stage-cancelled-bg); }
-  .chip-size { @apply inline-flex h-12 min-w-[54px] items-center justify-center border border-field bg-surface px-3 text-[15px] transition-colors hover:border-primary; }
+  .chip-size { @apply inline-flex h-11 min-w-[54px] items-center justify-center border border-field bg-surface px-3 text-[15px] transition-colors hover:border-primary; }
   .chip-size[aria-pressed='true'] { @apply border-primary bg-primary text-primary-contrast; }
   .chip-size:disabled { @apply text-muted line-through opacity-60; }
   .skeleton { @apply animate-pulse bg-cream; }
@@ -50,7 +67,7 @@
   .card-sf { @apply flex flex-col gap-5 border border-border bg-surface p-7; }
   .cap { @apply text-[11.5px] font-semibold uppercase tracking-[0.16em] text-muted; }
   .fld { @apply flex flex-col gap-2; }
-  .fld > label { @apply text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink; }
+  .fld > label { @apply text-xs font-semibold uppercase tracking-[0.14em] text-ink; }
   .inp { @apply box-border h-[46px] w-full border border-border bg-surface px-3.5 text-[14.5px] text-ink; }
   textarea.inp { @apply h-auto min-h-[96px] py-3; }
   .hint { @apply text-[13px] text-muted; }
@@ -117,3 +134,19 @@
 .admin-main .switch[aria-checked='true'] { background: var(--color-gold); }
 .admin-main .switch::after { top: 2px; left: 2px; width: 18px; height: 18px; background: var(--color-surface); }
 .admin-main .switch[aria-checked='true']::after { transform: translateX(18px); background: var(--color-surface); }
+
+/* Announcement marquee (storefront header). The track is two identical sets; moving it by -50% loops seamlessly. */
+.marquee { overflow: hidden; white-space: nowrap; }
+.marquee-track { display: flex; width: max-content; animation: sl-marquee var(--marquee-secs, 30s) linear infinite; }
+.marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+.marquee-set { display: flex; flex: none; align-items: center; justify-content: space-around; min-width: 100vw; }
+.marquee-item { display: inline-flex; min-height: 2.75rem; align-items: center; padding: 0 1.5rem; }
+.marquee-dot { font-size: 8px; opacity: 0.6; }
+@keyframes sl-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .marquee { text-align: center; }
+  .marquee-track { animation: none; width: auto; justify-content: center; }
+  .marquee-set:nth-child(2), .marquee-dot { display: none; }
+  .marquee-set { flex-wrap: wrap; justify-content: center; }
+  .marquee-item { white-space: normal; }
+}

@@ -2,8 +2,12 @@
  * SRS THM-01/THM-03/THM-04/THM-13, UI-09. THE ONLY FILE that may contain raw colour values (THM-01, THM-05).
  * Defaults = "Signature" palette (THM-13). At render time the server overrides the
  * primary/accent/derived tokens from the published palette (THM-06).
+ *
+ * The defaults sit in :where(:root) (ZERO specificity) so the server-injected `:root{...}` theme block always wins,
+ * whatever order the <style>/<link> tags end up in. Without this the defaults, loaded later with the same
+ * specificity, silently overrode every saved theme.
  */
-:root {
+:where(:root) {
   /* palette-driven */
   --color-primary: #231e1c;
   --color-primary-hover: #8c5550;
@@ -58,4 +62,15 @@
   --status-delivered-bg: #dee9da;
   --status-closed-fg: #5b514b;
   --status-closed-bg: #e8e2d9;
+}
+
+/*
+ * The admin portal keeps the Signature neutrals (owner decision): a storefront Background/Text colour must not repaint it.
+ * Set on an element, these beat the inherited :root values; primary/accent still follow the theme (THM-05).
+ */
+.admin-scope {
+  --color-bg: #f8f4ec; --color-surface: #fffdf9; --color-cream: #f0e8db; --color-border: #e3d9c9;
+  --color-ink: #231e1c; --color-muted: #6e625b; --color-field: #d8ccb9; --color-body: #4a413d; --color-gold: #7c6036;
+  --tile-1: #e9dccb; --tile-2: #e6d2ca; --tile-3: #dcd2c3; --tile-4: #e2d6c6;
+  --tile-5: #ebd7d0; --tile-6: #e3dacb; --tile-7: #dfd1c0; --tile-8: #e8d6cd;
 }

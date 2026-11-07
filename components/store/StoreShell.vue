@@ -7,6 +7,9 @@ defineProps<{ bleed?: boolean }>()
 const { data: s } = await useSiteSettings()
 const url = useRequestURL()
 const route = useRoute()
+const sizeFinder = useSizeFinder()
+// A page change closes the dialog (e.g. "Shop in 32B" from inside it).
+watch(() => route.fullPath, () => sizeFinder.hide())
 // Read once in setup: composables like useRuntimeConfig() must not run lazily inside computed().
 const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', ''))
 useHead({
@@ -24,9 +27,11 @@ useSeoMeta({
   <div class="min-h-screen bg-bg text-ink">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-surface focus:p-3">Skip to content</a>
     <StoreHeader />
-    <main id="main" tabindex="-1" class="pb-20 outline-none sm:pb-0" :class="bleed ? '' : 'wrap py-8 md:py-12'"><slot /></main>
+    <main id="main" tabindex="-1" class="pb-20 outline-none sm:pb-0" :class="bleed ? '' : 'wrap py-6 md:py-9'"><slot /></main>
     <StoreFooter />
+    <ClientOnly><StoreFloatingCart /></ClientOnly> <!-- cart lives in localStorage: client-only avoids a hydration mismatch -->
     <StoreBottomNav />
     <StoreCookieBanner />
+    <StoreSizeModal v-if="sizeFinder.open.value" @close="sizeFinder.hide()" />
   </div>
 </template>

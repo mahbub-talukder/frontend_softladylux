@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // A product/category/hero image area: the uploaded photo when there is one, otherwise the canvas's
 // tinted tile with garment line art. Fixed aspect ratio, so nothing shifts while images load (UI-05).
+// Task 2 (WEB-09): non-hero images stay <img> with object-fit: cover, so lazy loading, srcset and alt text
+// keep working; the box (not the upload) sets the size. The hero uses a CSS background instead (HomeHero).
 import { artKind, tileClass } from '~/utils/tiles'
 
 const props = withDefaults(defineProps<{
@@ -12,7 +14,7 @@ const cls = computed(() => props.tint || tileClass(props.tileKey))
 
 <template>
   <div class="relative overflow-hidden" :class="cls" :style="{ aspectRatio: ratio }">
-    <NuxtImg v-if="src" format="webp" :src="mediaSrc(src)" :alt="alt" :width="width" :height="height" :sizes="sizes" :loading="eager ? 'eager' : 'lazy'" class="absolute inset-0 h-full w-full object-cover" />
+    <NuxtImg v-if="src" format="webp" :src="mediaSrc(src)" :alt="alt" :width="width" :height="height" :sizes="sizes" :loading="eager ? 'eager' : 'lazy'" class="media-cover absolute inset-0 h-full w-full" />
     <div v-else class="absolute inset-0 flex items-center justify-center text-gold" aria-hidden="true">
       <div :style="{ width: artWidth }" class="transition-transform duration-[600ms] group-hover:scale-[1.06]"><StoreArt :kind="artKind(category)" /></div>
     </div>

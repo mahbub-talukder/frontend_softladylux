@@ -38,7 +38,7 @@ watch(() => customer.wishIds.length, () => { items.value = items.value.filter((p
       </p>
       <div v-if="loading" class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-x-6" aria-busy="true"><div v-for="n in 4" :key="n" class="skeleton aspect-[4/5]" /></div>
       <div v-else-if="!items.length" class="flex flex-col items-center gap-3.5 bg-cream px-5 py-20 text-center">
-        <h2 class="font-display text-[28px] md:text-[34px]">Your wishlist is empty</h2><p class="text-body">Tap the heart on any product to save it here.</p>
+        <h2 class="font-display text-h3 md:text-h3-lg">Your wishlist is empty</h2><p class="text-body">Tap the heart on any product to save it here.</p>
         <NuxtLink to="/shop/new" class="btn">Browse new arrivals</NuxtLink>
       </div>
       <div v-else class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 md:gap-y-10 lg:grid-cols-4">

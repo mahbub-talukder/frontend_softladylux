@@ -8,28 +8,28 @@ definePageMeta({ layout: 'admin', permission: 'website.manage' })
 const LINK_TYPES = ['url', 'category', 'product']
 const TABS: { id: string; label: string; endpoint: string; titleKey: string; canCreate: boolean; canDelete: boolean; note?: string; fields: FieldDef[]; defaults?: Record<string, unknown> }[] = [
   { id: 'carousel', label: 'Carousel', endpoint: '/admin/website/carousel/', titleKey: 'heading', canCreate: true, canDelete: true,
-    note: 'Up to 8 slides can be on at once. Recommended image size 1600 × 900 px (mobile crop 800 × 1000 px, optional).',
+    note: 'Up to 8 slides can be on at once. Recommended 1600 × 900 px (desktop) and 800 × 1000 px (mobile, optional). The picture fills a fixed box and is cropped from the centre, so keep the subject in the middle.',
     defaults: { link_type: 'url' }, fields: [
-      { key: 'media', label: 'Image', type: 'media', kind: 'carousel', hint: '1600 × 900 px' },
-      { key: 'mobile_media', label: 'Mobile image (optional)', type: 'media', kind: 'carousel', hint: '800 × 1000 px' },
-      { key: 'eyebrow', label: 'Eyebrow text' }, { key: 'heading', label: 'Heading' }, { key: 'subtext', label: 'Sub-text' },
-      { key: 'button_label', label: 'Button label' }, { key: 'link_type', label: 'Link type', type: 'select', options: LINK_TYPES },
-      { key: 'link_value', label: 'Link target (slug or URL)' }] },
+      { key: 'media', label: 'Image', type: 'media', kind: 'carousel', hint: '1600 × 900 px, centre stays visible', required: true },
+      { key: 'mobile_media', label: 'Mobile image (optional)', type: 'media', kind: 'carousel', hint: '800 × 1000 px, phones only' },
+      { key: 'eyebrow', label: 'Eyebrow text', max: 80 }, { key: 'heading', label: 'Heading', max: 120 }, { key: 'subtext', label: 'Sub-text', max: 240 },
+      { key: 'button_label', label: 'Button label', max: 40 }, { key: 'link_type', label: 'Link type', type: 'select', options: LINK_TYPES },
+      { key: 'link_value', label: 'Link target (slug or URL)', max: 300 }] },
   { id: 'banners', label: 'Banners', endpoint: '/admin/website/banners/', titleKey: 'placement', canCreate: false, canDelete: false,
     note: 'Two fixed placements: home promo and home offer.', fields: [
       { key: 'media', label: 'Image', type: 'media', kind: 'banner', hint: '1200 × 600 px' },
-      { key: 'heading', label: 'Heading' }, { key: 'text', label: 'Text' }, { key: 'link', label: 'Link' }] },
+      { key: 'heading', label: 'Heading', max: 120 }, { key: 'text', label: 'Text', max: 240 }, { key: 'link', label: 'Link', max: 300 }] },
   { id: 'videos', label: 'Videos', endpoint: '/admin/website/videos/', titleKey: 'title', canCreate: true, canDelete: true,
-    note: 'Paste a YouTube, Facebook or direct video link.', fields: [
-      { key: 'title', label: 'Title' }, { key: 'url', label: 'Video URL' },
-      { key: 'thumbnail', label: 'Thumbnail', type: 'media', kind: 'video_thumb', hint: '640 × 360 px' }] },
+    note: 'Paste a YouTube, Vimeo or direct video link (.mp4/.webm). It plays in place on the home page. Other links open in the same tab.', fields: [
+      { key: 'title', label: 'Title', required: true, max: 120 }, { key: 'url', label: 'Video URL', required: true, url: true, max: 200 },
+      { key: 'thumbnail', label: 'Thumbnail', type: 'media', kind: 'video_thumb', hint: 'Optional, 640 × 360 px. YouTube videos use their own thumbnail when this is empty.' }] },
   { id: 'announcements', label: 'Announcement bar', endpoint: '/admin/website/announcements/', titleKey: 'text', canCreate: true, canDelete: true,
-    fields: [{ key: 'text', label: 'Message' }, { key: 'link', label: 'Link (optional)' }] },
+    fields: [{ key: 'text', label: 'Message', required: true, max: 200 }, { key: 'link', label: 'Link (optional)', max: 300 }] },
   { id: 'trust', label: 'Trust strip', endpoint: '/admin/website/trust/', titleKey: 'title', canCreate: true, canDelete: true,
-    fields: [{ key: 'icon', label: 'Icon name' }, { key: 'title', label: 'Title' }, { key: 'text', label: 'Text' }] },
+    fields: [{ key: 'icon', label: 'Icon name', max: 40 }, { key: 'title', label: 'Title', required: true, max: 80 }, { key: 'text', label: 'Text', max: 200 }] },
   { id: 'pages', label: 'Static pages', endpoint: '/admin/website/pages/', titleKey: 'title', canCreate: false, canDelete: false,
     note: 'About, Delivery & Returns, Privacy and Terms. They are shown in the footer.', fields: [
-      { key: 'title', label: 'Title' }, { key: 'body', label: 'Content (HTML)', type: 'textarea' }] }
+      { key: 'title', label: 'Title', required: true, max: 120 }, { key: 'body', label: 'Content (HTML)', type: 'textarea' }] }
 ]
 const tab = ref(TABS[0].id)
 const current = computed(() => TABS.find((t) => t.id === tab.value))
@@ -44,7 +44,7 @@ async function toggleSection(s: { key: string; on: boolean }) {
   sectionMsg.value = ''; sectionErr.value = ''
   const next = !s.on
   s.on = next
-  try { sections.value = await api('/admin/website/home-sections/', { method: 'PUT', body: { [s.key]: next } }); sectionMsg.value = 'Saved. The storefront updates within a minute.' }
+  try { sections.value = await api('/admin/website/home-sections/', { method: 'PUT', body: { [s.key]: next }, successMessage: 'Saved. The storefront updates within a minute.', toast: false }); sectionMsg.value = 'Saved. The storefront updates within a minute.' }
   catch (e) { s.on = !next; sectionErr.value = errorOf(e).message }
 }
 </script>

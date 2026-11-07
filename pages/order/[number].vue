@@ -33,10 +33,10 @@ const next = computed(() => order.value?.payment_method === 'cod'
     <template v-if="order">
       <div class="flex h-[76px] w-[76px] items-center justify-center border border-gold text-gold"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></div>
       <div class="eyebrow">Order received</div>
-      <h1 class="font-display text-[44px] leading-none md:text-[64px]">Thank you, {{ order.name.split(' ')[0] }}</h1>
+      <h1 class="font-display text-h1 leading-none md:text-h1-lg">Thank you, {{ order.name.split(' ')[0] }}</h1>
       <p class="max-w-[520px] text-base leading-[1.7] text-body md:text-[17px]">Your order <b class="font-medium text-ink">#{{ order.number }}</b> is placed. {{ next }}<template v-if="order.email"> A confirmation was sent to {{ order.email }}.</template></p>
       <ol class="mt-2 grid w-full grid-cols-4 border-t border-border" aria-label="Order progress">
-        <li v-for="(st, i) in ['Order placed', 'Confirmed', 'Shipping', 'Delivered']" :key="st" class="flex flex-col items-center gap-2.5 px-1 py-5 md:py-[22px]"><span class="h-3.5 w-3.5 rounded-full border border-gold" :class="i === 0 ? 'bg-gold' : ''" /><span class="text-[11px] uppercase tracking-[0.12em] md:text-xs md:tracking-[0.14em]" :class="i === 0 ? 'font-semibold' : 'text-muted'">{{ st }}</span></li>
+        <li v-for="(st, i) in ['Order placed', 'Confirmed', 'Shipping', 'Delivered']" :key="st" class="flex flex-col items-center gap-2.5 px-1 py-5 md:py-[22px]"><span class="h-3.5 w-3.5 rounded-full border border-gold" :class="i === 0 ? 'bg-gold' : ''" /><span class="text-xs uppercase tracking-[0.12em] md:text-xs md:tracking-[0.14em]" :class="i === 0 ? 'font-semibold' : 'text-muted'">{{ st }}</span></li>
       </ol>
       <div class="w-full bg-cream p-6 text-left md:p-8">
         <ul class="flex flex-col gap-2.5 text-[15px]"><li v-for="i in order.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
@@ -44,7 +44,7 @@ const next = computed(() => order.value?.payment_method === 'cod'
           <div class="flex justify-between"><dt>Subtotal</dt><dd>{{ taka(order.subtotal) }}</dd></div>
           <div v-if="Number(order.coupon_discount)" class="flex justify-between text-rose-deep"><dt>Coupon {{ order.coupon_code }}</dt><dd>− {{ taka(order.coupon_discount) }}</dd></div>
           <div class="flex justify-between"><dt>Delivery</dt><dd>{{ taka(order.delivery_fee) }}</dd></div>
-          <div class="flex items-baseline justify-between border-t border-ink pt-3"><dt class="text-xs font-semibold uppercase tracking-[0.18em]">Total</dt><dd class="font-display text-[32px]">{{ taka(order.total) }}</dd></div>
+          <div class="flex items-baseline justify-between border-t border-ink pt-3"><dt class="text-xs font-semibold uppercase tracking-[0.18em]">Total</dt><dd class="font-display text-h2">{{ taka(order.total) }}</dd></div>
         </dl>
         <p class="mt-3 text-[13.5px] text-muted">Delivering to {{ order.address_line }}, {{ order.thana }}, {{ order.district }}. Payment: {{ order.payment_status }}.</p>
       </div>
@@ -53,7 +53,7 @@ const next = computed(() => order.value?.payment_method === 'cod'
     </template>
     <template v-else>
       <div class="eyebrow">Order {{ route.params.number }}</div>
-      <h1 class="font-display text-[40px] leading-none md:text-[52px]">View your order</h1>
+      <h1 class="font-display text-h1 leading-none md:text-h1-lg">View your order</h1>
       <p class="text-body">Enter the mobile number you used at checkout to view this order.</p>
       <form class="flex w-full max-w-[420px] flex-col gap-4 bg-cream p-6 text-left md:p-8" @submit.prevent="lookup">
         <div class="fld"><label class="sf-lbl" for="tp">Mobile number</label><input id="tp" v-model="phone" class="sf-inp" inputmode="tel" placeholder="01XXXXXXXXX" required></div>

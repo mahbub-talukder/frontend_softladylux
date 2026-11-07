@@ -6,6 +6,8 @@ import type { Area } from '~/utils/cart'
 useSeoMeta({ title: 'Shopping bag', robots: 'noindex' })
 const cart = useCartStore()
 const { data: s } = await useSiteSettings()
+const float = useFloatingCart()
+onMounted(() => float.load())
 const code = ref('')
 const couponMsg = computed(() => cart.check?.coupon ?? null)
 
@@ -39,11 +41,16 @@ const priceChanged = (l: { variant: number; price: string }) => {
 
 <template>
   <section class="pb-8">
-    <div class="mb-8 flex flex-col gap-3 md:mb-10"><div class="eyebrow">Step 1 of 3 · Bag</div><h1 class="font-display text-[44px] leading-none md:text-[60px]">Shopping bag</h1></div>
+    <div class="mb-8 flex flex-col gap-3 md:mb-10"><div class="eyebrow">Step 1 of 3 · Bag</div><h1 class="font-display text-h1 leading-none md:text-[60px]">Shopping bag</h1></div>
+    <!-- Re-enable point for the floating bag widget (owner request): shown only while the widget is hidden. -->
+    <div v-if="float.ready.value && float.hidden.value" class="mb-6 flex flex-wrap items-center justify-between gap-3 border border-border bg-cream px-4 py-3 text-sm" role="status">
+      <span>The floating bag shortcut is hidden. Your bag is unchanged.</span>
+      <button type="button" class="btn-o !h-11 !px-5" data-track="floating_cart_show" @click="float.show()">Show floating bag</button>
+    </div>
     <p v-if="!cart.storageOk" class="mb-6 border-l-[3px] border-gold bg-cream p-3 text-sm" role="status">Your bag could not be saved on this device (private mode or blocked storage). It works for this visit only.</p>
 
     <div v-if="cart.hydrated && !cart.lines.length" class="flex flex-col items-center gap-4 bg-cream px-5 py-20 text-center md:py-24">
-      <h2 class="font-display text-[34px] md:text-[40px]">Your bag is empty</h2><p class="text-body">Discover something you will love.</p>
+      <h2 class="font-display text-h2 md:text-h2-lg">Your bag is empty</h2><p class="text-body">Discover something you will love.</p>
       <NuxtLink to="/" class="btn">Start shopping</NuxtLink>
     </div>
 
@@ -56,7 +63,7 @@ const priceChanged = (l: { variant: number; price: string }) => {
             <div class="col-span-2 flex items-center gap-4 md:col-span-1 md:gap-[22px]">
               <NuxtLink :to="`/product/${l.slug}`" class="block w-[88px] flex-none md:w-[110px]"><StoreTile :src="l.image" :alt="l.name" :tile-key="l.variant" ratio="3/4" :width="110" :height="147" art-width="56%" /></NuxtLink>
               <div class="flex min-w-0 flex-col gap-1.5">
-                <NuxtLink :to="`/product/${l.slug}`" class="font-display text-[22px] leading-[1.15] md:text-[26px]">{{ l.name }}</NuxtLink>
+                <NuxtLink :to="`/product/${l.slug}`" class="font-display text-card leading-[1.15] md:text-card-lg">{{ l.name }}</NuxtLink>
                 <span class="text-sm text-muted">{{ l.label }}</span>
                 <span class="text-[15px]">{{ taka(l.price) }}</span>
                 <p v-if="priceChanged(l)" class="text-sm text-accent" role="status">The price changed to {{ taka(lineInfo(l.variant)?.price) }}.</p>
@@ -79,7 +86,7 @@ const priceChanged = (l: { variant: number; price: string }) => {
       </div>
 
       <aside class="flex w-full flex-col gap-[22px] bg-cream p-6 md:p-9 lg:max-w-[460px] lg:flex-1" aria-label="Order summary">
-        <h2 class="font-display text-[32px]">Order summary</h2>
+        <h2 class="font-display text-h2">Order summary</h2>
         <div role="group" aria-label="Delivery area" class="flex flex-col gap-2.5">
           <div class="text-xs font-semibold uppercase tracking-[0.18em]">Delivery area</div>
           <div class="grid grid-cols-2 gap-2.5">
@@ -97,7 +104,7 @@ const priceChanged = (l: { variant: number; price: string }) => {
           <div v-if="discount" class="flex justify-between text-rose-deep"><dt>Discount ({{ couponMsg?.code }})</dt><dd>− {{ taka(discount) }}</dd></div>
           <div class="flex justify-between"><dt>Delivery</dt><dd class="text-muted">{{ fee !== null ? taka(fee) : `${taka(Math.min(inside, outside))} – ${taka(Math.max(inside, outside))}` }}</dd></div>
         </dl>
-        <div class="flex items-baseline justify-between border-t border-ink pt-[18px]"><span class="text-xs font-semibold uppercase tracking-[0.18em]">Total</span><span class="font-display text-4xl">{{ fee !== null ? taka(total) : `from ${taka(total + Math.min(inside, outside))}` }}</span></div>
+        <div class="flex items-baseline justify-between border-t border-ink pt-[18px]"><span class="text-xs font-semibold uppercase tracking-[0.18em]">Total</span><span class="font-display text-h2">{{ fee !== null ? taka(total) : `from ${taka(total + Math.min(inside, outside))}` }}</span></div>
         <p v-if="cart.blocked" class="err" role="alert">Fix the highlighted items to continue.</p>
         <NuxtLink v-if="!cart.blocked && !cart.checking" to="/checkout" class="btn !h-[54px]" data-track="proceed_to_checkout">Proceed to checkout</NuxtLink>
         <button v-else class="btn !h-[54px]" disabled>{{ cart.checking ? 'Checking your bag…' : 'Proceed to checkout' }}</button>

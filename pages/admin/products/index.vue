@@ -7,7 +7,7 @@ definePageMeta({ layout: 'admin', permission: 'products.view' })
 const auth = useAuthStore()
 const canEdit = computed(() => auth.can('products.manage'))
 const { api, errorOf } = useApi()
-const config = useRuntimeConfig()
+const { download } = useDownload()
 
 const q = ref('')
 const category = ref('')
@@ -29,7 +29,7 @@ const allOn = computed(() => !!data.value?.results.length && data.value.results.
 
 function search() { page.value = 1; selected.value = []; refresh() }
 const toggleAll = () => { selected.value = allOn.value ? [] : data.value!.results.map((r) => r.id) }
-const exportUrl = computed(() => `${config.public.apiBase}/admin/products/export/?${new URLSearchParams({ ...(q.value && { q: q.value }), ...(category.value && { category: category.value }), ...(status.value && { status: status.value }) })}`)
+const exportCsv = () => download('/admin/products/export/', { q: q.value, category: category.value, status: status.value }, 'products.csv')
 
 async function bulk(action: string, extra: Dict = {}) {
   error.value = ''; message.value = ''
@@ -37,28 +37,28 @@ async function bulk(action: string, extra: Dict = {}) {
   try {
     const r = await api<{ updated: number }>('/admin/products/bulk/', { method: 'POST', body: { ids: selected.value, action, ...extra } })
     message.value = `${r.updated} product(s) updated.`; selected.value = []; await refresh()
-  } catch (e) { const er = errorOf(e); error.value = Object.values(er.fields).flat().join(' ') || er.message }
+  } catch (e) { const er = errorOf(e); error.value = er.flat.join(' ') }
 }
 </script>
 
 <template>
   <section>
     <AdminHeading eyebrow="Catalogue" title="Products">
-      <a class="btn-secondary" :href="exportUrl">Export CSV</a>
+      <button type="button" class="btn-secondary" @click="exportCsv">Export CSV</button>
       <NuxtLink v-if="canEdit" to="/admin/products/new" class="btn">+ Add product</NuxtLink>
     </AdminHeading>
     <form class="mb-4 flex flex-wrap gap-3" @submit.prevent="search">
       <input v-model="q" class="inp !w-64" placeholder="Search by name or SKU…" aria-label="Search products">
       <select v-model="category" class="inp !w-48" aria-label="Category"><option value="">All categories</option><option v-for="c in cats" :key="c.id" :value="String(c.id)">{{ c.name }}</option></select>
-      <select v-model="status" class="inp !w-40" aria-label="Status"><option value="">Any status</option><option value="active">Active</option><option value="draft">Draft</option></select>
+      <select v-model="status" class="inp !w-40" aria-label="Status"><option value="">Any status</option><option value="active">Published</option><option value="draft">Unpublished</option></select>
       <button class="btn-secondary">Filter</button>
     </form>
 
     <div v-if="canEdit && selected.length" class="card mb-4">
       <p class="text-sm">{{ selected.length }} selected</p>
       <div class="flex flex-wrap items-end gap-2">
-        <button class="btn-secondary" @click="bulk('activate')">Activate</button>
-        <button class="btn-secondary" @click="bulk('deactivate')">Deactivate</button>
+        <button class="btn-secondary" @click="bulk('activate')">Publish</button>
+        <button class="btn-secondary" @click="bulk('deactivate')">Unpublish</button>
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_new', value: true })">Mark new</button>
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_signature', value: true })">Mark signature</button>
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_offer', value: true })">Mark offer</button>
@@ -82,7 +82,7 @@ async function bulk(action: string, extra: Dict = {}) {
             <td class="p-3">{{ p.uom }}</td>
             <td class="whitespace-nowrap p-3 text-right">{{ taka(p.price) }}<span v-if="p.discount_pct" class="text-xs text-muted"> −{{ p.discount_pct }}%</span></td>
             <td class="p-3 text-right"><span :class="(p.stock ?? 0) <= 5 ? 'bg-[var(--stage-shipping-bg)] px-[9px] py-1 font-semibold text-[var(--stage-shipping-fg)]' : ''">{{ p.stock ?? 0 }}</span></td>
-            <td class="p-3"><span class="stage" :data-stage="p.is_active ? 'delivered' : 'cancelled'">{{ p.is_active ? 'Active' : 'Draft' }}</span></td>
+            <td class="p-3"><span class="stage" :data-stage="p.is_active ? 'delivered' : 'draft'">{{ p.is_active ? 'Published' : 'Unpublished' }}</span></td>
             <td class="p-3"><NuxtLink :to="`/admin/products/${p.id}`" class="inline-flex min-h-11 items-center text-xs font-semibold uppercase tracking-[0.12em] text-accent">{{ canEdit ? 'Edit' : 'View' }}</NuxtLink></td>
           </tr>
           <tr v-if="!pending && !data?.results.length"><td colspan="8" class="p-6 text-center text-muted">No products found.</td></tr>

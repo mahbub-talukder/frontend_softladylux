@@ -57,6 +57,7 @@ const cart = useCartStore()
 const qty = ref(1)
 const added = ref('')
 const needSize = ref(false)
+const sizeFinder = useSizeFinder() // CAT-08: size chart dialog (rendered once by StoreShell)
 function addToBag() {
   const v = chosen.value
   if (!v) { needSize.value = true; return }
@@ -80,10 +81,10 @@ const tabs = computed(() => [
 
 <template>
   <div v-if="p">
-    <nav class="text-[13px] text-muted" aria-label="Breadcrumb">
-      <NuxtLink to="/" class="hover:text-ink">Home</NuxtLink>
-      <template v-for="(b, i) in p.breadcrumb" :key="b.slug"><span class="px-2">/</span><NuxtLink v-if="i === 0" :to="`/shop/${b.slug}`" class="hover:text-ink">{{ b.name }}</NuxtLink><NuxtLink v-else :to="`/shop/${p.breadcrumb[0].slug}?sub=${b.slug}`" class="hover:text-ink">{{ b.name }}</NuxtLink></template>
-      <span class="px-2">/</span><span class="text-ink">{{ p.name }}</span>
+    <nav class="flex flex-wrap items-center text-[13px] text-muted" aria-label="Breadcrumb">
+      <NuxtLink to="/" class="inline-flex min-h-11 min-w-11 items-center justify-center hover:text-ink">Home</NuxtLink>
+      <template v-for="(b, i) in p.breadcrumb" :key="b.slug"><span class="px-0.5">/</span><NuxtLink v-if="i === 0" :to="`/shop/${b.slug}`" class="inline-flex min-h-11 min-w-11 items-center justify-center hover:text-ink">{{ b.name }}</NuxtLink><NuxtLink v-else :to="`/shop/${p.breadcrumb[0].slug}?sub=${b.slug}`" class="inline-flex min-h-11 min-w-11 items-center justify-center hover:text-ink">{{ b.name }}</NuxtLink></template>
+      <span class="px-0.5">/</span><span class="text-ink">{{ p.name }}</span>
     </nav>
 
     <section class="mt-5 grid gap-8 md:mt-7 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-16">
@@ -97,7 +98,7 @@ const tabs = computed(() => [
         </div>
         <StoreTile :src="gallery[active]?.url" :alt="gallery[active]?.alt_text || p.name" :tile-key="p.id + active" :category="p.category.name" ratio="4/5" :width="720" :height="900" sizes="xs:100vw lg:50vw" eager class="min-w-0 flex-1" art-width="52%">
           <div v-if="!gallery[active]" class="pointer-events-none absolute inset-5 border border-gold/30 md:inset-7" />
-          <span v-if="p.tag" class="absolute right-4 top-4 bg-bg px-2.5 py-1.5 text-[10.5px] font-medium uppercase tracking-[0.16em] md:right-7 md:top-7">{{ p.tag }}</span>
+          <span v-if="p.tag" class="absolute right-4 top-4 bg-bg px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.16em] md:right-7 md:top-7">{{ p.tag }}</span>
         </StoreTile>
       </div>
 
@@ -105,7 +106,7 @@ const tabs = computed(() => [
       <div class="flex min-w-0 flex-col gap-6 lg:max-w-[560px] lg:gap-[26px]">
         <div class="flex flex-col gap-3">
           <div class="eyebrow">{{ p.category.name }}<template v-if="p.collection"> · {{ p.collection }}</template></div>
-          <h1 class="font-display text-[38px] leading-[1.05] md:text-[54px]">{{ p.name }}</h1>
+          <h1 class="font-display text-h1 leading-[1.05] md:text-h1-lg">{{ p.name }}</h1>
           <div class="flex flex-wrap items-baseline gap-x-3.5 gap-y-1 text-2xl">
             <span class="font-medium">{{ taka(price) }}</span>
             <template v-if="p.discount_pct"><s class="text-base text-muted">{{ taka(p.compare_at_price) }}</s><span class="bg-accent px-2 py-0.5 text-sm font-semibold text-primary-contrast">−{{ p.discount_pct }}%</span></template>
@@ -124,7 +125,7 @@ const tabs = computed(() => [
           </div>
         </div>
         <div v-if="sizes.some((v) => v.size_label)" role="group" aria-label="Size" class="flex flex-col gap-3">
-          <div class="flex items-baseline justify-between"><div class="text-xs font-semibold uppercase tracking-[0.18em]">Size</div><NuxtLink to="/size-guide" class="border-b border-ink pb-px text-[13px]">Size chart &amp; calculator</NuxtLink></div>
+          <div class="flex items-baseline justify-between"><div class="text-xs font-semibold uppercase tracking-[0.18em]">Size</div><button type="button" class="inline-flex min-h-11 items-center text-[13px] underline underline-offset-4" aria-haspopup="dialog" data-track="size_chart_open" @click="sizeFinder.show()">Size chart &amp; calculator</button></div>
           <div class="flex flex-wrap gap-2">
             <button v-for="v in sizes" :key="v.id" type="button" :disabled="!v.in_stock" class="chip-size" :aria-pressed="size === v.size_label" @click="size = v.size_label; needSize = false">{{ v.size_label }}</button>
           </div>
@@ -159,7 +160,7 @@ const tabs = computed(() => [
     </section>
 
     <section v-if="p.related.length" class="pt-16 md:pt-24">
-      <div class="mb-8 flex items-end justify-between md:mb-9"><div class="flex flex-col gap-3"><div class="eyebrow">Complete the set</div><h2 class="font-display text-[34px] md:text-[44px]">You may also love</h2></div><NuxtLink :to="`/shop/${p.category.slug}`" class="lnk">View all</NuxtLink></div>
+      <div class="mb-8 flex items-end justify-between md:mb-9"><div class="flex flex-col gap-3"><div class="eyebrow">Complete the set</div><h2 class="font-display text-h2 md:text-h2-lg">You may also love</h2></div><NuxtLink :to="`/shop/${p.category.slug}`" class="lnk">View all</NuxtLink></div>
       <div class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-4 md:gap-6"><StoreProductCard v-for="r in p.related" :key="r.id" :product="r" /></div>
     </section>
   </div>

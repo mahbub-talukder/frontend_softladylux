@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', {
     async fetchMe() {
       const { api } = useApi()
       try {
-        this.me = await api<AdminMe>('/admin/me/')
+        this.me = await api<AdminMe>('/admin/me/', { silent: true })
       } catch {
         this.me = null
       }

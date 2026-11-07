@@ -36,11 +36,12 @@ export interface Home {
   trust: TrustItem[]; videos: Video[]
 }
 
-export interface Palette { id: number; name: string; primary_hex: string; accent_hex: string; is_builtin: boolean }
+export interface Palette { id: number; name: string; primary_hex: string; accent_hex: string; background_hex: string; text_hex: string; is_builtin: boolean }
 export interface ThemeState {
   palette: number | null; primary_hex: string; accent_hex: string | null
+  background_hex: string; text_hex: string
   tokens: Record<string, string>; updated_by: string | null; updated_at: string
-  low_contrast_warning: boolean
+  low_contrast_warning: boolean; contrast_issues: string[]
 }
 export interface PermissionDef { code: string; group: string; description: string; default: boolean; sensitive: boolean }
 export interface StaffUser { id: number; full_name: string; email: string; role: 'owner' | 'staff'; is_active: boolean; permissions: string[] }
@@ -58,7 +59,7 @@ export interface CardProduct {
   image: { url: string; alt_text: string; width: number; height: number; color: string } | null
   category: { name: string; slug: string }; subcategory: { name: string; slug: string } | null
   colors: { name: string; hex: string }[]; sizes: string[]
-  variants: { id: number; size_label: string; color_name: string; in_stock: boolean }[]
+  variants: { id: number; sku?: string; size_label: string; color_name: string; price?: string; in_stock: boolean }[]
 }
 export interface ProductVariant {
   id: number; sku: string; size_label: string; color_name: string; color_hex: string

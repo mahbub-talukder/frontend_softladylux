@@ -1,14 +1,25 @@
 import type { FetchOptions } from 'ofetch'
+import { normalizeApiError } from '~/utils/apiError'
+import type { ApiError } from '~/utils/apiError'
 
-export interface ApiError {
-  code: string
-  message: string
-  fields: Record<string, string[]>
+export interface ApiOptions extends FetchOptions {
+  /** Admin calls only: no loading indicator and no automatic error toast (background/expected-failure calls). */
+  silent?: boolean
+  /** Set false when the caller renders every error itself and a toast would only repeat it. */
+  toast?: boolean
+  /** Shown as a success toast after a successful admin call. */
+  successMessage?: string
 }
 
 function csrfToken(): string | undefined {
   if (import.meta.server) return undefined
   return document.cookie.match(/(?:^|; )csrftoken=([^;]+)/)?.[1]
+}
+
+/** Calls under /admin/ (except the auth endpoints, whose callers show inline errors) drive the global
+ * loading indicator and error toasts (SRS ADM-07, UI-06). Storefront and customer calls never do. */
+function isTracked(path: string) {
+  return path.startsWith('/admin/') && !path.startsWith('/admin/auth/')
 }
 
 /** SRS ARC-05 / ARC-06 / §7. Typed API client for /api/v1. Sends cookies; adds the CSRF header on
@@ -17,6 +28,11 @@ function csrfToken(): string | undefined {
 export function useApi() {
   const config = useRuntimeConfig()
   const base = import.meta.server ? config.apiBaseInternal : config.public.apiBase
+  // Resolved once here (inside the caller's setup/middleware context), then closed over by api().
+  let ui: ReturnType<typeof useAdminUi> | null = null
+  if (import.meta.client) {
+    try { ui = useAdminUi() } catch { ui = null }
+  }
 
   async function raw<T>(path: string, opts: FetchOptions): Promise<T> {
     const method = String(opts.method ?? 'GET').toUpperCase()
@@ -34,7 +50,7 @@ export function useApi() {
     return (await $fetch(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)) as T
   }
 
-  async function api<T>(path: string, opts: FetchOptions = {}): Promise<T> {
+  async function withRefresh<T>(path: string, opts: FetchOptions): Promise<T> {
     try {
       return await raw<T>(path, opts)
     } catch (e) {
@@ -44,7 +60,14 @@ export function useApi() {
         // Admin and customer sessions each rotate their own refresh cookie once, then retry.
         const refresh = path.startsWith('/admin/') ? '/admin/auth/refresh/' : (path.startsWith('/me') || path.startsWith('/orders') ? '/auth/refresh/' : null)
         if (refresh) {
-          await raw(refresh, { method: 'POST' })
+          try {
+            await raw(refresh, { method: 'POST' })
+          } catch {
+            // Session is gone: send staff to the sign-in page instead of leaving a broken screen.
+            // window.location, not useRoute(): the Nuxt context is gone after the awaits above.
+            if (path.startsWith('/admin/') && window.location.pathname !== '/admin/login') await navigateTo('/admin/login')
+            throw e
+          }
           return await raw<T>(path, opts)
         }
       }
@@ -52,14 +75,43 @@ export function useApi() {
     }
   }
 
-  /** Pull the {code,message,fields} body out of a failed call (SRS §7 error shape). */
-  function errorOf(e: unknown): ApiError {
-    const data = (e as { data?: Partial<ApiError> }).data
-    return {
-      code: data?.code ?? 'error',
-      message: data?.message ?? 'Something went wrong. Please try again.',
-      fields: data?.fields ?? {}
+  function notifyFailure(e: unknown, method: string) {
+    if (!ui) return
+    const er = normalizeApiError(e)
+    if (er.status === 401) return // already redirected to sign-in
+    // Failed reads are shown by the page itself; only surface unexpected ones (server/network) here.
+    if (method === 'GET' && er.status && er.status < 500) return
+    ui.error(er.message, er.flat.slice(0, 3))
+  }
+
+  async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
+    const { silent, toast: wantToast, successMessage, ...fetchOpts } = opts
+    const tracked = !!ui && isTracked(path) && !silent
+    const method = String(fetchOpts.method ?? 'GET').toUpperCase()
+    if (tracked) ui!.begin()
+    try {
+      const res = await withRefresh<T>(path, fetchOpts)
+      if (tracked && successMessage) ui!.success(successMessage)
+      return res
+    } catch (e) {
+      if (tracked && wantToast !== false) notifyFailure(e, method)
+      throw e
+    } finally {
+      if (tracked) ui!.end()
     }
   }
-  return { api, errorOf }
+
+  /** Pull the {code,message,fields} body out of a failed call (SRS §7 error shape), normalised. */
+  function errorOf(e: unknown): ApiError {
+    return normalizeApiError(e)
+  }
+
+  /** Manual toasts for multi-step flows (no-ops on the server). */
+  const toast = {
+    success: (title: string, lines?: string[]) => ui?.success(title, lines),
+    info: (title: string, lines?: string[]) => ui?.info(title, lines),
+    error: (title: string, lines?: string[]) => ui?.error(title, lines),
+    fromError: (e: unknown) => { if (ui) { const er = normalizeApiError(e); ui.error(er.message, er.flat.slice(0, 3)) } }
+  }
+  return { api, errorOf, toast }
 }

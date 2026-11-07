@@ -27,14 +27,12 @@ onMounted(() => { measure(); window.addEventListener('resize', measure) })
 onBeforeUnmount(() => window.removeEventListener('resize', measure))
 
 // ---- offers & favourites tabs (SRS has no "Best seller"/"Hot deal" flag: Offers and Signature)
+const sizeFinder = useSizeFinder()
 const tab = ref<'offers' | 'favourites'>('offers')
 const tabItems = computed(() => (tab.value === 'offers' ? home.value?.offers : home.value?.signature) ?? [])
 const tabs = computed(() => [{ id: 'offers' as const, label: 'Special offer', n: home.value?.offers.length ?? 0 }, { id: 'favourites' as const, label: 'Our favourites', n: home.value?.signature.length ?? 0 }].filter((t) => t.n))
 watchEffect(() => { if (tabs.value.length && !tabs.value.some((t) => t.id === tab.value)) tab.value = tabs.value[0].id })
 
-// ---- video gallery
-const vi = ref(0)
-const video = computed(() => home.value?.videos[vi.value])
 const sig = computed(() => home.value?.signature ?? [])
 const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: string; short_desc?: string }) | undefined)
 </script>
@@ -59,7 +57,7 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
         <li v-for="(c, k) in home.categories" :key="c.slug" class="w-[44%] shrink-0 snap-start sm:w-[30%] lg:w-[calc((100%-100px)/6)]">
           <NuxtLink :to="`/shop/${c.slug}`" class="group flex flex-col gap-3.5 transition-transform duration-500 hover:-translate-y-1" data-track="home_category_tile">
             <StoreTile :src="c.tile?.url" :alt="c.tile?.alt_text || c.name" ratio="4/5" :tile-key="k" :category="c.slug" :width="400" :height="500" art-width="62%" />
-            <div class="flex items-baseline justify-between"><h3 class="text-[22px] md:text-2xl">{{ c.name }}</h3><span class="lnk !text-[10.5px]">Shop</span></div>
+            <div class="flex items-baseline justify-between"><h3 class="text-card md:text-2xl">{{ c.name }}</h3><span class="text-xs font-medium uppercase tracking-[0.16em] underline underline-offset-[6px]">Shop</span></div>
           </NuxtLink>
         </li>
       </ul>
@@ -70,7 +68,7 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
         <template v-for="p in ['home_promo', 'home_offer']" :key="p">
           <NuxtLink v-if="banner(p)?.media" :to="banner(p)?.link || '/'" class="group relative block overflow-hidden" data-track="home_banner">
             <StoreTile :src="banner(p)!.media!.url" :alt="banner(p)!.media!.alt_text" ratio="2/1" tint="bg-tile-5" :width="800" :height="400" art-width="22%" category="gift-sets" />
-            <div class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-dark/55 to-transparent p-6 text-on-dark md:p-8"><h3 class="text-[28px] md:text-4xl">{{ banner(p)!.heading }}</h3><p class="text-[15px] text-on-dark/90">{{ banner(p)!.text }}</p></div>
+            <div class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-dark/55 to-transparent p-6 text-on-dark md:p-8"><h3 class="text-h3 md:text-h2-lg">{{ banner(p)!.heading }}</h3><p class="text-[15px] text-on-dark/90">{{ banner(p)!.text }}</p></div>
           </NuxtLink>
         </template>
       </div>
@@ -86,7 +84,7 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
         <div class="relative flex min-h-[420px] flex-col justify-between bg-tile-2 p-8 md:min-h-[620px] md:px-12 md:py-14">
           <div class="flex flex-col gap-[18px]">
             <div class="eyebrow !text-rose-deep">Signature collection</div>
-            <h2 class="text-[40px] leading-[1.05] md:text-[54px]">{{ sigLead.collection || 'Signature' }}</h2>
+            <h2 class="text-h1 leading-[1.05] md:text-h1-lg">{{ sigLead.collection || 'Signature' }}</h2>
             <p class="max-w-[340px] text-base leading-[1.7] text-body">{{ sigLead.short_desc || 'Our most-loved pieces, finished with care.' }}</p>
           </div>
           <div class="w-[58%] self-center text-rose-deep" aria-hidden="true"><StoreArt kind="set" /></div>
@@ -106,32 +104,19 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
       </Transition>
     </section>
 
-    <section v-if="video" class="wrap section pb-6">
+    <section v-if="home?.videos?.length" class="wrap section pb-6">
       <StoreSection eyebrow="Watch" title="Video gallery" />
-      <div class="grid gap-8 lg:grid-cols-[8fr_4fr]">
-        <div class="flex flex-col gap-3.5">
-          <!-- Links out instead of embedding, so nothing from Google/Facebook loads before cookie consent -->
-          <a :href="video.url" target="_blank" rel="noopener" class="group relative flex aspect-video items-center justify-center overflow-hidden bg-tile-video" :aria-label="`Watch ${video.title}`" data-track="video_open">
-            <NuxtImg v-if="video.thumbnail" format="webp" :src="mediaSrc(video.thumbnail.url)" :alt="video.thumbnail.alt_text" width="1000" height="563" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[600ms] group-hover:scale-[1.03]" />
-            <span class="pointer-events-none absolute inset-5 border border-champagne/25" />
-            <span class="relative flex h-[84px] w-[84px] items-center justify-center rounded-full border border-champagne text-on-dark transition-colors duration-300 group-hover:bg-champagne group-hover:text-ink"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg></span>
-          </a>
-          <h3 class="text-[26px] md:text-[28px]">{{ video.title }}</h3>
-        </div>
-        <ul class="flex flex-col border-t border-border">
-          <li v-for="(v, k) in home!.videos" :key="v.id"><button class="flex w-full items-center gap-4 border-b border-border py-4 text-left transition-colors duration-200 hover:bg-cream/60" :class="k === vi ? 'bg-cream' : ''" :aria-current="k === vi" @click="vi = k"><span class="flex aspect-video w-28 shrink-0 items-center justify-center bg-tile-6 text-gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg></span><span class="font-display text-[21px] leading-[1.2]">{{ v.title }}</span></button></li>
-        </ul>
-      </div>
+      <StoreVideoGallery :videos="home.videos" />
     </section>
 
-    <section class="mt-12 bg-dark text-on-dark md:mt-24">
-      <div class="wrap grid items-center gap-10 py-16 md:grid-cols-2 md:gap-[60px] md:py-20">
-        <div class="flex flex-col gap-[18px]"><div class="eyebrow !text-champagne">Fit guidance</div><h2 class="text-[38px] leading-[1.05] md:text-[52px]">Find the size that feels like yours</h2><p class="max-w-[460px] text-base leading-[1.7] text-text-dark">Enter two measurements and our calculator suggests your band and cup size, with a full size chart alongside.</p></div>
+    <section class="mt-9 bg-dark text-on-dark md:mt-[72px]">
+      <div class="wrap grid items-center gap-10 py-12 md:grid-cols-2 md:gap-[60px] md:py-16">
+        <div class="flex flex-col gap-[18px]"><div class="eyebrow !text-champagne">Fit guidance</div><h2 class="text-h1 leading-[1.05] md:text-h1-lg">Find the size that feels like yours</h2><p class="max-w-[460px] text-base leading-[1.7] text-text-dark">Enter two measurements and our calculator suggests your band and cup size, with a full size chart alongside.</p></div>
         <div class="flex flex-col items-start gap-3.5">
           <ol class="grid w-full grid-cols-1 border-t border-line-dark-2 sm:grid-cols-3">
-            <li v-for="(t, k) in ['Measure under the bust', 'Measure the fullest part', 'Get your recommended size']" :key="t" class="border-line-dark-2 py-5 sm:px-5 sm:first:pl-0" :class="k ? 'sm:border-l' : ''"><div class="font-display text-[40px] text-champagne">0{{ k + 1 }}</div><div class="text-sm text-text-dark">{{ t }}</div></li>
+            <li v-for="(t, k) in ['Measure under the bust', 'Measure the fullest part', 'Get your recommended size']" :key="t" class="border-line-dark-2 py-5 sm:px-5 sm:first:pl-0" :class="k ? 'sm:border-l' : ''"><div class="font-display text-h1 text-champagne">0{{ k + 1 }}</div><div class="text-sm text-text-dark">{{ t }}</div></li>
           </ol>
-          <NuxtLink to="/size-guide" class="btn btn-light" data-track="home_size_finder">Open size calculator</NuxtLink>
+          <button type="button" class="btn btn-light" aria-haspopup="dialog" data-track="home_size_finder" @click="sizeFinder.show()">Open size calculator</button>
         </div>
       </div>
     </section>

@@ -84,7 +84,7 @@ const stepAt = (st: string) => STEPS.indexOf(st)
 
         <div v-if="tab === 'orders'" class="flex flex-col gap-10 xl:flex-row xl:items-start">
           <div class="flex min-w-0 flex-col gap-2.5 xl:w-[380px] xl:flex-none">
-            <h2 class="mb-3 font-display text-[30px] md:text-4xl">My orders</h2>
+            <h2 class="mb-3 font-display text-h2 md:text-h2-lg">My orders</h2>
             <div v-if="!orders.length" class="bg-cream p-8 text-center"><p class="text-body">No orders yet.</p><NuxtLink to="/" class="btn mt-4">Start shopping</NuxtLink></div>
             <button v-for="o in orders" :key="o.number" class="flex w-full flex-col gap-2 border px-[18px] py-5 text-left transition-colors" :class="sel?.number === o.number ? 'border-ink bg-surface' : 'border-border hover:border-field'" :aria-pressed="sel?.number === o.number" @click="sel = o">
               <span class="flex w-full items-baseline justify-between gap-3"><span class="font-display text-2xl">{{ o.number }}</span><span class="stage" :data-stage="o.status">{{ o.status_label }}</span></span>
@@ -92,7 +92,7 @@ const stepAt = (st: string) => STEPS.indexOf(st)
             </button>
           </div>
           <div v-if="sel" :key="sel.number" class="fade-in flex min-w-0 flex-1 flex-col gap-6 border border-border bg-surface p-6 md:p-[34px]">
-            <div class="flex flex-wrap items-baseline justify-between gap-2"><h2 class="font-display text-[28px] md:text-[32px]">Track {{ sel.number }}</h2><span class="stage" :data-stage="sel.status">{{ sel.status_label }}</span></div>
+            <div class="flex flex-wrap items-baseline justify-between gap-2"><h2 class="font-display text-h3 md:text-h3-lg">Track {{ sel.number }}</h2><span class="stage" :data-stage="sel.status">{{ sel.status_label }}</span></div>
             <p v-if="sel.status === 'cancelled'" class="border-l-[3px] border-accent bg-cream px-5 py-[18px] text-[15px] leading-relaxed">This order was cancelled. If you already paid, we will contact you about the refund.</p>
             <ol v-else class="flex flex-col">
               <li v-for="(n, i) in STEPS" :key="n" class="flex min-h-16 gap-[18px]">
@@ -102,7 +102,7 @@ const stepAt = (st: string) => STEPS.indexOf(st)
               </li>
             </ol>
             <ul class="flex flex-col gap-2 border-t border-border pt-5 text-[15px]"><li v-for="i in sel.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
-            <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-[28px]">{{ taka(sel.total) }}</span></div>
+            <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-h3">{{ taka(sel.total) }}</span></div>
             <p class="-mt-3 text-[13.5px] text-muted">Payment: {{ sel.payment_status }}</p>
             <div class="flex flex-wrap gap-3">
               <NuxtLink :to="`/account/orders/${sel.number}/invoice`" class="btn-secondary !h-12 !px-6" target="_blank">Invoice</NuxtLink>
@@ -118,14 +118,14 @@ const stepAt = (st: string) => STEPS.indexOf(st)
         </div>
 
         <div v-else-if="tab === 'wishlist'">
-          <h2 class="mb-6 font-display text-[30px] md:text-4xl">My wishlist</h2>
+          <h2 class="mb-6 font-display text-h2 md:text-h2-lg">My wishlist</h2>
           <div v-if="!wishlist.length" class="bg-cream p-8 text-center"><p class="text-body">Tap the heart on any product to save it here.</p><NuxtLink to="/" class="btn mt-4">Browse products</NuxtLink></div>
           <div class="grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 md:gap-x-6 md:gap-y-9"><div v-for="p in wishlist" :key="p.id"><StoreProductCard :product="p" /><button class="mt-2 min-h-11 border-b border-ink text-xs font-medium uppercase tracking-[0.14em]" @click="unwish(p)">Remove</button></div></div>
         </div>
 
         <div v-else class="flex max-w-[720px] flex-col gap-12">
           <form class="grid gap-[18px] sm:grid-cols-2" @submit.prevent="saveProfile">
-            <h2 class="font-display text-[30px] sm:col-span-2 md:text-4xl">Profile</h2>
+            <h2 class="font-display text-h2 sm:col-span-2 md:text-h2-lg">Profile</h2>
             <div class="fld"><label class="sf-lbl" for="pn">Full name</label><input id="pn" v-model="profile.full_name" class="sf-inp" required></div>
             <div class="fld"><label class="sf-lbl" for="pm">Mobile (verified)</label><input id="pm" :value="customer.me?.phone" class="sf-inp bg-cream" disabled></div>
             <div class="fld"><label class="sf-lbl" for="pe">Email (optional)</label><input id="pe" v-model="profile.email" type="email" class="sf-inp"></div>
@@ -134,8 +134,8 @@ const stepAt = (st: string) => STEPS.indexOf(st)
           </form>
 
           <div class="flex flex-col gap-5">
-            <h2 class="border-b border-ink pb-3.5 font-display text-[30px] md:text-4xl">Saved addresses <span class="text-base text-muted">({{ addresses.length }}/5)</span></h2>
-            <ul class="grid gap-3 sm:grid-cols-2"><li v-for="a in addresses" :key="a.id" class="flex flex-col gap-1 border border-border bg-surface p-[18px] text-[15px] leading-relaxed"><div><b class="font-medium">{{ a.label }}</b><span v-if="a.is_default" class="ml-2 text-[11px] uppercase tracking-[0.14em] text-gold">Default</span></div><span class="text-body">{{ a.recipient_name }} · {{ a.phone }}<br>{{ a.address_line }}, {{ a.thana }}, {{ a.district }}</span><div class="mt-2 flex gap-4"><button v-if="!a.is_default" class="min-h-11 border-b border-ink text-xs font-medium uppercase tracking-[0.12em]" @click="makeDefault(a)">Make default</button><button class="min-h-11 text-xs font-medium uppercase tracking-[0.12em] text-accent" @click="removeAddress(a)">Delete</button></div></li></ul>
+            <h2 class="border-b border-ink pb-3.5 font-display text-h2 md:text-h2-lg">Saved addresses <span class="text-base text-muted">({{ addresses.length }}/5)</span></h2>
+            <ul class="grid gap-3 sm:grid-cols-2"><li v-for="a in addresses" :key="a.id" class="flex flex-col gap-1 border border-border bg-surface p-[18px] text-[15px] leading-relaxed"><div><b class="font-medium">{{ a.label }}</b><span v-if="a.is_default" class="ml-2 text-xs uppercase tracking-[0.14em] text-gold">Default</span></div><span class="text-body">{{ a.recipient_name }} · {{ a.phone }}<br>{{ a.address_line }}, {{ a.thana }}, {{ a.district }}</span><div class="mt-2 flex gap-4"><button v-if="!a.is_default" class="min-h-11 border-b border-ink text-xs font-medium uppercase tracking-[0.12em]" @click="makeDefault(a)">Make default</button><button class="min-h-11 text-xs font-medium uppercase tracking-[0.12em] text-accent" @click="removeAddress(a)">Delete</button></div></li></ul>
             <form v-if="addresses.length < 5" class="grid gap-[18px] bg-cream p-6 sm:grid-cols-2 md:p-7" @submit.prevent="addAddress">
               <h3 class="font-display text-2xl sm:col-span-2">Add an address</h3>
               <div class="fld"><label class="sf-lbl" for="al">Label</label><input id="al" v-model="newAddr.label" class="sf-inp" placeholder="Home, Office" required></div>
@@ -149,7 +149,7 @@ const stepAt = (st: string) => STEPS.indexOf(st)
             </form>
           </div>
 
-          <div class="flex flex-col items-start gap-3 border-t border-border pt-8"><h2 class="font-display text-[26px]">Delete account</h2><p class="text-[15px] text-body">Your personal details are anonymised. Order records are kept for accounting.</p>
+          <div class="flex flex-col items-start gap-3 border-t border-border pt-8"><h2 class="font-display text-h3">Delete account</h2><p class="text-[15px] text-body">Your personal details are anonymised. Order records are kept for accounting.</p>
             <button v-if="!delOpen" class="btn-secondary !h-12" @click="delOpen = true">Delete my account</button>
             <form v-else class="flex w-full max-w-[420px] flex-col gap-3" @submit.prevent="deleteAccount"><div class="fld"><label class="sf-lbl" for="dp">Enter your password to confirm</label><input id="dp" v-model="delPw" type="password" class="sf-inp" autocomplete="current-password" required></div><div class="flex gap-3"><button class="btn !h-12 flex-1">Delete permanently</button><button type="button" class="btn-secondary !h-12" @click="delOpen = false; delPw = ''">Keep account</button></div></form>
           </div>

@@ -4,7 +4,7 @@
 import type { PermissionDef, StaffUser } from '~/types/api'
 
 definePageMeta({ layout: 'admin', ownerOnly: true })
-const { api, errorOf } = useApi()
+const { api, errorOf, toast } = useApi()
 const users = ref<StaffUser[]>([])
 const catalogue = ref<PermissionDef[]>([])
 const selectedId = ref<number | null>(null)
@@ -13,6 +13,17 @@ const message = ref('')
 const error = ref('')
 const adding = ref(false)
 const draft = reactive({ full_name: '', email: '', password: '' })
+const busy = ref(false)
+// UI-06 / §10: name required (<= 150), valid email, password >= 8 characters (server validator).
+const { required, maxLength, email, minLength } = rules
+const addForm = useFormValidation(() => draft, {
+  full_name: [required('Enter the staff member’s name.'), maxLength(150)],
+  email: [required('Enter an email address.'), email()],
+  password: [required('Choose a password.'), minLength(8, 'Use at least 8 characters.')]
+})
+const resetting = ref(false)
+const resetDraft = reactive({ password: '' })
+const resetForm = useFormValidation(() => resetDraft, { password: [required('Enter the new password.'), minLength(8, 'Use at least 8 characters.')] })
 
 const IMPLIES: Record<string, string> = {
   'orders.manage': 'orders.view', 'payments.verify': 'orders.view',
@@ -63,28 +74,35 @@ async function save() {
   try {
     const r = await api<{ permissions: string[] }>(`/admin/users/${current.value.id}/permissions/`, { method: 'PUT', body: { permissions: [...checked.value] } })
     checked.value = new Set(r.permissions); message.value = 'Permissions saved. They apply on the staff member’s next request.'
+    toast.success('Permissions saved', ['They apply on the staff member’s next request.'])
     await load()
   } catch (e) { error.value = errorOf(e).message }
 }
 async function addStaff() {
   error.value = ''
+  if (!addForm.validateAll()) { toast.error('Please fix the highlighted fields', addForm.summary.value.slice(0, 3)); return }
+  busy.value = true
   try {
-    const u = await api<StaffUser>('/admin/users/', { method: 'POST', body: { ...draft } })
-    adding.value = false; Object.assign(draft, { full_name: '', email: '', password: '' })
+    const u = await api<StaffUser>('/admin/users/', { method: 'POST', body: { ...draft, email: draft.email.trim().toLowerCase(), full_name: draft.full_name.trim() }, successMessage: 'Staff user created' })
+    adding.value = false; Object.assign(draft, { full_name: '', email: '', password: '' }); addForm.reset()
     await load(); pick(u.id)
-  } catch (e) { const er = errorOf(e); error.value = Object.values(er.fields).flat().join(' ') || er.message }
+  } catch (e) { const er = errorOf(e); addForm.setServerErrors(er); error.value = er.flat.join(' ') } finally { busy.value = false }
 }
 async function toggleActive() {
   const u = current.value
   if (!u || !confirm(u.is_active ? `Deactivate ${u.full_name}? They are signed out at once.` : `Reactivate ${u.full_name}?`)) return // ADM-08
-  await api(`/admin/users/${u.id}/`, { method: 'PATCH', body: { is_active: !u.is_active } }); await load()
+  try { await api(`/admin/users/${u.id}/`, { method: 'PATCH', body: { is_active: !u.is_active }, successMessage: u.is_active ? `${u.full_name || u.email} deactivated` : `${u.full_name || u.email} reactivated` }); await load() } catch { /* toast shown */ }
 }
+function openReset() { resetting.value = true; resetDraft.password = ''; resetForm.reset(); error.value = '' }
 async function resetPassword() {
   const u = current.value
-  const pw = u && prompt(`New password for ${u.full_name} (min 8 characters)`)
-  if (!u || !pw) return
-  try { await api(`/admin/users/${u.id}/reset-password/`, { method: 'POST', body: { password: pw } }); message.value = 'Password reset.' }
-  catch (e) { const er = errorOf(e); error.value = Object.values(er.fields).flat().join(' ') || er.message }
+  if (!u) return
+  if (!resetForm.validateAll()) return
+  busy.value = true
+  try {
+    await api(`/admin/users/${u.id}/reset-password/`, { method: 'POST', body: { password: resetDraft.password }, successMessage: 'Password reset' })
+    message.value = 'Password reset.'; resetting.value = false; resetDraft.password = ''
+  } catch (e) { const er = errorOf(e); resetForm.setServerErrors(er); error.value = er.flat.join(' ') } finally { busy.value = false }
 }
 </script>
 
@@ -99,12 +117,18 @@ async function resetPassword() {
           <span class="hint">{{ u.role === 'owner' ? 'Owner' : u.is_active ? 'Staff' : 'Staff · inactive' }}</span>
         </button>
         <button class="btn-secondary" @click="adding = !adding">+ Add staff user</button>
-        <form v-if="adding" class="flex flex-col gap-3" @submit.prevent="addStaff">
-          <div class="fld"><label for="n">Name</label><input id="n" v-model="draft.full_name" class="inp" required></div>
-          <div class="fld"><label for="e">Email</label><input id="e" v-model="draft.email" type="email" class="inp" required></div>
-          <div class="fld"><label for="p">Password</label><input id="p" v-model="draft.password" type="password" class="inp" autocomplete="new-password" required></div>
+        <form v-if="adding" class="flex flex-col gap-3" novalidate @submit.prevent="addStaff">
+          <AdminFormField name="full_name" label="Name" required :error="addForm.errorFor('full_name')">
+            <template #default="f"><input :id="f.id" v-model="draft.full_name" class="inp" maxlength="150" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="addForm.onInput('full_name')" @blur="addForm.touch('full_name')"></template>
+          </AdminFormField>
+          <AdminFormField name="email" label="Email" required :error="addForm.errorFor('email')">
+            <template #default="f"><input :id="f.id" v-model="draft.email" type="email" class="inp" autocomplete="off" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="addForm.onInput('email')" @blur="addForm.touch('email')"></template>
+          </AdminFormField>
+          <AdminFormField name="password" label="Password" required hint="At least 8 characters." :error="addForm.errorFor('password')">
+            <template #default="f"><input :id="f.id" v-model="draft.password" type="password" class="inp" autocomplete="new-password" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="addForm.onInput('password')" @blur="addForm.touch('password')"></template>
+          </AdminFormField>
           <p class="hint">New staff start with the default permissions; adjust them after saving.</p>
-          <button class="btn">Create</button>
+          <button class="btn btn-spin" :disabled="busy" :aria-busy="busy">Create</button>
         </form>
       </div>
       <div v-if="current" class="card">
@@ -128,9 +152,16 @@ async function resetPassword() {
           <button class="btn-secondary" @click="selectAll">Select all</button>
           <button class="btn-secondary" @click="clearAll">Clear all</button>
           <button class="btn-secondary" @click="resetDefault">Reset to defaults</button>
-          <button class="btn-secondary" @click="resetPassword">Reset password</button>
+          <button class="btn-secondary" @click="openReset">Reset password</button>
           <button class="btn-secondary" @click="toggleActive">{{ current.is_active ? 'Deactivate' : 'Reactivate' }}</button>
         </div>
+        <form v-if="resetting && !isOwnerRow" class="flex max-w-sm flex-col gap-3 border border-border p-4" novalidate @submit.prevent="resetPassword">
+          <h3 class="text-xl">New password for {{ current.full_name || current.email }}</h3>
+          <AdminFormField name="reset_password" label="New password" required hint="At least 8 characters. The staff member is not notified." :error="resetForm.errorFor('password')">
+            <template #default="f"><input :id="f.id" v-model="resetDraft.password" type="password" class="inp" autocomplete="new-password" :aria-invalid="f.invalid" :aria-describedby="f.describedby" @input="resetForm.onInput('password')" @blur="resetForm.touch('password')"></template>
+          </AdminFormField>
+          <div class="flex gap-3"><button class="btn btn-spin" :disabled="busy" :aria-busy="busy">Reset password</button><button type="button" class="btn-secondary" @click="resetting = false">Cancel</button></div>
+        </form>
         <p v-if="message" class="hint" role="status">{{ message }}</p>
         <p v-if="error" class="err" role="alert">{{ error }}</p>
       </div>

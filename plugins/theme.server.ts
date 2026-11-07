@@ -15,5 +15,6 @@ export default defineNuxtPlugin(async () => {
   } catch {
     css = ''
   }
-  if (css) useHead({ style: [{ key: 'theme-tokens', innerHTML: css }] })
+  // tagPriority 'low' also sorts this block after the stylesheet links (belt and braces next to :where(:root) in tokens.css).
+  if (css) useHead({ style: [{ key: 'theme-tokens', innerHTML: css, tagPriority: 'low' }] })
 })
