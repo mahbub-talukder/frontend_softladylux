@@ -45,7 +45,8 @@ const active = (slug: string) => route.path === `/shop/${slug}`
       </div>
     </div>
 
-    <div class="sticky top-0 z-50 bg-bg transition-shadow duration-300" :class="scrolled ? 'shadow-pop' : ''">
+    <!-- TEST (owner, to be confirmed): 80 % opacity once stuck -->
+    <div class="sticky top-0 z-50 transition-[box-shadow,background-color] duration-300" :class="scrolled ? 'bg-bg/80 shadow-pop backdrop-blur-sm' : 'bg-bg'">
     <div class="wrap grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 transition-[height] duration-300 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)] 2xl:gap-8" :class="scrolled ? 'h-14 md:h-16' : 'h-14 md:h-[72px]'">
       <div class="flex min-w-0 items-center gap-1">
         <button class="-ml-2 inline-flex h-11 w-11 items-center justify-center md:hidden" :aria-expanded="menu" aria-controls="mobile-menu" aria-label="Open menu" @click="menu = true">
@@ -83,7 +84,7 @@ const active = (slug: string) => route.path === `/shop/${slug}`
       </nav>
     </div>
 
-    <nav class="hidden border-y border-border bg-bg md:block" aria-label="Categories">
+    <nav class="hidden border-y border-border md:block" aria-label="Categories">
       <!-- One row at every width: centred when it fits, scrollable when it does not (never wraps) -->
       <ul class="wrap flex flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] lg:gap-1.5 [&>li:first-child]:ml-auto [&>li:last-child]:mr-auto [&::-webkit-scrollbar]:hidden">
         <li v-for="c in cats ?? []" :key="c.slug" class="shrink-0"><NuxtLink :to="`/shop/${c.slug}`" class="block whitespace-nowrap border-b-2 px-4 py-3.5 text-[12.5px] font-medium uppercase tracking-[0.16em] transition-colors hover:text-accent" :class="active(c.slug) ? 'border-accent' : 'border-transparent'">{{ c.name }}</NuxtLink></li>
