@@ -11,7 +11,14 @@ watch(() => route.fullPath, () => { open.value = false })
 
 const { data: site } = useSiteSettings()
 const siteName = computed(() => site.value?.company_name || 'SoftLadyLux')
-useHead({ title: () => `${siteName.value} | Admin Panel` })
+useHead({ title: () => `${siteName.value} | Admin Panel`,
+  link: [
+    { key: 'favicon', rel: 'icon', type: 'image/svg+xml', href: '/admin-favicon.svg' },
+    { key: 'favicon-png', rel: 'icon', type: 'image/png', sizes: '32x32', href: '/admin-favicon-32.png' },
+    { key: 'favicon-ico', rel: 'icon', href: '/admin-favicon.ico', sizes: 'any' },
+    { key: 'apple-icon', rel: 'apple-touch-icon', href: '/admin-apple-touch-icon.png' }
+  ]
+})
 </script>
 
 <template>

@@ -11,21 +11,25 @@ const customer = useCustomerStore()
 const route = useRoute()
 const menu = ref(false)
 const sizeFinder = useSizeFinder()
+// Header shadow + compact row after the first few pixels of scroll (passive listener, one rAF per frame).
+const scrolled = ref(false)
+let raf = 0
+const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; scrolled.value = window.scrollY > 8 }) }
+onMounted(() => { onScroll(); window.addEventListener('scroll', onScroll, { passive: true }) })
+onBeforeUnmount(() => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) })
 const notes = computed(() => home.value?.announcements ?? [])
 // Marquee speed: ~55 px/s, so a longer message scrolls for longer (never faster).
 const marqueeSecs = computed(() => Math.max(18, Math.round(notes.value.reduce((n, a) => n + a.text.length, 0) * 0.22)))
-const words = computed(() => {
-  const n = s.value?.company_name || 'SoftLadyLux'
-  const i = n.search(/[A-Z][a-z]+$/) // "SoftLady" + italic "Lux" style split on the last capitalised word
-  return i > 0 ? [n.slice(0, i), n.slice(i)] : [n, '']
-})
 watch(() => route.fullPath, () => { menu.value = false })
 watch(menu, (o) => { if (import.meta.client) document.documentElement.style.overflow = o ? 'hidden' : '' })
 const active = (slug: string) => route.path === `/shop/${slug}`
 </script>
 
 <template>
-  <header class="relative z-50 bg-bg">
+  <!-- Sticky header (owner request, like embralux.com): the announcement bar scrolls away; the main row and category bar stay
+         pinned to the top. `contents` lets the sticky block use the page as its scroll container. Soft: the row shrinks and a
+         shadow fades in once the page is scrolled (both transitions; no jump). Phones pin only the main row, so search scrolls away. -->
+  <header class="contents">
     <!-- Owner request: the announcement scrolls as a marquee. The track holds the messages twice and slides by
          half its width, so the loop is seamless; hover/focus pause it; reduced-motion shows one static line
          (CSS in main.css). The repeat is aria-hidden so a screen reader hears each message once. -->
@@ -41,17 +45,16 @@ const active = (slug: string) => route.path === `/shop/${slug}`
       </div>
     </div>
 
-    <div class="wrap grid h-14 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:h-[72px] md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)] 2xl:gap-8">
+    <div class="sticky top-0 z-50 bg-bg transition-shadow duration-300" :class="scrolled ? 'shadow-pop' : ''">
+    <div class="wrap grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 transition-[height] duration-300 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_minmax(0,1fr)] 2xl:gap-8" :class="scrolled ? 'h-14 md:h-16' : 'h-14 md:h-[72px]'">
       <div class="flex min-w-0 items-center gap-1">
         <button class="-ml-2 inline-flex h-11 w-11 items-center justify-center md:hidden" :aria-expanded="menu" aria-controls="mobile-menu" aria-label="Open menu" @click="menu = true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         </button>
         <NuxtLink to="/" class="flex min-h-11 flex-col justify-center leading-none" :aria-label="`${s?.company_name} home`">
           <NuxtImg v-if="s?.logo" format="webp" :src="mediaSrc(s.logo.url)" :alt="s.logo.alt_text" height="40" class="h-10 w-auto" />
-          <template v-else>
-            <span class="font-display whitespace-nowrap text-[24px] font-medium tracking-[0.06em] sm:text-[26px] lg:text-[32px]">{{ words[0] }}<span v-if="words[1]" class="italic text-accent">{{ words[1] }}</span></span>
-            <span class="mt-[5px] hidden whitespace-nowrap text-xs uppercase tracking-[0.42em] text-gold lg:block">{{ s?.tagline && s.tagline.length < 32 ? s.tagline : 'Fashion & Intimates' }}</span>
-          </template>
+          <!-- Brand logo (brand/ kit): default when no logo is uploaded in Settings. The mark already carries name and tagline. -->
+          <img v-else src="/brand/logo-full.svg" :alt="s?.company_name || 'SoftLadyLux'" width="188" height="48" class="h-9 w-auto md:h-11 lg:h-12">
         </NuxtLink>
       </div>
 
@@ -80,8 +83,6 @@ const active = (slug: string) => route.path === `/shop/${slug}`
       </nav>
     </div>
 
-    <div class="wrap pb-3 md:hidden"><StoreSearch /></div>
-
     <nav class="hidden border-y border-border bg-bg md:block" aria-label="Categories">
       <!-- One row at every width: centred when it fits, scrollable when it does not (never wraps) -->
       <ul class="wrap flex flex-nowrap gap-1 overflow-x-auto [scrollbar-width:none] lg:gap-1.5 [&>li:first-child]:ml-auto [&>li:last-child]:mr-auto [&::-webkit-scrollbar]:hidden">
@@ -89,6 +90,8 @@ const active = (slug: string) => route.path === `/shop/${slug}`
         <li class="shrink-0"><NuxtLink to="/shop/offers" class="block whitespace-nowrap border-b-2 px-4 py-3.5 text-[12.5px] font-medium uppercase tracking-[0.16em] text-accent transition-colors hover:text-ink" :class="route.path === '/shop/offers' ? 'border-accent' : 'border-transparent'">Offers</NuxtLink></li>
       </ul>
     </nav>
+    </div>
+    <div class="wrap pb-3 md:hidden"><StoreSearch /></div>
 
     <!-- Mobile menu (slide-in) -->
     <Transition enter-active-class="transition-opacity duration-300" leave-active-class="transition-opacity duration-200" enter-from-class="opacity-0" leave-to-class="opacity-0">
@@ -96,7 +99,7 @@ const active = (slug: string) => route.path === `/shop/${slug}`
     </Transition>
     <Transition enter-active-class="transition-transform duration-300 ease-out" leave-active-class="transition-transform duration-200 ease-in" enter-from-class="-translate-x-full" leave-to-class="-translate-x-full">
       <aside v-if="menu" id="mobile-menu" class="fixed inset-y-0 left-0 z-50 flex w-[86%] max-w-sm flex-col overflow-y-auto bg-bg md:hidden" aria-label="Menu" @keydown.esc="menu = false">
-        <div class="flex h-14 items-center justify-between border-b border-border px-5"><span class="font-display text-2xl">{{ words[0] }}<span class="italic text-accent">{{ words[1] }}</span></span><button class="h-11 w-11" aria-label="Close menu" @click="menu = false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button></div>
+        <div class="flex h-14 items-center justify-between border-b border-border px-5"><img src="/brand/logo-full.svg" :alt="s?.company_name || 'SoftLadyLux'" width="141" height="36" class="h-9 w-auto"><button class="h-11 w-11" aria-label="Close menu" @click="menu = false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button></div>
         <ul class="flex flex-col py-2"><li v-for="c in cats ?? []" :key="c.slug"><NuxtLink :to="`/shop/${c.slug}`" class="flex min-h-[52px] items-center justify-between border-b border-border px-5 text-[13px] font-medium uppercase tracking-[0.16em]">{{ c.name }}<span class="text-muted">›</span></NuxtLink></li><li><NuxtLink to="/shop/offers" class="flex min-h-[52px] items-center px-5 text-[13px] font-medium uppercase tracking-[0.16em] text-accent">Offers</NuxtLink></li></ul>
         <div class="mt-auto flex flex-col gap-1 border-t border-border p-5 text-sm"><NuxtLink to="/track" class="flex min-h-11 items-center">Track order</NuxtLink><button type="button" class="flex min-h-11 items-center text-left" aria-haspopup="dialog" @click="menu = false; sizeFinder.show()">Find my size</button><NuxtLink :to="customer.isIn ? '/account' : '/login'" class="flex min-h-11 items-center">{{ customer.isIn ? 'My account' : 'Log in / Register' }}</NuxtLink></div>
       </aside>

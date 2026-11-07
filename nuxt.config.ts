@@ -23,7 +23,17 @@ export default defineNuxtConfig({
   // Originals live in the shared media volume; NUXT_IMAGE_DIR points IPX at it (mounted at /media in Docker).
   image: { format: ['webp'], dir: process.env.NUXT_IMAGE_DIR || 'public' },
   app: {
-    head: { htmlAttrs: { lang: 'en' }, title: 'SoftLadyLux' },
+    head: {
+      htmlAttrs: { lang: 'en' }, title: 'SoftLadyLux',
+      // Storefront favicon (the logo icon on an ivory disc). The admin layouts replace these four links with the dark tile
+      // (same keys); a favicon uploaded in Settings replaces the 'favicon' one on the storefront.
+      link: [
+        { key: 'favicon', rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { key: 'favicon-png', rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { key: 'favicon-ico', rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+        { key: 'apple-icon', rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }
+      ]
+    },
     pageTransition: { name: 'page', mode: 'out-in' }
   }
 })

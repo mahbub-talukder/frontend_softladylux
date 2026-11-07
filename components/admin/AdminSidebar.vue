@@ -36,9 +36,12 @@ async function signOut() {
 
 <template>
   <nav aria-label="Admin" class="flex min-h-full w-[264px] shrink-0 flex-col gap-1.5 bg-dark px-[18px] py-7 text-text-dark">
-    <NuxtLink to="/admin" class="flex flex-col gap-1.5 px-3 pb-6">
-      <span class="break-words font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">{{ siteName || 'SoftLadyLux' }}</span>
-      <span class="text-[10px] uppercase tracking-[0.34em] text-champagne">Admin panel</span>
+    <NuxtLink to="/admin" class="flex items-center gap-3 px-3 pb-6">
+      <img src="/brand/logo-icon-reversed.svg" alt="" width="44" height="44" class="h-11 w-11 shrink-0">
+      <span class="flex min-w-0 flex-col gap-1.5">
+        <span class="break-words font-display text-[24px] leading-none tracking-[0.06em] text-on-dark">{{ siteName || 'SoftLadyLux' }}</span>
+        <span class="text-[10px] uppercase tracking-[0.34em] text-champagne">Admin panel</span>
+      </span>
     </NuxtLink>
     <NuxtLink
       v-for="i in visible" :key="i.to" :to="i.to"

@@ -13,7 +13,7 @@ watch(() => route.fullPath, () => sizeFinder.hide())
 // Read once in setup: composables like useRuntimeConfig() must not run lazily inside computed().
 const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', ''))
 useHead({
-  link: () => [...(s.value?.favicon ? [{ rel: 'icon', href: s.value.favicon.url }] : []), { rel: 'canonical', href: canonicalOf(origin, route.path) }]
+  link: () => [...(s.value?.favicon ? [{ key: 'favicon', rel: 'icon', href: s.value.favicon.url }] : []), { rel: 'canonical', href: canonicalOf(origin, route.path) }]
 })
 // Open Graph defaults from Settings (SET-04); pages override title/description/image.
 useSeoMeta({

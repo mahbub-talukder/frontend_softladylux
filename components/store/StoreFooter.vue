@@ -18,7 +18,6 @@ const wa = computed(() => {
 })
 const social = computed(() => ([['Facebook', s.value?.facebook_url, 'Fb'], ['Instagram', s.value?.instagram_url, 'Ig'], ['YouTube', s.value?.youtube_url, 'Yt'], ['TikTok', s.value?.tiktok_url, 'Tt']] as [string, string | undefined, string][]).filter(([, u]) => u) as [string, string, string][])
 const { data: cats } = await useCategories()
-const words = computed(() => { const n = s.value?.company_name || 'SoftLadyLux'; const i = n.search(/[A-Z][a-z]+$/); return i > 0 ? [n.slice(0, i), n.slice(i)] : [n, ''] })
 const { errorOf } = useApi()
 // Newsletter band is hidden for now (owner request); flip to show it again.
 const showNewsletter = false
@@ -49,7 +48,7 @@ async function subscribe() {
 
     <div class="wrap grid grid-cols-2 gap-x-6 gap-y-6 pb-6 pt-8 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-8 md:pt-9">
       <div class="col-span-2 flex flex-col gap-3.5 md:col-span-1">
-        <div class="font-display text-[30px] leading-none tracking-[0.06em] text-on-dark">{{ words[0] }}<span v-if="words[1]" class="italic text-rose-soft">{{ words[1] }}</span></div>
+        <img src="/brand/logo-full-reversed.svg" :alt="s?.company_name || 'SoftLadyLux'" width="235" height="60" class="h-[60px] w-auto self-start" loading="lazy">
         <p class="max-w-[330px] text-sm leading-[1.6] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
         <div class="mt-1 flex gap-2.5"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-11 w-11 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
       </div>
