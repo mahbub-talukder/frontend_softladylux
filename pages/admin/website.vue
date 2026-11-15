@@ -6,7 +6,9 @@ import type { FieldDef } from '~/components/admin/ContentList.vue'
 definePageMeta({ layout: 'admin', permission: 'website.manage' })
 
 const LINK_TYPES = ['url', 'category', 'product']
-const TABS: { id: string; label: string; endpoint: string; titleKey: string; canCreate: boolean; canDelete: boolean; note?: string; fields: FieldDef[]; defaults?: Record<string, unknown> }[] = [
+const BANNER_TITLES = { home_promo: 'Home promo banner', home_offer: 'Home offer banner', signature: 'Signature collection (big panel)', popup: 'Promotional popup' }
+type Tab = { id: string; label: string; endpoint: string; titleKey: string; canCreate: boolean; canDelete: boolean; note?: string; fields: FieldDef[]; defaults?: Record<string, unknown>; query?: Record<string, string>; titles?: Record<string, string>; hideSort?: boolean }
+const TABS: Tab[] = [
   { id: 'carousel', label: 'Carousel', endpoint: '/admin/website/carousel/', titleKey: 'heading', canCreate: true, canDelete: true,
     note: 'Up to 8 slides can be on at once. Recommended 1600 × 900 px (desktop) and 800 × 1000 px (mobile, optional). The picture fills a fixed box and is cropped from the centre, so keep the subject in the middle.',
     defaults: { link_type: 'url' }, fields: [
@@ -15,10 +17,20 @@ const TABS: { id: string; label: string; endpoint: string; titleKey: string; can
       { key: 'eyebrow', label: 'Eyebrow text', max: 80 }, { key: 'heading', label: 'Heading', max: 120 }, { key: 'subtext', label: 'Sub-text', max: 240 },
       { key: 'button_label', label: 'Button label', max: 40 }, { key: 'link_type', label: 'Link type', type: 'select', options: LINK_TYPES },
       { key: 'link_value', label: 'Link target (slug or URL)', max: 300 }] },
+  // WEB-02 (v1.6): home promo, home offer and the big Signature collection panel
   { id: 'banners', label: 'Banners', endpoint: '/admin/website/banners/', titleKey: 'placement', canCreate: false, canDelete: false,
-    note: 'Two fixed placements: home promo and home offer.', fields: [
-      { key: 'media', label: 'Image', type: 'media', kind: 'banner', hint: '1200 × 600 px' },
-      { key: 'heading', label: 'Heading', max: 120 }, { key: 'text', label: 'Text', max: 240 }, { key: 'link', label: 'Link', max: 300 }] },
+    query: { placement: 'home_promo,home_offer,signature' }, titles: BANNER_TITLES, hideSort: true,
+    note: 'Fixed placements. Home promo and Home offer are shown side by side, whole and uncropped, in the shape of the uploaded picture: use the same size for both (1200 × 600 px recommended) so they line up. Signature collection: the big panel beside the Signature products, 800 × 1000 px (portrait); while it has no image the drawn panel is shown. The button label is used by the Signature panel.', fields: [
+      { key: 'media', label: 'Image', type: 'media', kind: 'banner', hint: 'See the sizes above' },
+      { key: 'heading', label: 'Heading', max: 120 }, { key: 'text', label: 'Text', max: 240 },
+      { key: 'button_label', label: 'Button label', max: 40 }, { key: 'link', label: 'Link', max: 300, hint: 'A page on this site such as /shop/new, or a full https:// link' }] },
+  // WEB-11 (v1.6): one promotional popup, shown on every home page load while it is on
+  { id: 'promo', label: 'Promotional Ads Panel', endpoint: '/admin/website/banners/', titleKey: 'placement', canCreate: false, canDelete: false,
+    query: { placement: 'popup' }, titles: BANNER_TITLES, hideSort: true,
+    note: 'A popup that opens shortly after the home page loads, every time it is loaded, until the visitor closes it. It needs an image and the switch on; switch it off to stop showing it. Any shape works and the picture is never cropped (800 × 800 px or 800 × 1000 px suit it best); add a heading, text and button to show them beside the image (image only works too).', fields: [
+      { key: 'media', label: 'Promotional image', type: 'media', kind: 'banner', hint: '800 × 800 px, JPG/PNG/WebP up to 5 MB', required: true },
+      { key: 'heading', label: 'Heading', max: 120 }, { key: 'text', label: 'Promotional text', type: 'textarea', max: 240 },
+      { key: 'button_label', label: 'Button label', max: 40, hint: 'Default: Shop now' }, { key: 'link', label: 'Button link', max: 300, hint: 'A page on this site such as /shop/offers, or a full https:// link' }] },
   { id: 'videos', label: 'Videos', endpoint: '/admin/website/videos/', titleKey: 'title', canCreate: true, canDelete: true,
     note: 'Paste a YouTube, Vimeo or direct video link (.mp4/.webm). It plays in place on the home page. Other links open in the same tab.', fields: [
       { key: 'title', label: 'Title', required: true, max: 120 }, { key: 'url', label: 'Video URL', required: true, url: true, max: 200 },
@@ -68,7 +80,7 @@ async function toggleSection(s: { key: string; on: boolean }) {
       <p v-if="sectionMsg" class="mt-2 text-sm" role="status">{{ sectionMsg }}</p><p v-if="sectionErr" class="err mt-2" role="alert">{{ sectionErr }}</p>
     </div>
     <div v-else-if="current" class="max-w-2xl">
-      <AdminContentList :key="current.id" :endpoint="current.endpoint" :fields="current.fields" :title-key="current.titleKey" :can-create="current.canCreate" :can-delete="current.canDelete" :defaults="current.defaults" :note="current.note" />
+      <AdminContentList :key="current.id" :endpoint="current.endpoint" :fields="current.fields" :title-key="current.titleKey" :can-create="current.canCreate" :can-delete="current.canDelete" :defaults="current.defaults" :note="current.note" :query="current.query" :titles="current.titles" :hide-sort="current.hideSort" />
     </div>
   </section>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Design: Footer board. SRS SET-08 / STF: contact, support hours, WhatsApp and Messenger links
-// live here (no header bar, no floating button). Values come from Settings; brackets mark
-// placeholders shown until the owner supplies real data.
+// Design: Footer board. SRS SET-08 / NTF-05: contact, support hours, WhatsApp and Messenger links
+// live here (the header also has WhatsApp/Call icons since v1.6; no floating button). Values come from Settings; brackets mark
+// placeholders shown until the owner supplies real data. Compact layout (amendment v1.6): tighter rows,
+// 36 px link targets (WCAG 2.2 minimum is 24 px), smaller logo.
 import type { StaticPage } from '~/types/api'
 
 const { data: s } = await useSiteSettings()
@@ -12,10 +13,7 @@ const { data: pages } = await useAsyncData('footer-pages', async () => {
   return out.filter((p): p is StaticPage => !!p)
 })
 const ph = (v: string | undefined, label: string) => v || `[${label}]`
-const wa = computed(() => {
-  const n = (s.value?.whatsapp_number || '').replace(/\D/g, '')
-  return n ? `https://wa.me/${n}` : ''
-})
+const wa = computed(() => waLink(s.value?.whatsapp_number)) // 01… is turned into 8801… for wa.me
 const social = computed(() => ([['Facebook', s.value?.facebook_url, 'Fb'], ['Instagram', s.value?.instagram_url, 'Ig'], ['YouTube', s.value?.youtube_url, 'Yt'], ['TikTok', s.value?.tiktok_url, 'Tt']] as [string, string | undefined, string][]).filter(([, u]) => u) as [string, string, string][])
 const { data: cats } = await useCategories()
 const { errorOf } = useApi()
@@ -46,29 +44,29 @@ async function subscribe() {
       </div>
     </div>
 
-    <div class="wrap grid grid-cols-2 gap-x-6 gap-y-6 pb-6 pt-8 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-8 md:pt-9">
-      <div class="col-span-2 flex flex-col gap-3.5 md:col-span-1">
-        <img src="/brand/logo-full-reversed.svg" :alt="s?.company_name || 'SoftLadyLux'" width="235" height="60" class="h-[60px] w-auto self-start" loading="lazy">
-        <p class="max-w-[330px] text-sm leading-[1.6] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
-        <div class="mt-1 flex gap-2.5"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-11 w-11 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
+    <div class="wrap grid grid-cols-2 gap-x-6 gap-y-5 pb-4 pt-6 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-x-8 md:gap-y-4 md:pt-7">
+      <div class="col-span-2 flex flex-col gap-2.5 md:col-span-1">
+        <img src="/brand/logo-full-reversed.svg" :alt="s?.company_name || 'SoftLadyLux'" width="188" height="48" class="h-12 w-auto self-start" loading="lazy">
+        <p class="max-w-[330px] text-[13px] leading-[1.55] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
+        <div class="flex gap-2"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-9 w-9 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
       </div>
-      <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">{{ c.name }}</NuxtLink></nav>
-      <nav class="flex flex-col md:grid md:grid-cols-2 md:content-start md:gap-x-6" aria-label="Help"><div class="mb-2 md:col-span-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
-        <NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Size chart</NuxtLink><NuxtLink to="/size-guide" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Size calculator</NuxtLink><NuxtLink to="/track" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Track my order</NuxtLink><NuxtLink to="/wishlist" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Wishlist</NuxtLink><NuxtLink to="/login" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Login / Register</NuxtLink><NuxtLink to="/contact" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">Contact us</NuxtLink>
-        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="text-sm leading-normal transition-colors hover:text-white flex min-h-11 items-center">{{ p.title }}</NuxtLink>
+      <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-1 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">{{ c.name }}</NuxtLink></nav>
+      <nav class="flex flex-col md:grid md:grid-cols-2 md:content-start md:gap-x-6" aria-label="Help"><div class="mb-1 md:col-span-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Help</div>
+        <NuxtLink to="/size-guide" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Size chart</NuxtLink><NuxtLink to="/size-guide" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Size calculator</NuxtLink><NuxtLink to="/track" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Track my order</NuxtLink><NuxtLink to="/wishlist" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Wishlist</NuxtLink><NuxtLink to="/login" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Login / Register</NuxtLink><NuxtLink to="/contact" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">Contact us</NuxtLink>
+        <NuxtLink v-for="p in pages" :key="p.slug" :to="`/pages/${p.slug}`" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">{{ p.title }}</NuxtLink>
       </nav>
-      <address class="col-span-2 flex flex-col gap-1 text-sm not-italic md:col-span-1"><div class="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
+      <address class="col-span-2 flex flex-col gap-0.5 text-[13.5px] not-italic md:col-span-1"><div class="mb-1 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Contact</div>
         <span class="leading-[1.6]">{{ ph(s?.address_line1, 'STORE ADDRESS') }}<template v-if="s?.address_line2">, {{ s.address_line2 }}</template><br>{{ ph(s?.city, 'CITY') }}, {{ s?.country || 'Bangladesh' }}</span>
         <span class="mt-1">{{ s?.support_phones?.length ? s.support_phones.join(', ') : '[PHONE NUMBER]' }}</span><span>{{ ph(s?.support_email, 'EMAIL ADDRESS') }}</span>
         <span class="mt-1">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
-        <span class="mt-1.5 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
+        <span class="mt-1 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
       </address>
     </div>
 
     <div class="border-t border-line-dark">
-      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-2 text-[13px] text-text-dark-3">
-        <span class="py-2">{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
-        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-11 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
+      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-1 text-[12.5px] text-text-dark-3">
+        <span class="py-1.5">{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
+        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </div>
     </div>
   </footer>

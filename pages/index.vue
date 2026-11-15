@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CardProduct } from '~/types/api'
+import type { CardProduct, Media } from '~/types/api'
 // Design: Main + MobileHome boards. Fixed layout (SRS WEB-06): hero, trust strip, category carousel,
 // New arrivals, Signature collection, Offers tabs, Video gallery, Size-finder band. Each block shows
 // only when it has content; New / Signature / Offers fill from product flags (CAT-07).
@@ -11,35 +11,32 @@ useSeoMeta({
   description: () => s.value?.seo_description || s.value?.tagline || ''
 })
 const banner = (p: string) => home.value?.banners.find((b) => b.placement === p)
+// Home promo / offer banners show the whole uploaded picture (v1.6): the box takes the image's own proportions instead
+// of a fixed 2:1 crop, and the resize keeps that shape. 2:1 is only the fallback when the size is unknown.
+const shape = (m: Media) => (m.width && m.height ? { ratio: `${m.width}/${m.height}`, height: Math.round((800 * m.height) / m.width) } : { ratio: '2/1', height: 400 })
 
-// ---- category carousel (6 tiles in view, arrows scroll one tile)
-const rail = ref<HTMLElement | null>(null)
-const canPrev = ref(false)
-const canNext = ref(true)
-function measure() {
-  const el = rail.value
-  if (!el) return
-  canPrev.value = el.scrollLeft > 4
-  canNext.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
-}
-function scrollRail(d: number) { rail.value?.scrollBy({ left: d * ((rail.value.firstElementChild as HTMLElement | null)?.clientWidth ?? 200 + 20), behavior: 'smooth' }) }
-onMounted(() => { measure(); window.addEventListener('resize', measure) })
-onBeforeUnmount(() => window.removeEventListener('resize', measure))
-
-// ---- offers & favourites tabs (SRS has no "Best seller"/"Hot deal" flag: Offers and Signature)
+// ---- offers & favourites tabs: Special offer · Best seller (CAT-23, v1.6) · Our favourites (Signature flag)
 const sizeFinder = useSizeFinder()
-const tab = ref<'offers' | 'favourites'>('offers')
-const tabItems = computed(() => (tab.value === 'offers' ? home.value?.offers : home.value?.signature) ?? [])
-const tabs = computed(() => [{ id: 'offers' as const, label: 'Special offer', n: home.value?.offers.length ?? 0 }, { id: 'favourites' as const, label: 'Our favourites', n: home.value?.signature.length ?? 0 }].filter((t) => t.n))
+type TabId = 'offers' | 'bestsellers' | 'favourites'
+const tab = ref<TabId>('offers')
+const TAB_DATA: Record<TabId, () => CardProduct[]> = {
+  offers: () => home.value?.offers ?? [], bestsellers: () => home.value?.bestsellers ?? [], favourites: () => home.value?.signature ?? []
+}
+const tabItems = computed(() => TAB_DATA[tab.value]())
+const tabs = computed(() => ([['offers', 'Special offer'], ['bestsellers', 'Best seller'], ['favourites', 'Our favourites']] as [TabId, string][])
+  .map(([id, label]) => ({ id, label, n: TAB_DATA[id]().length })).filter((t) => t.n))
 watchEffect(() => { if (tabs.value.length && !tabs.value.some((t) => t.id === tab.value)) tab.value = tabs.value[0].id })
 
 const sig = computed(() => home.value?.signature ?? [])
 const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: string; short_desc?: string }) | undefined)
+const sigBanner = computed(() => home.value?.signature_banner ?? null) // WEB-02 (v1.6): admin-managed panel image
 </script>
 
 <template>
   <div>
     <StoreHomeHero :slides="home?.carousel ?? []" />
+    <!-- WEB-11 (v1.6): promotional popup on every home page load; renders nothing on the server -->
+    <StorePromoModal v-if="home?.popup" :popup="home.popup" />
 
     <section v-if="home?.trust.length" class="border-b border-border bg-bg" aria-label="Why shop with us">
       <div class="wrap grid grid-cols-2 lg:grid-cols-4">
@@ -50,24 +47,14 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
     </section>
 
     <section v-if="home?.categories.length" class="wrap section pb-6">
-      <StoreSection eyebrow="Shop by category" title="The wardrobe, edited">
-        <div class="hidden gap-2.5 md:flex"><button class="arrow-btn" aria-label="Previous categories" :disabled="!canPrev" @click="scrollRail(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg></button><button class="arrow-btn" aria-label="Next categories" :disabled="!canNext" @click="scrollRail(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg></button></div>
-      </StoreSection>
-      <ul ref="rail" class="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-5 overflow-x-auto scroll-smooth px-5 pb-2 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden" @scroll.passive="measure">
-        <li v-for="(c, k) in home.categories" :key="c.slug" class="w-[44%] shrink-0 snap-start sm:w-[30%] lg:w-[calc((100%-100px)/6)]">
-          <NuxtLink :to="`/shop/${c.slug}`" class="group flex flex-col gap-3.5 transition-transform duration-500 hover:-translate-y-1" data-track="home_category_tile">
-            <StoreTile :src="c.tile?.url" :alt="c.tile?.alt_text || c.name" ratio="4/5" :tile-key="k" :category="c.slug" :width="400" :height="500" art-width="62%" />
-            <div class="flex items-baseline justify-between"><h3 class="text-card md:text-2xl">{{ c.name }}</h3><span class="text-xs font-medium uppercase tracking-[0.16em] underline underline-offset-[6px]">Shop</span></div>
-          </NuxtLink>
-        </li>
-      </ul>
+      <StoreCategoryCarousel :categories="home.categories" />
     </section>
 
     <section v-if="home?.banners.length" class="wrap section pb-6 pt-6 md:pt-12">
-      <div class="grid gap-4 md:grid-cols-2 md:gap-6">
+      <div class="grid items-start gap-4 md:grid-cols-2 md:gap-6">
         <template v-for="p in ['home_promo', 'home_offer']" :key="p">
           <NuxtLink v-if="banner(p)?.media" :to="banner(p)?.link || '/'" class="group relative block overflow-hidden" data-track="home_banner">
-            <StoreTile :src="banner(p)!.media!.url" :alt="banner(p)!.media!.alt_text" ratio="2/1" tint="bg-tile-5" :width="800" :height="400" art-width="22%" category="gift-sets" />
+            <StoreTile :src="banner(p)!.media!.url" :alt="banner(p)!.media!.alt_text" :ratio="shape(banner(p)!.media!).ratio" tint="bg-tile-5" :width="800" :height="shape(banner(p)!.media!).height" sizes="100vw md:50vw lg:640px" art-width="22%" category="gift-sets" />
             <div class="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-dark/55 to-transparent p-6 text-on-dark md:p-8"><h3 class="text-h3 md:text-h2-lg">{{ banner(p)!.heading }}</h3><p class="text-[15px] text-on-dark/90">{{ banner(p)!.text }}</p></div>
           </NuxtLink>
         </template>
@@ -81,7 +68,17 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
 
     <section v-if="sigLead" class="wrap section pb-6">
       <div class="grid items-stretch gap-8 lg:grid-cols-[5fr_7fr] lg:gap-10">
-        <div class="relative flex min-h-[420px] flex-col justify-between bg-tile-2 p-8 md:min-h-[620px] md:px-12 md:py-14">
+        <!-- WEB-02 (v1.6): the uploaded Signature banner fills the panel with its text over a soft shade -->
+        <NuxtLink v-if="sigBanner?.media" :to="sigBanner.link || '/shop/new'" class="group relative flex min-h-[420px] flex-col justify-end overflow-hidden bg-tile-2 md:min-h-[620px]" data-track="home_signature">
+          <NuxtImg format="webp" :src="mediaSrc(sigBanner.media.url)" :alt="sigBanner.media.alt_text" width="800" height="1000" sizes="100vw lg:540px" loading="lazy" class="media-cover absolute inset-0 h-full w-full transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
+          <div class="relative flex flex-col gap-4 bg-gradient-to-t from-dark/70 via-dark/35 to-transparent p-8 pt-24 text-on-dark md:px-12 md:pb-14">
+            <div class="eyebrow !text-on-dark/85">Signature collection</div>
+            <h2 class="text-h1 leading-[1.05] md:text-h1-lg">{{ sigBanner.heading || 'Signature' }}</h2>
+            <p v-if="sigBanner.text" class="max-w-[360px] text-base leading-[1.7] text-on-dark/90">{{ sigBanner.text }}</p>
+            <span class="btn btn-light mt-2 self-start">{{ sigBanner.button_label || 'Explore the collection' }}</span>
+          </div>
+        </NuxtLink>
+        <div v-else class="relative flex min-h-[420px] flex-col justify-between bg-tile-2 p-8 md:min-h-[620px] md:px-12 md:py-14">
           <div class="flex flex-col gap-[18px]">
             <div class="eyebrow !text-rose-deep">Signature collection</div>
             <h2 class="text-h1 leading-[1.05] md:text-h1-lg">{{ sigLead.collection || 'Signature' }}</h2>
@@ -96,8 +93,8 @@ const sigLead = computed(() => sig.value[0] as (CardProduct & { collection?: str
 
     <section v-if="tabs.length" class="wrap section pb-6">
       <StoreSection eyebrow="Curated for you" title="Offers & favourites" center />
-      <div class="mb-10 flex flex-wrap justify-center gap-10 border-b border-border" role="tablist">
-        <button v-for="t in tabs" :key="t.id" role="tab" :aria-selected="tab === t.id" class="-mb-px min-h-11 border-b-2 pb-4 text-xs font-medium uppercase tracking-[0.18em] transition-colors" :class="tab === t.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'" @click="tab = t.id">{{ t.label }}</button>
+      <div class="mb-10 flex justify-center gap-5 border-b border-border sm:gap-10" role="tablist">
+        <button v-for="t in tabs" :key="t.id" role="tab" :aria-selected="tab === t.id" class="-mb-px min-h-11 whitespace-nowrap border-b-2 pb-4 text-[11px] font-medium uppercase tracking-[0.12em] transition-colors sm:text-xs sm:tracking-[0.18em]" :class="tab === t.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'" @click="tab = t.id">{{ t.label }}</button>
       </div>
       <Transition mode="out-in" enter-active-class="transition duration-300" leave-active-class="transition duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
         <div :key="tab" class="grid grid-cols-2 gap-x-4 gap-y-9 lg:grid-cols-4 lg:gap-6"><StoreProductCard v-for="p in tabItems.slice(0, 4)" :key="p.id" :product="p" /></div>

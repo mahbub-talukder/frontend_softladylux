@@ -71,7 +71,7 @@ const priceChanged = (l: { variant: number; price: string }) => {
                   {{ cart.issuesFor(l.variant).map((i) => issueText[i]).join(', ') }}
                   <button class="underline" @click="cart.fix(l.variant)">{{ cart.issuesFor(l.variant).includes('quantity_above_stock') ? `Reduce to ${lineInfo(l.variant)?.available_quantity}` : 'Remove' }}</button>
                 </div>
-                <button class="mt-1 min-h-11 self-start border-b border-ink text-xs font-medium uppercase tracking-[0.14em]" @click="cart.remove(l.variant); useTrack().push('remove_from_cart', { item: l.slug })">Remove</button>
+                <button class="mt-1 min-h-11 self-start border-b border-ink text-xs font-medium uppercase tracking-[0.14em]" @click="useTrack().ecommerce('remove_from_cart', { items: [useTrack().line(l)] }); cart.remove(l.variant)">Remove</button>
               </div>
             </div>
             <div class="flex h-12 w-[132px] items-center border border-field bg-surface" role="group" :aria-label="`Quantity for ${l.name}`">

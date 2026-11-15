@@ -2,7 +2,9 @@ import { clickInfo, type TrackEl } from '~/utils/consent'
 
 // SRS INS-03/INS-05: consent first, then the event contract.
 // - Consent Mode defaults to denied; GTM is injected only after Accept (stores/consent.ts).
-// - page_view on every route change.
+// - page_view once per page: the first load and `page:finish` can both fire for the same path (v1.6), and a
+//   query-only change (filters, sort) is not a new page. page_location has no query string, so search terms
+//   or anything typed into a URL never reach GA4.
 // - any element with data-track="name" raises ui_click with button_name, button_location, page_path.
 export default defineNuxtPlugin(async (nuxtApp) => {
   const { data: site } = await useSiteSettings()
@@ -11,7 +13,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const { push } = useTrack()
   const router = useRouter()
 
-  const view = (path: string) => push('page_view', { page_path: path.split('?')[0], page_title: document.title })
+  let last = ''
+  const view = (full: string) => {
+    const path = full.split('?')[0].split('#')[0]
+    if (path === last) return
+    last = path
+    push('page_view', { page_path: path, page_location: `${window.location.origin}${path}`, page_title: document.title })
+  }
   view(router.currentRoute.value.fullPath)
   nuxtApp.hook('page:finish', () => view(router.currentRoute.value.fullPath))
 

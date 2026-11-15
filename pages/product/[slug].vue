@@ -68,9 +68,12 @@ function addToBag() {
     image: p.value!.images[0]?.url ?? null, slug: p.value!.slug
   }, qty.value)
   added.value = status === 'full' ? 'Your bag is full (30 items). Remove something first.' : `${qty.value} × ${p.value!.name} (${[v.size_label, v.color_name].filter(Boolean).join(', ')}) added to your bag.`
-  useTrack().push('add_to_cart', { item: p.value!.slug, value: Number(v.price) * qty.value })
+  if (status !== 'full') {
+    const t = useTrack()
+    t.ecommerce('add_to_cart', { items: [t.item(p.value!, { price: Number(v.price), quantity: qty.value, item_variant: [v.color_name, v.size_label].filter(Boolean).join(' / ') || undefined })] })
+  }
 }
-onMounted(() => useTrack().push('view_item', { items: [useTrack().item(p.value!)], value: Number(p.value!.price) }))
+onMounted(() => { const t = useTrack(); t.ecommerce('view_item', { items: [t.item(p.value!)] }) })
 const open = ref(0)
 const tabs = computed(() => [
   { id: 'description', label: 'Details', body: p.value!.description || p.value!.short_desc },
@@ -139,7 +142,7 @@ const tabs = computed(() => [
             <button type="button" class="h-full w-12 text-xl" aria-label="Increase quantity" @click="qty = Math.min(10, qty + 1)">+</button>
           </div>
           <button type="button" class="btn !h-[54px] min-w-0 flex-1 !px-4" :disabled="!!chosen && !chosen.in_stock" data-track="add_to_bag" @click="addToBag">Add to bag</button>
-          <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" class="!h-[54px] !w-[54px] border border-field bg-surface" />
+          <StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" :price="p.price" class="!h-[54px] !w-[54px] border border-field bg-surface" />
         </div>
         <p v-if="needSize" class="err -mt-2" role="alert">Choose a size first.</p>
         <div v-if="added" class="fade-in flex items-center justify-between gap-3 border-l-[3px] border-gold bg-cream px-[18px] py-4 text-[15px]" role="status"><span>{{ added }}</span><NuxtLink to="/cart" class="whitespace-nowrap border-b border-ink text-xs font-medium uppercase tracking-[0.14em]">View bag</NuxtLink></div>

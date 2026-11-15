@@ -10,10 +10,6 @@ const { api, errorOf, toast } = useApi()
 
 type Kind = 'email' | 'url' | 'money' | 'int'
 type Field = { key: string; label: string; ph?: string; type?: 'text' | 'textarea' | 'number' | 'password' | 'switch' | 'list'; note?: string; req?: boolean; max?: number; kind?: Kind; rule?: Rule }
-const jsonObject: Rule = (x) => {
-  if (x === '' || x == null) return null
-  try { const j = JSON.parse(String(x)); return j && typeof j === 'object' && !Array.isArray(j) ? null : 'Use a JSON object, e.g. {"to":"…"}.' } catch { return 'This is not valid JSON.' }
-}
 const TABS: { id: string; label: string; title: string; fields: Field[]; note?: string }[] = [
   { id: 'company', label: 'Company', title: 'Company', fields: [
     { key: 'company_name', label: 'Business name', req: true, max: 120 },
@@ -50,13 +46,13 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
     { key: 'order_number_prefix', label: 'Order number prefix', max: 10 }] },
   { id: 'analytics', label: 'Analytics', title: 'Analytics', note: 'GTM loads only after the visitor accepts the cookie banner. GA4 is configured inside GTM.', fields: [
     { key: 'gtm_id', label: 'Google Tag Manager ID', ph: 'GTM-XXXXXXX', max: 20, rule: (x) => (x && !String(x).trim().startsWith('GTM-') ? 'A Tag Manager ID starts with GTM-.' : null) }] },
-  { id: 'sms', label: 'SMS', title: 'SMS provider (MiMSMS)', note: 'Used for OTP messages. Environment variables take priority. The key is never shown again after saving.', fields: [
-    { key: 'mimsms_api_key', label: 'MiMSMS API key', type: 'password', ph: 'Leave blank to keep the saved key', max: 200 },
-    { key: 'mimsms_sender_id', label: 'Sender ID', max: 40 },
-    { key: 'mimsms_endpoint', label: 'API endpoint URL', ph: 'From your MiMSMS documentation', kind: 'url' },
-    { key: 'mimsms_method', label: 'HTTP method', ph: 'POST or GET', max: 4, rule: (x) => (x && !/^(GET|POST)$/i.test(String(x).trim()) ? 'Use POST or GET.' : null) },
-    { key: 'mimsms_params', label: 'Parameter names (JSON)', type: 'textarea', ph: '{"api_key":"…","to":"…","text":"…","sender":"…"}', note: 'Names of the fields your MiMSMS API expects.', rule: jsonObject },
-    { key: 'mimsms_success_contains', label: 'Success marker in the response', max: 80 }] },
+  // ACC-02 / NTF-02 (amendment v1.6): MiMSMS JSON API, configured only here.
+  { id: 'sms', label: 'SMS', title: 'SMS provider (MiMSMS)', note: 'Used for OTP codes (registration, forgot password) and the order confirmation SMS. All four fields are needed before any SMS can be sent. The API key is never shown again after saving.', fields: [
+    { key: 'mimsms_api_key', label: 'API key', type: 'password', ph: 'Leave blank to keep the saved key', max: 200 },
+    { key: 'mimsms_username', label: 'Username', ph: 'Your MiMSMS login email', max: 120 },
+    { key: 'mimsms_sender_name', label: 'Sender name', ph: 'Sender number from MiMSMS, e.g. 8809…', max: 40 },
+    { key: 'mimsms_url', label: 'API URL', ph: 'https://api.mimsms.com/api/V2/SMS', kind: 'url', max: 200 },
+    { key: 'sms_order_enabled', label: 'Send order confirmation SMS to customers', type: 'switch' }] },
   { id: 'seo', label: 'SEO', title: 'SEO', fields: [
     { key: 'seo_title', label: 'Default page title', max: 120 },
     { key: 'seo_description', label: 'Default description', type: 'textarea', max: 300 }] }
@@ -95,7 +91,6 @@ async function load() {
   logo.value = d.logo; favicon.value = d.favicon; share.value = d.seo_share_image
   keySet.value = d.mimsms_api_key_set
   d.support_phones = (d.support_phones || []).join(', ')
-  d.mimsms_params = JSON.stringify(d.mimsms_params || {})
   d.mimsms_api_key = ''
   form.value = d
 }
@@ -120,7 +115,6 @@ async function save() {
   }
   const body: Dict = { ...form.value }
   body.support_phones = String(body.support_phones || '').split(',').map((s) => s.trim()).filter(Boolean)
-  body.mimsms_params = JSON.parse(String(body.mimsms_params || '{}'))
   if (!body.mimsms_api_key) delete body.mimsms_api_key
   body.logo = logo.value?.id ?? null; body.favicon = favicon.value?.id ?? null
   body.seo_share_image = share.value?.id ?? null
@@ -135,6 +129,21 @@ async function save() {
     const er = errorOf(e); error.value = er.message; v.setServerErrors(er)
     await showFirstProblem()
   } finally { busy.value = false }
+}
+
+// ACC-02: send one real SMS with the saved settings and show the gateway's answer.
+const testPhone = ref('')
+const testMsg = ref<{ ok: boolean; text: string } | null>(null)
+const testing = ref(false)
+async function sendTest() {
+  testMsg.value = null
+  testing.value = true
+  try {
+    const r = await api<{ ok: boolean; detail: string }>('/admin/settings/sms-test/', { method: 'POST', body: { phone: testPhone.value }, toast: false })
+    testMsg.value = { ok: r.ok, text: r.ok ? r.detail : `Not sent: ${r.detail}` }
+  } catch (e) {
+    testMsg.value = { ok: false, text: errorOf(e).message }
+  } finally { testing.value = false }
 }
 </script>
 
@@ -177,6 +186,15 @@ async function save() {
         </AdminFormField>
       </template>
       <p v-if="current.note" class="hint">{{ current.note }}</p>
+      <div v-if="tab === 'sms'" class="mt-2 border-t border-border pt-4">
+        <h3 class="mb-1 text-lg">Send test SMS</h3>
+        <p class="hint mb-3">Uses the <strong>saved</strong> settings, so save changes first. Each test SMS uses credit.</p>
+        <div class="flex flex-wrap items-start gap-3">
+          <input id="sms-test-phone" v-model="testPhone" class="inp max-w-[220px]" type="tel" placeholder="01XXXXXXXXX" aria-label="Mobile number for the test SMS" autocomplete="off">
+          <button type="button" class="btn btn-spin" :disabled="testing || !testPhone.trim()" :aria-busy="testing" data-track="settings_sms_test" @click="sendTest">Send test</button>
+        </div>
+        <p v-if="testMsg" :class="testMsg.ok ? 'hint text-ink' : 'err'" role="status">{{ testMsg.text }}</p>
+      </div>
       <p v-if="error" class="err" role="alert">{{ error }}</p>
     </form>
   </section>

@@ -46,7 +46,7 @@ async function toggle() {
 
 function add(v: CardVariant) {
   full.value = cart.add(lineFor(p.value, v), 1) === 'full'
-  if (!full.value) useTrack().push('add_to_cart', { items: [useTrack().item(p.value)] })
+  if (!full.value) { const t = useTrack(); t.ecommerce('add_to_cart', { items: [t.item(p.value, { price: Number(v.price ?? p.value.price), quantity: 1, item_variant: [v.color_name, v.size_label].filter(Boolean).join(' / ') || undefined })] }) }
   send('chosen')
   live.value = full.value ? 'Your bag is full' : `Added ${p.value.name}, ${[v.color_name, v.size_label].filter(Boolean).join(' ')} to bag`
   focusTrigger()
@@ -73,14 +73,14 @@ onBeforeUnmount(() => { clearTimeout(timer); if (import.meta.client) document.re
 </script>
 
 <template>
-  <article ref="root" class="fade-in group flex w-full flex-col gap-3" @keydown.esc="escape" @focusout="onFocusOut">
+  <article ref="root" class="fade-in card-zoom group flex w-full flex-col gap-3" @keydown.esc="escape" @focusout="onFocusOut">
     <StoreTile :src="p.image?.url" :alt="p.image?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="3/4" :sizes="'xs:50vw md:33vw lg:25vw'">
       <NuxtLink :to="`/product/${p.slug}`" class="absolute inset-0" :aria-label="p.name" />
       <div class="pointer-events-none absolute left-3.5 top-3.5 flex flex-col items-start gap-1.5">
         <span v-if="p.tag" class="bg-bg px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.14em] text-ink">{{ p.tag }}</span>
         <span v-if="p.discount_pct" class="bg-accent px-2.5 py-1.5 text-xs font-semibold tracking-[0.06em] text-primary-contrast">−{{ p.discount_pct }}%</span>
       </div>
-      <div class="absolute right-2.5 top-2.5"><StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" /></div>
+      <div class="absolute right-2.5 top-2.5"><StoreWishHeart :product-id="p.id" :slug="p.slug" :label="p.name" :price="p.price" /></div>
       <template v-if="!p.sold_out">
         <!-- Size chips: open until a choice, outside pointerdown, Escape or focus leaving the card -->
         <!-- tabindex=-1: a click on the panel background keeps focus inside the card, so focusout does not close it -->

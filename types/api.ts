@@ -19,9 +19,10 @@ export interface Slide {
   subtext: string; button_label: string; link_type: string; link_value: string; sort: number
   is_active: boolean
 }
+// WEB-02 / WEB-11 (amendment v1.6): fixed placements; `signature` is the big Signature panel, `popup` the promo dialog
 export interface Banner {
-  id: number; placement: 'home_promo' | 'home_offer'; media: Media | null; heading: string
-  text: string; link: string; is_active: boolean
+  id: number; placement: 'home_promo' | 'home_offer' | 'signature' | 'popup'; media: Media | null; heading: string
+  text: string; button_label: string; link: string; is_active: boolean; updated_at: string
 }
 export interface Video { id: number; title: string; url: string; thumbnail: Media | null; sort: number; is_active: boolean }
 export interface Announcement { id: number; text: string; link: string; sort: number; is_active: boolean }
@@ -33,6 +34,8 @@ export interface Home {
   announcements: Announcement[]; carousel: Slide[]; banners: Banner[]
   categories: { name: string; slug: string; tile: { url: string; alt_text: string } | null }[]
   new_arrivals: CardProduct[]; signature: CardProduct[]; offers: CardProduct[]
+  bestsellers: CardProduct[] // CAT-23 (v1.6)
+  signature_banner: Banner | null; popup: Banner | null // WEB-02 / WEB-11 (v1.6)
   trust: TrustItem[]; videos: Video[]
 }
 

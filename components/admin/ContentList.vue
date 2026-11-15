@@ -27,6 +27,12 @@ const props = defineProps<{
   canDelete?: boolean
   defaults?: Record<string, unknown>
   note?: string
+  /** Extra list filter, e.g. { placement: 'popup' } (the edit/delete URLs stay `${endpoint}${id}/`). */
+  query?: Record<string, string>
+  /** Display names for title values, e.g. { home_promo: 'Home promo' }. */
+  titles?: Record<string, string>
+  /** Rows without an order (fixed banners): no "Order" field, no sort sent. */
+  hideSort?: boolean
 }>()
 const { api, errorOf, toast } = useApi()
 type Row = Dict
@@ -36,7 +42,8 @@ const errors = ref<Record<string, string>>({})
 const tried = ref<Record<string, boolean>>({}) // item key -> a save was attempted, so show every problem
 const left = ref<Record<string, boolean>>({}) // `${item}:${field}` -> the field was left
 
-async function load() { items.value = await api<Row[]>(props.endpoint) }
+async function load() { items.value = await api<Row[]>(props.endpoint, props.query ? { query: props.query } : {}) }
+const titleOf = (row: Row) => { const t = row[props.titleKey] || row.placement; return (t && props.titles?.[t]) || t || `Item ${row.id}` }
 await load()
 
 const R = rules
@@ -52,7 +59,7 @@ function fieldError(f: FieldDef, row: Row): string {
   if (f.type === 'number') rs.push(R.integer(), R.min(0))
   return firstError(rs, v, row) ?? ''
 }
-const sortError = (row: Row) => firstError([R.integer(), R.min(0), R.max(OPEN_SORT, `Use ${OPEN_SORT} or less.`)], row.sort, row) ?? ''
+const sortError = (row: Row) => props.hideSort ? '' : firstError([R.integer(), R.min(0), R.max(OPEN_SORT, `Use ${OPEN_SORT} or less.`)], row.sort, row) ?? ''
 const keyOf = (row: Row | null) => (row?.id ?? 'new') as string | number
 const shown = (row: Row, f: string) => !!(tried.value[keyOf(row)] || left.value[`${keyOf(row)}:${f}`])
 const errOf = (f: FieldDef, row: Row) => (shown(row, f.key) ? fieldError(f, row) : '')
@@ -62,7 +69,8 @@ const markLeft = (row: Row, f: string) => { left.value[`${keyOf(row)}:${f}`] = t
 const payload = (row: Row) => {
   const body: Row = {}
   for (const f of props.fields) body[f.key] = f.type === 'media' ? (row[f.key]?.id ?? null) : row[f.key]
-  body.is_active = row.is_active ?? true; body.sort = Number(row.sort ?? 0)
+  body.is_active = row.is_active ?? true
+  if (!props.hideSort) body.sort = Number(row.sort ?? 0)
   return body
 }
 function fail(key: number | string, e: unknown) {
@@ -100,7 +108,7 @@ const fid = (row: Row, f: string) => `${props.endpoint}${keyOf(row)}${f}`
     <p class="hint"><span class="text-accent" aria-hidden="true">*</span> marks mandatory fields. Everything else is optional.</p>
     <form v-for="row in items" :key="row.id" class="card md:grid md:grid-cols-2 md:gap-x-6 [&>*:not(.fld)]:col-span-2 [&>.fld:has(textarea)]:col-span-2 [&>.fld:has(input[type=file])]:col-span-2" novalidate @submit.prevent="save(row)">
       <div class="flex items-center justify-between gap-3">
-        <h3 class="text-xl">{{ row[titleKey] || row.placement || `Item ${row.id}` }}</h3>
+        <h3 class="text-xl">{{ titleOf(row) }}</h3>
         <label class="flex items-center gap-2 text-sm">On
           <button type="button" role="switch" class="switch" :aria-checked="!!row.is_active" :aria-label="`Show ${row[titleKey] || 'item'}`" @click="row.is_active = !row.is_active" />
         </label>
@@ -116,7 +124,7 @@ const fid = (row: Row, f: string) => `${props.endpoint}${keyOf(row)}${f}`
           </template>
         </AdminFormField>
       </template>
-      <AdminFormField :name="fid(row, 'sort')" label="Order" hint="Lower numbers show first." :error="tried[keyOf(row)] ? sortError(row) : ''">
+      <AdminFormField v-if="!hideSort" :name="fid(row, 'sort')" label="Order" hint="Lower numbers show first." :error="tried[keyOf(row)] ? sortError(row) : ''">
         <template #default="s"><input :id="s.id" v-model="row.sort" type="number" min="0" step="1" class="inp w-28" :aria-invalid="s.invalid" :aria-describedby="s.describedby"></template>
       </AdminFormField>
       <p v-if="errors[row.id]" class="err" role="alert">{{ errors[row.id] }}</p>

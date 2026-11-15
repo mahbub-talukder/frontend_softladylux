@@ -23,7 +23,7 @@ const { data: cats } = await useAsyncData('admin-cats-form', () => api<Dict[]>('
 const blank = (): Dict => ({
   name: '', slug: '', category: null, subcategory: null, short_desc: '', description: '', care_notes: '',
   collection: '', uom: 'pc', price: '', compare_at_price: '', sku_prefix: '', is_active: false, is_new: false,
-  is_signature: false, is_offer: false, tags: [], seo_title: '', seo_description: '', variants: [], images: []
+  is_signature: false, is_offer: false, is_bestseller: false, tags: [], seo_title: '', seo_description: '', variants: [], images: []
 })
 const form = ref<Dict>(blank())
 const tags = ref('')
@@ -180,7 +180,7 @@ function payload(publish: boolean) {
     name: f.name, slug: f.slug || undefined, category: f.category, subcategory: f.subcategory, short_desc: f.short_desc,
     description: f.description, care_notes: f.care_notes, collection: f.collection, uom: f.uom, price: f.price,
     compare_at_price: f.compare_at_price || null, sku_prefix: f.sku_prefix, is_new: f.is_new, is_signature: f.is_signature,
-    is_offer: f.is_offer, tags: tags.value.split(',').map((t) => t.trim()).filter(Boolean), seo_title: f.seo_title,
+    is_offer: f.is_offer, is_bestseller: f.is_bestseller, tags: tags.value.split(',').map((t) => t.trim()).filter(Boolean), seo_title: f.seo_title,
     seo_description: f.seo_description, is_active: publish ? true : (isNew.value ? false : f.is_active),
     variants: payloadRows.value.map((r) => ({
       id: r.id, size_label: r.size_label, color_name: r.color_name, color_hex: r.color_hex || '',
@@ -506,8 +506,8 @@ const serverErr = (k: string) => v.server[k]?.join(' ') ?? ''
         </fieldset>
         <fieldset class="card !gap-1.5" :disabled="!canEdit">
           <h2 class="mb-2 text-2xl">Show in sections <span class="text-[11.5px] font-normal tracking-normal text-muted">(Optional)</span></h2>
-          <label v-for="fl in ([['is_new', 'New arrival'], ['is_signature', 'Signature'], ['is_offer', 'Special offer']] as const)" :key="fl[0]" class="flex min-h-11 cursor-pointer items-center gap-3 text-[14.5px]"><input v-model="form[fl[0]]" type="checkbox">{{ fl[1] }}</label>
-          <p class="hint mt-1">Controls which home-page and listing sections show this product.</p>
+          <label v-for="fl in ([['is_new', 'New arrival'], ['is_signature', 'Signature'], ['is_offer', 'Special offer'], ['is_bestseller', 'Best Seller']] as const)" :key="fl[0]" class="flex min-h-11 cursor-pointer items-center gap-3 text-[14.5px]"><input v-model="form[fl[0]]" type="checkbox">{{ fl[1] }}</label>
+          <p class="hint mt-1">Controls which home-page and listing sections show this product. Best Seller puts it in the home page "Best seller" tab.</p>
         </fieldset>
         <div class="card !gap-3.5" aria-label="Storefront preview">
           <div class="cap">Storefront preview</div>

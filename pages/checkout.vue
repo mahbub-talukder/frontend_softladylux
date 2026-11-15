@@ -37,7 +37,8 @@ onMounted(async () => {
   if (!cart.lines.length) return navigateTo('/cart')
   await cart.validate() // CRT-03: before checkout
   if (cart.blocked) return navigateTo('/cart')
-  useTrack().push('begin_checkout', { value: cart.localSubtotal })
+  const t = useTrack()
+  t.ecommerce('begin_checkout', { items: cart.lines.map(t.line), coupon: cart.coupon || undefined })
 })
 watch(() => [cart.area, cart.coupon], () => cart.validate())
 
@@ -69,7 +70,8 @@ async function place() {
       body: { ...form, area: cart.area, coupon_code: cart.coupon || undefined, expected_total: (changedTotal.value ?? total.value.toFixed(2)), lines: cart.lines.map((l) => ({ variant: l.variant, quantity: l.quantity })) }
     })
     sessionStorage.setItem('sll_last_order', JSON.stringify(order))
-    useTrack().push('purchase', { transaction_id: order.number, value: Number(order.total) })
+    const t = useTrack() // INS-05 (v1.6): GA4 purchase with items, once per order
+    t.purchase(order.number, { items: cart.lines.map(t.line), value: Number(order.total), shipping: Number(order.delivery_fee), coupon: order.coupon_code || undefined })
     cart.clear() // CRT-09: the cart is cleared only after the order is created
     await navigateTo(`/order/${order.number}`)
   } catch (e) {
@@ -129,7 +131,7 @@ async function place() {
         <section class="flex flex-col gap-5">
           <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash or Nagad and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
           <div class="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" role="group" aria-label="Payment method">
-            <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[64px] items-center gap-3.5 border px-[18px] py-5 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().push('add_payment_info', { payment_type: m })">
+            <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[64px] items-center gap-3.5 border px-[18px] py-5 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().ecommerce('add_payment_info', { payment_type: m, items: cart.lines.map(useTrack().line) })">
               <span class="h-[18px] w-[18px] flex-none rounded-full border border-ink" :class="form.payment_method === m ? 'bg-[radial-gradient(var(--color-ink)_0_45%,transparent_50%)]' : ''" />
               <span class="font-display text-h3 font-semibold leading-[1.1]">{{ m === 'cod' ? 'Cash on Delivery' : m === 'bkash' ? 'bKash' : 'Nagad' }}</span>
             </button>

@@ -31,6 +31,10 @@ describe('sanitizeEvent (no personal data, INS-05)', () => {
     })
     expect(out).toEqual({ event: 'purchase', transaction_id: 'SLL-261104-0001', value: 1860, items: [{ item_id: 'air-bra', item_name: 'Air Bra', price: 1500 }] })
   })
+  it('keeps the contract keys that contain "name" (v1.6 fix) but no other name key', () => {
+    const out = sanitizeEvent({ button_name: 'header_bag', item_list_name: 'Bras', items: [{ item_name: 'Plunge' }], full_name: 'Nusrat', first_name: 'N' })
+    expect(out).toEqual({ button_name: 'header_bag', item_list_name: 'Bras', items: [{ item_name: 'Plunge' }] })
+  })
   it('keeps normal strings and numbers and is bounded', () => {
     expect(sanitizeEvent({ search_term: 'plunge bra', n: 3, ok: true })).toEqual({ search_term: 'plunge bra', n: 3, ok: true })
     const deep = { a: { b: { c: { d: { e: { f: 1 } } } } } }

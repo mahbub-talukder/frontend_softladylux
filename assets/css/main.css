@@ -39,6 +39,18 @@
     .qa-bar { display: block; transform: translateY(100%); transition: transform 350ms ease-out; }
     .group:hover .qa-bar, .group:focus-within .qa-bar { transform: translateY(0); }
   }
+  /* Icon tooltip (amendment v1.6, header icons): <a class="tip" data-tip="Call us">. Mouse hover or keyboard
+     focus only (touch devices have no hover); the accessible name stays on aria-label. */
+  .tip { position: relative; }
+  .tip::after {
+    content: attr(data-tip); @apply pointer-events-none absolute left-1/2 top-[calc(100%+4px)] z-[60] whitespace-nowrap bg-dark px-2.5 py-1.5 text-[11.5px] font-medium normal-case tracking-[0.04em] text-on-dark opacity-0 shadow-pop;
+    transform: translate(-50%, -3px); transition: opacity 150ms ease-out, transform 150ms ease-out;
+  }
+  .tip:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 0ms; }
+  @media (hover: hover) and (pointer: fine) { .tip:hover::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 250ms; } }
+  /* Promotional popup entrance (WEB-11, v1.6); the global reduced-motion rule shortens it to nothing */
+  .promo-in { animation: promo-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes promo-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
   .arrow-btn { @apply inline-flex h-11 w-11 items-center justify-center border border-primary bg-transparent text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-contrast disabled:opacity-40; }
   /* Page container: 1320px content, 40px gutters (DesignSystem "Grid") */
   .wrap { @apply mx-auto w-full max-w-wrap px-5 md:px-10; }
@@ -102,6 +114,10 @@
 .page-leave-to { opacity: 0; }
 @keyframes sl-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fade-in { animation: sl-fade-in 0.35s ease both; }
+/* Product card hover zoom (owner request, 2026-11-15): grows a little on mouse hover and eases back on leave. Uses the
+   `scale` property, not `transform`, because .fade-in's fill-mode holds `transform`. Mouse devices only. */
+.card-zoom { position: relative; transition: scale 300ms ease-out; }
+@media (hover: hover) and (pointer: fine) { .card-zoom:hover { scale: 1.03; z-index: 10; } }
 
 /* Admin tables (AdminDashboard / AdminOrders boards). Unlayered so they apply to every admin table
    without touching each page: uppercase muted headers, 14px cells, hairline rows, hover tint. */

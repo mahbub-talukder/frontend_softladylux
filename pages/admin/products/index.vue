@@ -62,6 +62,7 @@ async function bulk(action: string, extra: Dict = {}) {
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_new', value: true })">Mark new</button>
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_signature', value: true })">Mark signature</button>
         <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_offer', value: true })">Mark offer</button>
+        <button class="btn-secondary" @click="bulk('set_flag', { flag: 'is_bestseller', value: true })">Mark best seller</button>
         <select v-model="bulkCategory" class="inp !w-44" aria-label="Move to category"><option value="">Move to category…</option><option v-for="c in cats" :key="c.id" :value="String(c.id)">{{ c.name }}</option></select>
         <select v-if="subs.length" v-model="bulkSub" class="inp !w-44" aria-label="New sub-category"><option value="">Sub-category…</option><option v-for="s in subs" :key="s.id" :value="String(s.id)">{{ s.name }}</option></select>
         <button class="btn" :disabled="!bulkCategory" @click="bulk('set_category', { category: Number(bulkCategory), subcategory: bulkSub ? Number(bulkSub) : null })">Move</button>

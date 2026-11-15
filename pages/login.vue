@@ -55,7 +55,11 @@ async function watchSms() {
 
 async function login() {
   busy.value = true; errors.value = {}; message.value = ''
-  try { await finish(await api<CustomerMe>('/auth/login/', { method: 'POST', body: { phone: f.phone, password: f.password, remember: f.remember } })) }
+  try {
+    const me = await api<CustomerMe>('/auth/login/', { method: 'POST', body: { phone: f.phone, password: f.password, remember: f.remember } })
+    useTrack().push('login', { method: 'phone' }) // INS-05 (v1.6)
+    await finish(me)
+  }
   catch (e) { fail(e) } finally { busy.value = false }
 }
 async function register() {
@@ -80,7 +84,11 @@ async function verify() {
   errors.value = {}
   if (!isCode(f.code)) { errors.value = { code: 'Enter the 6-digit code.' }; return }
   busy.value = true
-  try { await finish(await api<CustomerMe>('/auth/register/verify/', { method: 'POST', body: { phone: f.phone, code: f.code } })) }
+  try {
+    const me = await api<CustomerMe>('/auth/register/verify/', { method: 'POST', body: { phone: f.phone, code: f.code } })
+    useTrack().push('sign_up', { method: 'phone' }) // INS-05 (v1.6): the account is created once the code is verified
+    await finish(me)
+  }
   catch (e) { fail(e) } finally { busy.value = false }
 }
 async function forgot() {

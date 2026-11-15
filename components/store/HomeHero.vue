@@ -2,7 +2,7 @@
 // Design: Main board, hero carousel. Two columns: a cream text panel (eyebrow, 72px headline,
 // paragraph, two buttons, prev/next squares and bar dots) and a tinted image panel with an inner
 // frame and a caption. SRS WEB-01: at most 8 active slides, no scheduling. Slides advance on their own
-// every 6 s with a soft cross-fade; hover, keyboard focus, a hidden tab or reduced-motion pause it.
+// every 3 s (WEB-01, amendment v1.6) with a soft cross-fade; hover, keyboard focus, a hidden tab or reduced-motion pause it.
 // Task 2 (SRS WEB-09, UI-05): the picture is a literal CSS background (cover, no-repeat, centre) inside a
 // fixed-height box per breakpoint, so any upload ratio fills it and never changes its size. Phones
 // (< 640 px) use `mobile_media` when set, wider screens use `media`. The first slide is preloaded (LCP).
@@ -17,7 +17,7 @@ const paused = ref(false)
 let timer: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  timer = setInterval(() => { if (n.value > 1 && !paused.value && !document.hidden) slide(1) }, 6000)
+  timer = setInterval(() => { if (n.value > 1 && !paused.value && !document.hidden) slide(1) }, 3000) // WEB-01 (v1.6): 3 s
 })
 onBeforeUnmount(() => clearInterval(timer))
 

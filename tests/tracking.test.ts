@@ -14,6 +14,6 @@ describe('data-track names', () => {
   it.each([...used])('%s is documented', (name) => expect(doc).toContain(name))
   it('documents the bottom navigation family', () => expect(doc).toContain('bottom_nav_home'))
   it('lists every event of the contract', () => {
-    for (const e of ['page_view', 'view_item_list', 'view_item', 'search', 'add_to_cart', 'remove_from_cart', 'add_to_wishlist', 'begin_checkout', 'add_payment_info', 'purchase', 'ui_click']) expect(doc).toContain(e)
+    for (const e of ['page_view', 'view_item_list', 'view_item', 'search', 'add_to_cart', 'remove_from_cart', 'add_to_wishlist', 'begin_checkout', 'add_payment_info', 'purchase', 'ui_click', 'login', 'sign_up']) expect(doc).toContain(e)
   })
 })

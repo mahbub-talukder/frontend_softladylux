@@ -19,6 +19,9 @@ export const CONSENT_GRANTED_ANALYTICS = { analytics_storage: 'granted' } as con
 const PERSONAL_KEY = /name|phone|mobile|email|address|thana|district|trx|sender|password|token|note/i
 const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/
 const BD_PHONE = /(?:\+?880|0)1[3-9]\d{8}/
+// Contract keys that contain "name" but are never personal (INS-05, v1.6: button_name and item_list_name were dropped
+// before, which emptied the ui_click and list reports).
+const SAFE_KEYS = new Set(['item_name', 'item_list_name', 'button_name'])
 
 export function sanitizeEvent<T>(value: T, depth = 0): T {
   if (depth > 4) return undefined as T
@@ -26,7 +29,7 @@ export function sanitizeEvent<T>(value: T, depth = 0): T {
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      if (PERSONAL_KEY.test(k) && k !== 'item_name') continue
+      if (PERSONAL_KEY.test(k) && !SAFE_KEYS.has(k)) continue
       const s = sanitizeEvent(v, depth + 1)
       if (s !== undefined) out[k] = s
     }

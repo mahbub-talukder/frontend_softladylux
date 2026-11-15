@@ -3,6 +3,7 @@
 // "Trending searches" (or "Suggestions" while typing) beside matching products with a thumbnail.
 // SRS CAT-10: top 6 matches while typing. Suggestions open on focus and close on blur/Escape.
 import type { CardProduct } from '~/types/api'
+import { TYPING_START, type TypingState, typingStep, typingText } from '~/utils/typing'
 
 const { api } = useApi()
 const router = useRouter()
@@ -32,6 +33,31 @@ watch(q, (v) => {
     } catch { if (mine === seq) { hits.value = []; failed.value = true } } finally { if (mine === seq) loading.value = false }
   }, 180)
 })
+// Live typing placeholder (amendment v1.6): the whole phrase "Search for <category>" is typed and deleted in turn,
+// using the shop's own category names. The server and reduced-motion visitors get the static text; it stops while the
+// field is focused or has text, and while the browser tab is hidden. The label stays "Search products".
+const STATIC_PH = 'Search bras, sets, sleepwear…'
+const words = computed(() => {
+  const names = (cats.value ?? []).map((c) => c.name.toLowerCase()).filter(Boolean)
+  return (names.length ? names.slice(0, 6) : ['bras', 'lingerie sets', 'sleepwear', 'shapewear']).map((n) => `Search for ${n}…`)
+})
+const typing = ref<TypingState | null>(null)
+const placeholder = computed(() => (typing.value && !open.value && !q.value ? typingText(typing.value, words.value) : STATIC_PH))
+let typeTimer: ReturnType<typeof setTimeout> | undefined
+function tick() {
+  if (!typing.value) return
+  if (open.value || q.value || document.hidden) { typeTimer = setTimeout(tick, 600); return }
+  const { state, delay } = typingStep(typing.value, words.value)
+  typing.value = state
+  typeTimer = setTimeout(tick, delay)
+}
+onMounted(() => {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  typing.value = { ...TYPING_START }
+  typeTimer = setTimeout(tick, 900)
+})
+onBeforeUnmount(() => { clearTimeout(typeTimer); clearTimeout(timer) })
+
 function go(to: string) { open.value = false; router.push(to) }
 function submit() {
   open.value = false
@@ -44,7 +70,7 @@ function submit() {
     <label :for="`s-${uid}`" class="sr-only">Search products</label>
     <div class="flex h-12 items-center gap-3 border bg-surface px-4 transition-colors duration-200" :class="open ? 'border-accent' : 'border-field'">
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="shrink-0 text-muted" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>
-      <input :id="`s-${uid}`" v-model="q" type="search" autocomplete="off" placeholder="Search bras, sets, sleepwear…" class="h-11 min-w-0 flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted">
+      <input :id="`s-${uid}`" v-model="q" type="search" autocomplete="off" :placeholder="placeholder" class="h-11 min-w-0 flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted">
     </div>
     <div v-if="open" class="absolute inset-x-0 top-[54px] z-40 grid gap-7 border border-border bg-surface p-5 shadow-pop md:grid-cols-[5fr_7fr] md:p-6" @mousedown.prevent>
       <div class="flex flex-col gap-1.5">

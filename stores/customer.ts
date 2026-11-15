@@ -35,10 +35,13 @@ export const useCustomerStore = defineStore('customer', {
       this.wishIds = list.map((p) => p.id); this.wishReady = true
       if (guest.length) this.writeGuest([])
     },
-    async toggleWish(productId: number, slug = '') {
+    async toggleWish(productId: number, slug = '', product?: { name: string; price: string }) {
       const adding = !this.wishIds.includes(productId)
       this.wishIds = toggleId(this.wishIds, productId)
-      if (adding) useTrack().push('add_to_wishlist', { item: slug })
+      if (adding) {
+        const t = useTrack()
+        t.ecommerce('add_to_wishlist', { items: [t.item({ slug, name: product?.name ?? slug, price: product?.price ?? 0 })] })
+      }
       if (!this.me) { this.writeGuest(this.wishIds); return }
       const { api } = useApi()
       try {
