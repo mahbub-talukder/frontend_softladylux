@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Design: AdminOrders board (detail panel). SRS ORD-02..06, ORD-08..11, PAY-03/05/06. Buttons only
 // show for the permission the user holds (PRM-04); the server stays authoritative (PRM-03).
+// v1.7: the courier block (AdminCourierBlock) handles Steadfast; manual Ship stays as the ORD-10 fallback.
 import type { AdminOrder } from '~/types/api'
 import { formatWeight } from '~/utils/weight'
 
@@ -132,6 +133,8 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <form v-if="mode === 'reject'" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="reject"><label for="rj">Rejection reason <span class="text-accent" aria-hidden="true">*</span></label><input id="rj" v-model="f.reason" class="inp" maxlength="300" :aria-invalid="!!v.errorFor('reason')" @input="v.onInput('reason')" @blur="v.touch('reason')"><p v-if="v.errorFor('reason')" class="err" role="alert">{{ v.errorFor('reason') }}</p><button class="btn-secondary">Reject payment</button></form>
       <form v-if="mode === 'trx'" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="editTrx"><input v-model="f.trx_id" class="inp uppercase" maxlength="12" aria-label="Transaction ID" :aria-invalid="!!v.errorFor('trx_id')" @input="v.onInput('trx_id')" @blur="v.touch('trx_id')"><p v-if="v.errorFor('trx_id')" class="err" role="alert">{{ v.errorFor('trx_id') }}</p><input v-model="f.sender_number" class="inp" aria-label="Sender number" :aria-invalid="!!v.errorFor('sender_number')" @input="v.onInput('sender_number')" @blur="v.touch('sender_number')"><p v-if="v.errorFor('sender_number')" class="err" role="alert">{{ v.errorFor('sender_number') }}</p><button class="btn-secondary">Save correction</button></form>
     </section>
+    <!-- SRS v1.7 §4.18: Steadfast booking, status, steps, return request, delivery record -->
+    <AdminCourierBlock :order="order" @changed="load(); emit('changed')" />
     <div class="grid grid-cols-2 gap-2.5">
       <NuxtLink :to="`/admin/orders/${order.id}/invoice`" class="btn-secondary !px-4" target="_blank">Print invoice</NuxtLink>
       <NuxtLink :to="`/admin/orders/${order.id}/slip`" class="btn-secondary !px-4" target="_blank">Delivery slip</NuxtLink>

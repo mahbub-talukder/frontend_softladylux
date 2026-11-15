@@ -53,6 +53,13 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
     { key: 'mimsms_sender_name', label: 'Sender name', ph: 'Sender number from MiMSMS, e.g. 8809…', max: 40 },
     { key: 'mimsms_url', label: 'API URL', ph: 'https://api.mimsms.com/api/V2/SMS', kind: 'url', max: 200 },
     { key: 'sms_order_enabled', label: 'Send order confirmation SMS to customers', type: 'switch' }] },
+  // CRR-01 (v1.7): Steadfast courier. Keys and token are write-only, like the SMS key.
+  { id: 'courier', label: 'Courier', title: 'Courier (Steadfast)', note: 'Keys are on the Steadfast dashboard under API. The keys and webhook token are never shown again after saving; leave a field blank to keep the saved value.', fields: [
+    { key: 'steadfast_api_key', label: 'API key', type: 'password', ph: 'Leave blank to keep the saved key', max: 200 },
+    { key: 'steadfast_secret_key', label: 'Secret key', type: 'password', ph: 'Leave blank to keep the saved key', max: 200 },
+    { key: 'steadfast_webhook_token', label: 'Webhook auth token', type: 'password', ph: 'Same token as on the Steadfast Webhook page', max: 200, rule: (x) => (x && !/^[A-Za-z0-9._=-]+$/.test(String(x)) ? 'Use letters, digits and - _ . = only.' : null) },
+    { key: 'steadfast_base_url', label: 'API base URL', ph: 'https://portal.packzy.com/api/v1', kind: 'url', max: 200 },
+    { key: 'steadfast_auto_book', label: 'Book Steadfast parcels automatically when an order is confirmed', type: 'switch' }] },
   { id: 'seo', label: 'SEO', title: 'SEO', fields: [
     { key: 'seo_title', label: 'Default page title', max: 120 },
     { key: 'seo_description', label: 'Default description', type: 'textarea', max: 300 }] }
@@ -80,7 +87,10 @@ const form = ref<Dict>({})
 const logo = ref<Media | null>(null)
 const favicon = ref<Media | null>(null)
 const share = ref<Media | null>(null)
-const keySet = ref(false)
+// Write-only secrets (ACC-02, CRR-01): the API only says whether each one is saved.
+const SECRETS = ['mimsms_api_key', 'steadfast_api_key', 'steadfast_secret_key', 'steadfast_webhook_token']
+const secretSet = ref<Record<string, boolean>>({})
+const keysRejected = ref(false)
 const error = ref('')
 const busy = ref(false)
 const v = useFormValidation(() => form.value, schema)
@@ -89,9 +99,10 @@ const tabHasError = (t: (typeof TABS)[number]) => t.fields.some((f) => !!v.error
 async function load() {
   const d = await api<Dict>('/admin/settings/')
   logo.value = d.logo; favicon.value = d.favicon; share.value = d.seo_share_image
-  keySet.value = d.mimsms_api_key_set
+  secretSet.value = Object.fromEntries(SECRETS.map((k) => [k, !!d[`${k}_set`]]))
+  keysRejected.value = !!d.steadfast_keys_rejected
   d.support_phones = (d.support_phones || []).join(', ')
-  d.mimsms_api_key = ''
+  for (const k of SECRETS) d[k] = ''
   form.value = d
 }
 await load()
@@ -113,13 +124,14 @@ async function save() {
     toast.error('Please fix the highlighted fields', v.summary.value.slice(0, 3))
     return
   }
-  const body: Dict = { ...form.value }
+  // Blank write-only secrets mean "keep the saved value"; the *_set flags and the lockout marker are read-only.
+  const skip = new Set(['steadfast_keys_rejected', ...SECRETS.filter((k) => !form.value[k]), ...SECRETS.map((k) => `${k}_set`)])
+  const body: Dict = Object.fromEntries(Object.entries(form.value).filter(([k]) => !skip.has(k)))
   body.support_phones = String(body.support_phones || '').split(',').map((s) => s.trim()).filter(Boolean)
-  if (!body.mimsms_api_key) delete body.mimsms_api_key
   body.logo = logo.value?.id ?? null; body.favicon = favicon.value?.id ?? null
   body.seo_share_image = share.value?.id ?? null
   // Not edited here: sending these back could overwrite changes made meanwhile on the Website content page.
-  delete body.id; delete body.mimsms_api_key_set; delete body.home_sections
+  delete body.id; delete body.home_sections
   busy.value = true
   try {
     await api('/admin/settings/', { method: 'PATCH', body, successMessage: 'Settings saved' })
@@ -144,6 +156,27 @@ async function sendTest() {
   } catch (e) {
     testMsg.value = { ok: false, text: errorOf(e).message }
   } finally { testing.value = false }
+}
+
+// CRR-02: Test connection — /ping proves Steadfast is reachable, /get_balance proves the keys.
+interface Part { ok: boolean; message?: string; data?: Dict }
+const courierTest = ref<{ reachable: Part; keys: Part; ok: boolean } | null>(null)
+const courierTesting = ref(false)
+const courierError = ref('')
+async function testCourier() {
+  courierTest.value = null; courierError.value = ''
+  courierTesting.value = true
+  try {
+    courierTest.value = await api('/admin/courier/ping/', { method: 'POST', toast: false })
+    await load()
+  } catch (e) {
+    courierError.value = errorOf(e).message
+  } finally { courierTesting.value = false }
+}
+// CRR-08: the address to paste into Steadfast → Webhook (same host as the site, under /api/).
+const webhookUrl = computed(() => (import.meta.client ? `${window.location.origin}/api/v1/webhooks/steadfast/` : '/api/v1/webhooks/steadfast/'))
+async function copyWebhook() {
+  try { await navigator.clipboard.writeText(webhookUrl.value); toast.success('Webhook URL copied') } catch { toast.error('Copy failed. Select the address and copy it.') }
 }
 </script>
 
@@ -172,7 +205,7 @@ async function sendTest() {
         </div>
         <AdminFormField
           v-else :name="f.key" :label="f.label" :required="!!f.req"
-          :hint="f.key === 'mimsms_api_key' && keySet ? 'A key is saved.' : (f.note ?? '')" :error="v.errorFor(f.key)"
+          :hint="SECRETS.includes(f.key) && secretSet[f.key] ? 'A value is saved.' : (f.note ?? '')" :error="v.errorFor(f.key)"
           :counter="f.max && f.max >= 80 ? { value: String(form[f.key] ?? ''), max: f.max } : undefined"
         >
           <template #default="s">
@@ -194,6 +227,23 @@ async function sendTest() {
           <button type="button" class="btn btn-spin" :disabled="testing || !testPhone.trim()" :aria-busy="testing" data-track="settings_sms_test" @click="sendTest">Send test</button>
         </div>
         <p v-if="testMsg" :class="testMsg.ok ? 'hint text-ink' : 'err'" role="status">{{ testMsg.text }}</p>
+      </div>
+      <div v-if="tab === 'courier'" class="mt-2 border-t border-border pt-4">
+        <p v-if="keysRejected" class="err mb-3" role="alert">Steadfast rejected the saved keys, so every courier call is paused. Check the keys and save to resume.</p>
+        <h3 class="mb-1 text-lg">Webhook address</h3>
+        <p class="hint mb-2">Paste this into Steadfast → Webhook → Callback URL, with the same auth token as above. It must be a public https address.</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <code class="break-all border border-border px-3 py-2 text-sm">{{ webhookUrl }}</code>
+          <button type="button" class="btn-secondary" @click="copyWebhook">Copy</button>
+        </div>
+        <h3 class="mb-1 mt-5 text-lg">Test connection</h3>
+        <p class="hint mb-3">Uses the <strong>saved</strong> settings, so save changes first. It books nothing.</p>
+        <button type="button" class="btn btn-spin" :disabled="courierTesting" :aria-busy="courierTesting" data-track="settings_courier_test" @click="testCourier">Test connection</button>
+        <ul v-if="courierTest" class="mt-3 text-sm" role="status">
+          <li :class="courierTest.reachable.ok ? 'text-ink' : 'err'">{{ courierTest.reachable.ok ? '✓ Steadfast is reachable.' : `✗ ${courierTest.reachable.message}` }}</li>
+          <li :class="courierTest.keys.ok ? 'text-ink' : 'err'">{{ courierTest.keys.ok ? `✓ Keys accepted. Balance ৳ ${courierTest.keys.data?.current_balance ?? 0}.` : `✗ ${courierTest.keys.message}` }}</li>
+        </ul>
+        <p v-if="courierError" class="err" role="alert">{{ courierError }}</p>
       </div>
       <p v-if="error" class="err" role="alert">{{ error }}</p>
     </form>

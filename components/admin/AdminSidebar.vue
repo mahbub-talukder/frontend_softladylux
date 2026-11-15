@@ -13,6 +13,8 @@ const ITEMS: Item[] = [
   { label: 'Products', to: '/admin/products', d: 'M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8', permission: 'products.view' },
   { label: 'Categories', to: '/admin/categories', d: 'M4 6h16M4 12h16M4 18h10', permission: 'products.view' },
   { label: 'Size charts', to: '/admin/size-charts', d: 'M3 17l4-4 3 3 5-6 6 7M3 21h18', permission: 'products.view' },
+  // SRS v1.7 CRR-12: Steadfast courier dashboard, pickups and returns
+  { label: 'Courier', to: '/admin/courier', d: 'M1 6h13v10H1zM14 9h4l4 4v3h-8zM5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z', permission: 'courier.view' },
   { label: 'Inventory', to: '/admin/inventory', d: 'M12 3l9 5-9 5-9-5zM3 13l9 5 9-5', permission: 'inventory.view' },
   { label: 'Coupons', to: '/admin/coupons', d: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10', permission: 'coupons.manage' },
   { label: 'Messages', to: '/admin/messages', d: 'M3 5h18v14H3zM3 7l9 6 9-6', permission: 'contact.manage' },
