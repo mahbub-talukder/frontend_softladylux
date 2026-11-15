@@ -2,6 +2,7 @@
 // Design: AdminOrders board (detail panel). SRS ORD-02..06, ORD-08..11, PAY-03/05/06. Buttons only
 // show for the permission the user holds (PRM-04); the server stays authoritative (PRM-03).
 import type { AdminOrder } from '~/types/api'
+import { formatWeight } from '~/utils/weight'
 
 const props = defineProps<{ id: number }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -110,6 +111,8 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
         <div v-if="Number(order.coupon_discount)" class="flex justify-between"><dt>Coupon {{ order.coupon_code }}</dt><dd>− {{ taka(order.coupon_discount) }}</dd></div>
         <div class="flex justify-between"><dt>Delivery</dt><dd>{{ taka(order.delivery_fee) }}</dd></div>
         <div class="flex justify-between font-medium"><dt>Total</dt><dd>{{ taka(order.total) }}</dd></div>
+        <!-- CAT-26 (v1.7): parcel weight from the order-line snapshots -->
+        <div class="flex justify-between"><dt>Parcel weight</dt><dd>{{ formatWeight(order.total_weight_grams) }}</dd></div>
       </dl>
     </section>
     <section v-if="order.payment" class="flex flex-col gap-1.5 bg-admin-bg p-4 text-[14.5px]">
