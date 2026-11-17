@@ -99,7 +99,8 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[1fr_420px]">
-      <div>
+      <!-- min-w-0: a grid cell will not shrink below its table otherwise, so phones scrolled the whole page sideways -->
+      <div class="min-w-0">
         <div class="overflow-x-auto border border-border bg-surface">
           <table class="w-full text-left text-sm">
             <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Order</th><th class="p-3">Customer</th><th class="p-3">Payment</th><th class="p-3 !text-right">Total</th><th class="p-3">Stage</th></tr></thead>
@@ -107,7 +108,7 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
               <tr v-if="pending"><td colspan="6" class="p-4 text-muted">Loading…</td></tr>
               <tr v-for="o in data?.results" :key="o.id" class="cursor-pointer" :class="[openId === o.id ? '!bg-cream' : '', o.is_stale ? 'shadow-[inset_3px_0_0_var(--color-accent)]' : '']" @click="openId = o.id">
                 <td class="p-3" @click.stop><input v-model="selected" type="checkbox" :value="o.id" :aria-label="`Select ${o.number}`"></td>
-                <td class="p-3"><button class="font-semibold underline underline-offset-[3px]" @click.stop="openId = o.id">{{ o.number }}</button><br><span class="text-xs text-muted">{{ d(o.placed_at) }}<template v-if="o.is_stale"> · <b class="text-accent">Draft over limit</b></template></span></td>
+                <td class="p-3"><button class="whitespace-nowrap font-semibold underline underline-offset-[3px]" @click.stop="openId = o.id">{{ o.number }}</button><br><span class="text-xs text-muted">{{ d(o.placed_at) }}<template v-if="o.is_stale"> · <b class="text-accent">Draft over limit</b></template></span></td>
                 <td class="p-3">{{ o.name }}<br><span class="text-xs text-muted">{{ o.phone }}</span></td>
                 <td class="p-3"><span class="uppercase">{{ o.payment_method }}</span> <span class="text-xs text-muted">· {{ o.payment_status }}</span></td>
                 <td class="p-3 text-right">{{ taka(o.total) }}</td>

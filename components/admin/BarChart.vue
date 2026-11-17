@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Design: AdminDashboard / AdminReports bar charts. Plain CSS bars (no chart library); bar colour is
 // the primary token. Heights are relative to the largest value; every bar has a text value for
-// screen readers and a title for hover.
+// screen readers and a title for hover. THM-31 (v1.10): the screen-reader table sits in a div.sr-only because a
+// <table> cannot shrink to 1 px and widened the page on phones.
 import type { DayPoint } from '~/types/api'
 
 const props = defineProps<{ points: DayPoint[]; label: string; compact?: boolean; tall?: boolean }>()
@@ -22,7 +23,7 @@ const total = computed(() => props.points.reduce((n, p) => n + Number(p.revenue)
     </div>
     <div v-if="points.length <= 14" class="flex gap-3 sm:gap-[18px]"><span v-for="p in points" :key="p.day" class="flex-1 text-center text-[12.5px] text-muted">{{ day(p.day) }}</span></div>
     <div v-else class="flex justify-between text-[12.5px] text-muted"><span>{{ short(points[0]?.day ?? '') }}</span><span>{{ short(points[Math.floor(points.length / 2)]?.day ?? '') }}</span><span>{{ short(points[points.length - 1]?.day ?? '') }}</span></div>
-    <table class="sr-only"><caption>{{ label }}</caption><tbody><tr v-for="p in points" :key="p.day"><td>{{ short(p.day) }}</td><td>{{ taka(p.revenue) }}</td></tr></tbody></table>
+    <div class="sr-only"><table><caption>{{ label }}</caption><tbody><tr v-for="p in points" :key="p.day"><td>{{ short(p.day) }}</td><td>{{ taka(p.revenue) }}</td></tr></tbody></table></div>
   </figure>
   <figure v-else :aria-label="label">
     <div class="flex h-40 items-end gap-1" role="img" :aria-label="`${label}: total ${taka(total)}`">
@@ -31,6 +32,6 @@ const total = computed(() => props.points.reduce((n, p) => n + Number(p.revenue)
       </div>
     </div>
     <figcaption class="mt-1 flex justify-between text-xs text-muted"><span>{{ short(points[0]?.day ?? '') }}</span><span v-if="!compact">{{ points.length }} days</span><span>{{ short(points[points.length - 1]?.day ?? '') }}</span></figcaption>
-    <table class="sr-only"><caption>{{ label }}</caption><tbody><tr v-for="p in points" :key="p.day"><td>{{ short(p.day) }}</td><td>{{ taka(p.revenue) }}</td></tr></tbody></table>
+    <div class="sr-only"><table><caption>{{ label }}</caption><tbody><tr v-for="p in points" :key="p.day"><td>{{ short(p.day) }}</td><td>{{ taka(p.revenue) }}</td></tr></tbody></table></div>
   </figure>
 </template>
