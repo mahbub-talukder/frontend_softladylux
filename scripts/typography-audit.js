@@ -206,10 +206,21 @@
       if (++n % 200 === 0) await sleep(0)
       labels[key] = lineCount(el, doc)
       const r = el.getBoundingClientRect()
-      const range = doc.createRange(); range.selectNodeContents(el)
-      const tr = range.getBoundingClientRect()
       if (overflow !== 'visible' || r.height < 2) continue
-      if (tr.width > 0 && (tr.right > r.right + 2 || tr.left < r.left - 2 || tr.bottom > r.bottom + 2 || tr.top < r.top - 2)) add('outside', el)
+      // Per text node, skipping line-clamped / ellipsis text (hidden lines are intended) and allowing for the
+      // letter-spacing browsers add after the last letter.
+      const walker = doc.createTreeWalker(el, 4)
+      const range = doc.createRange()
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent.trim()) continue
+        const ps = win.getComputedStyle(node.parentElement)
+        if (ps.webkitLineClamp !== 'none' || ps.textOverflow === 'ellipsis' || node.parentElement.closest('[class*="line-clamp"]')) continue
+        range.selectNodeContents(node)
+        const tr = range.getBoundingClientRect()
+        const slack = 2 + (parseFloat(ps.letterSpacing) || 0)
+        const vslack = Math.max(2, (parseFloat(ps.fontSize) || 16) * 0.2) // glyph ascent above tight (leading-none) lines
+        if (tr.width > 0 && (tr.right > r.right + slack || tr.left < r.left - slack || tr.bottom > r.bottom + vslack || tr.top < r.top - vslack)) { add('outside', el); break }
+      }
     }
     return { issues, lines, labels }
   }

@@ -99,7 +99,8 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
     </div>
 
     <div class="grid gap-6 xl:grid-cols-[1fr_420px]">
-      <div>
+      <!-- min-w-0: a grid cell will not shrink below its table otherwise, so phones scrolled the whole page sideways -->
+      <div class="min-w-0">
         <div class="overflow-x-auto border border-border bg-surface">
           <table class="w-full text-left text-sm">
             <thead><tr class="cap"><th class="p-3"><input type="checkbox" aria-label="Select all" :checked="allOn" @change="toggleAll"></th><th class="p-3">Order</th><th class="p-3">Customer</th><th class="p-3">Payment</th><th class="p-3 !text-right">Total</th><th class="p-3">Stage</th></tr></thead>
