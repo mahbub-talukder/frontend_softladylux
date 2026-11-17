@@ -9,6 +9,7 @@
 import { COLOUR_PRESETS, DEFAULT_SWATCH, SIZE_PRESETS } from '~/utils/variantPresets'
 import { checkImageFile, PRODUCT_MIN_SIDE } from '~/utils/imageCheck'
 import { makeSku, SKU_MAX, uniqueSku } from '~/utils/sku'
+import { DEFAULT_WEIGHT_GRAMS, variantWeightPayload, WEIGHT_MAX, WEIGHT_MIN } from '~/utils/weight'
 import type { Dict } from '~/types/api'
 
 // key: /new -> /{id} after create must remount the page, so it loads the saved product (and any carried-over photos).
@@ -23,7 +24,8 @@ const { data: cats } = await useAsyncData('admin-cats-form', () => api<Dict[]>('
 const blank = (): Dict => ({
   name: '', slug: '', category: null, subcategory: null, short_desc: '', description: '', care_notes: '',
   collection: '', uom: 'pc', price: '', compare_at_price: '', sku_prefix: '', is_active: false, is_new: false,
-  is_signature: false, is_offer: false, is_bestseller: false, tags: [], seo_title: '', seo_description: '', variants: [], images: []
+  is_signature: false, is_offer: false, is_bestseller: false, tags: [], seo_title: '', seo_description: '', variants: [], images: [],
+  weight_grams: DEFAULT_WEIGHT_GRAMS // CAT-24 (v1.7): new products start at 100 g
 })
 const form = ref<Dict>(blank())
 const tags = ref('')
@@ -52,7 +54,7 @@ const subOptions = computed(() => cats.value?.find((c) => c.id === form.value.ca
 function onCategory() { form.value.subcategory = null; v.onInput('category'); v.onInput('subcategory') } // CAT-19: changing the category clears it
 
 // ---- field validation (mirrors ProductSerializer; the server stays authoritative)
-const { required, maxLength, pattern, slug, min, max, decimal, custom } = rules
+const { required, maxLength, pattern, slug, min, max, decimal, custom, integer } = rules
 const v = useFormValidation(() => form.value, {
   name: [required('Enter the product name.'), maxLength(160)],
   slug: [slug(), maxLength(180)],
@@ -63,6 +65,8 @@ const v = useFormValidation(() => form.value, {
   sku_prefix: [maxLength(20), pattern(/^[A-Z0-9-]+$/, 'Use capital letters, digits and dashes only.')],
   price: [required('Enter the price.'), min(0, 'Price cannot be negative.'), max(99999999.99, 'Price is too large.'), decimal(2)],
   compare_at_price: [min(0, 'Cannot be negative.'), decimal(2), custom((x, all) => (x !== '' && x != null && Number(x) <= Number(all.price) ? 'Must be higher than the price.' : null))],
+  // CAT-24 / §10 (v1.7): whole grams 1–30,000, never blank
+  weight_grams: [required('Enter the weight in grams.'), integer(), min(WEIGHT_MIN, 'Weight must be between 1 and 30,000 grams.'), max(WEIGHT_MAX, 'Weight must be between 1 and 30,000 grams.')],
   seo_title: [maxLength(120)],
   seo_description: [maxLength(300)]
 })
@@ -105,7 +109,7 @@ function onSwatch(e: Event) {
   for (const r of form.value.variants) if (r.color_name === pickingName.value) r.color_hex = hex
 }
 const variantTotal = computed(() => Math.max(pickedSizes.value.length, 1) * Math.max(pickedColours.value.length, 1))
-const newRow = (size = '', colour = '', hex = ''): Dict => ({ size_label: size, color_name: colour, color_hex: hex, sku: '', sku_auto: true, price_override: null, on_hand: 0, is_active: true })
+const newRow = (size = '', colour = '', hex = ''): Dict => ({ size_label: size, color_name: colour, color_hex: hex, sku: '', sku_auto: true, price_override: null, on_hand: 0, is_active: true, weight_grams: null })
 const addVariant = () => form.value.variants.push(newRow())
 const sameCombo = (a: Dict, size: string, colour: string) => (a.size_label || '').trim().toLowerCase() === size.trim().toLowerCase() && (a.color_name || '').trim().toLowerCase() === colour.trim().toLowerCase()
 function generate() {
@@ -181,12 +185,12 @@ function payload(publish: boolean) {
     description: f.description, care_notes: f.care_notes, collection: f.collection, uom: f.uom, price: f.price,
     compare_at_price: f.compare_at_price || null, sku_prefix: f.sku_prefix, is_new: f.is_new, is_signature: f.is_signature,
     is_offer: f.is_offer, is_bestseller: f.is_bestseller, tags: tags.value.split(',').map((t) => t.trim()).filter(Boolean), seo_title: f.seo_title,
-    seo_description: f.seo_description, is_active: publish ? true : (isNew.value ? false : f.is_active),
+    seo_description: f.seo_description, weight_grams: Number(f.weight_grams), is_active: publish ? true : (isNew.value ? false : f.is_active),
     variants: payloadRows.value.map((r) => ({
       id: r.id, size_label: r.size_label, color_name: r.color_name, color_hex: r.color_hex || '',
       // Auto rows send no SKU: the server generates it and de-duplicates across all products.
       sku: r.sku_auto ? '' : (r.sku || ''),
-      price_override: r.price_override || null, ...(r.id ? {} : { on_hand: Number(r.on_hand) || 0 })
+      price_override: r.price_override || null, weight_grams: variantWeightPayload(r.weight_grams), ...(r.id ? {} : { on_hand: Number(r.on_hand) || 0 })
     }))
   }
 }
@@ -377,6 +381,10 @@ const serverErr = (k: string) => v.server[k]?.join(' ') ?? ''
         <AdminFormField name="sku_prefix" label="SKU prefix" class="max-w-sm" hint="Variant SKUs add colour and size. Capital letters, digits and dashes only." :error="v.errorFor('sku_prefix')">
           <template #default="s"><input :id="s.id" v-model="form.sku_prefix" class="inp" placeholder="Generated from the name" maxlength="20" :aria-invalid="s.invalid" :aria-describedby="s.describedby" @input="upperPrefix" @blur="v.touch('sku_prefix')"></template>
         </AdminFormField>
+        <!-- CAT-24 (v1.7): parcel weight used on the delivery slip and for courier booking -->
+        <AdminFormField name="weight_grams" label="Weight (g)" required class="max-w-sm" hint="Packed weight of one piece in grams. Variants can override it below." :error="v.errorFor('weight_grams')">
+          <template #default="s"><input :id="s.id" v-model="form.weight_grams" type="number" :min="WEIGHT_MIN" :max="WEIGHT_MAX" step="1" inputmode="numeric" class="inp" :aria-invalid="s.invalid" :aria-describedby="s.describedby" @input="fieldIn('weight_grams')" @blur="v.touch('weight_grams')"></template>
+        </AdminFormField>
       </fieldset>
 
       <fieldset class="card" :disabled="!canEdit">
@@ -415,7 +423,7 @@ const serverErr = (k: string) => v.server[k]?.join(' ') ?? ''
           <button type="button" class="btn-secondary" @click="generate">Add rows</button>
         </div>
         <div class="overflow-x-auto"><table class="w-full text-left text-sm">
-          <thead><tr class="cap"><th class="p-2">Size</th><th class="p-2">Colour</th><th class="p-2">Swatch</th><th class="p-2">SKU</th><th class="p-2">Price override</th><th class="p-2">Stock</th><th /></tr></thead>
+          <thead><tr class="cap"><th class="p-2">Size</th><th class="p-2">Colour</th><th class="p-2">Swatch</th><th class="p-2">SKU</th><th class="p-2">Price override</th><th class="p-2">Weight (g)</th><th class="p-2">Stock</th><th /></tr></thead>
           <tbody>
             <template v-for="(r, i) in form.variants" :key="r.id ?? `n${i}`">
               <tr v-show="r.is_active !== false" class="border-t border-border">
@@ -433,12 +441,14 @@ const serverErr = (k: string) => v.server[k]?.join(' ') ?? ''
                   </div>
                 </td>
                 <td class="p-2"><input v-model="r.price_override" type="number" min="0" step="0.01" class="inp !w-28" :aria-label="`Row ${i + 1} price override`"></td>
+                <!-- CAT-25 (v1.7): blank = same as the product weight -->
+                <td class="p-2"><input v-model="r.weight_grams" type="number" :min="WEIGHT_MIN" :max="WEIGHT_MAX" step="1" class="inp !w-24" :placeholder="String(form.weight_grams || DEFAULT_WEIGHT_GRAMS)" :aria-label="`Row ${i + 1} weight in grams`"></td>
                 <td class="p-2"><input v-if="!r.id" v-model.number="r.on_hand" type="number" min="0" step="1" class="inp !w-24" :aria-label="`Row ${i + 1} opening stock`"><span v-else>{{ r.on_hand }}</span></td>
                 <td class="p-2"><button type="button" class="min-h-touch min-w-touch border border-border" :aria-label="`Remove row ${i + 1}`" @click="r.id ? (r.is_active = false) : form.variants.splice(i, 1)">×</button></td>
               </tr>
-              <tr v-if="r.is_active !== false && rowProblems(r).length" class="border-0"><td colspan="7" class="px-2 pb-2"><p v-for="m in rowProblems(r)" :key="m" class="err" role="alert">Row {{ i + 1 }} · {{ m }}</p></td></tr>
+              <tr v-if="r.is_active !== false && rowProblems(r).length" class="border-0"><td colspan="8" class="px-2 pb-2"><p v-for="m in rowProblems(r)" :key="m" class="err" role="alert">Row {{ i + 1 }} · {{ m }}</p></td></tr>
             </template>
-            <tr v-if="!activeVariants.length"><td colspan="7" class="p-3 text-muted">{{ isNew ? 'No variants yet: a single default variant is created on save.' : 'No active variants. Add at least one before publishing.' }}</td></tr>
+            <tr v-if="!activeVariants.length"><td colspan="8" class="p-3 text-muted">{{ isNew ? 'No variants yet: a single default variant is created on save.' : 'No active variants. Add at least one before publishing.' }}</td></tr>
           </tbody>
         </table></div>
         <button type="button" class="btn-secondary self-start" @click="addVariant">+ Add variant</button>

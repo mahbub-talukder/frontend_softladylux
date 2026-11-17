@@ -114,6 +114,7 @@ export interface AdminOrderRow {
 export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_status' | 'can_cancel'> {
   id: number; is_stale: boolean; user_name: string | null; confirmed_at: string | null; shipped_at: string | null
   cancel_reason: string; return_reason: string
+  total_weight_grams: number // CAT-26 (v1.7)
   payment: { id: number; method: string; amount: string; sender_number: string; trx_id: string | null; status: string; verified_by_name: string | null; verified_at: string | null; reject_reason: string; note: string }
   logs: { id: number; from_status: string; to_status: string; user: string | null; note: string; created_at: string; internal: boolean }[]
 }
