@@ -45,9 +45,9 @@ export default <Partial<Config>>{
         card: ['18px', { lineHeight: '1.2' }], 'card-lg': ['19px', { lineHeight: '1.2' }]
       },
       fontFamily: {
-        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-        // display: ["Hind Siliguri", "sans-serif"],
-        sans: ['Jost', 'system-ui', 'sans-serif']
+        // SRS v1.9 THM-22: families come from the theme's font tokens (Admin → Theme → Fonts).
+        display: ['var(--font-display)'],
+        sans: ['var(--font-sans)']
       },
       borderRadius: { DEFAULT: '0', sm: '0', md: '0', lg: '0' },
       maxWidth: { wrap: '1320px' },

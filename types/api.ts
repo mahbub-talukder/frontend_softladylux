@@ -45,6 +45,11 @@ export interface ThemeState {
   background_hex: string; text_hex: string
   tokens: Record<string, string>; updated_by: string | null; updated_at: string
   low_contrast_warning: boolean; contrast_issues: string[]
+  storefront_font: string; admin_font: string; font_pairings: FontPairing[] // THM-20/21 (v1.9)
+}
+export interface FontPairing {
+  key: string; label: string; heading: { family: string; weights: string }; body: { family: string; weights: string }
+  display: string; sans: string; stylesheet: string
 }
 export interface PermissionDef { code: string; group: string; description: string; default: boolean; sensitive: boolean }
 export interface StaffUser { id: number; full_name: string; email: string; role: 'owner' | 'staff'; is_active: boolean; permissions: string[] }

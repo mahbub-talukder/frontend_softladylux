@@ -3,7 +3,9 @@
 // live preview (client-side derivation, server recomputes on save), contrast confirm, reset.
 // Owner-approved amendment: the storefront Background and Text colours are editable too. Every other neutral is derived
 // from them (THM-14), the admin keeps its own neutrals, and primary/accent still style both.
-import type { Palette, ThemeState } from '~/types/api'
+// v1.9 THM-20..THM-26: Fonts section — one pairing for the storefront, one for the admin panel.
+import type { FontPairing, Palette, ThemeState } from '~/types/api'
+import { fontStylesheet } from '~/utils/theme'
 import { contrastHex, DEFAULT_BG, DEFAULT_TEXT, deriveTokens, readabilityIssues } from '~/utils/themeDerive'
 
 definePageMeta({ layout: 'admin', permission: 'theme.manage' })
@@ -31,8 +33,35 @@ async function load() {
   palettes.value = p; state.value = t
   Object.assign(form, { primary: t.primary_hex, accent: t.accent_hex ?? '', background: t.background_hex, text: t.text_hex })
   paletteId.value = t.palette
+  Object.assign(fonts, { storefront: t.storefront_font, admin: t.admin_font })
 }
+const fonts = reactive({ storefront: 'signature', admin: 'signature' })
 await load()
+
+// THM-24: every option is previewed in its own fonts, so this page (only) loads each pairing's stylesheet.
+const pairings = computed<FontPairing[]>(() => state.value?.font_pairings ?? [])
+useHead(() => ({ link: pairings.value.map((p) => ({ key: `font-sample-${p.key}`, rel: 'stylesheet', href: fontStylesheet(p) })).filter((l) => l.href) }))
+const sampleHeading = (p: FontPairing) => ({ fontFamily: p.display }) // stacks come from the API (THM-20), not literals
+const sampleBody = (p: FontPairing) => ({ fontFamily: p.sans })
+const FONT_AREAS = [
+  { key: 'storefront', label: 'Storefront', hint: 'The website, checkout, account pages and customer invoices.' },
+  { key: 'admin', label: 'Admin panel', hint: 'Every admin page, including the sign-in page and printed slips.' }
+] as const
+const fontsChanged = computed(() => !!state.value && (fonts.storefront !== state.value.storefront_font || fonts.admin !== state.value.admin_font))
+const fontBusy = ref(false)
+async function saveFonts(body: { storefront_font: string; admin_font: string }, message: string) {
+  fontBusy.value = true
+  try {
+    await api<ThemeState>('/admin/theme/', { method: 'PUT', successMessage: message, body })
+    await theme.refresh() // the admin panel switches at once (THM-21); storefront pages on their next load
+    await load()
+  } catch { /* toast shown by api() */ } finally { fontBusy.value = false }
+}
+const publishFonts = () => saveFonts({ storefront_font: fonts.storefront, admin_font: fonts.admin }, 'Fonts saved. The website uses them on the next page load.')
+function resetFonts() {
+  if (!confirm('Reset both font choices to Signature?')) return // ADM-08
+  saveFonts({ storefront_font: 'signature', admin_font: 'signature' }, 'Fonts reset to Signature.')
+}
 
 const valid = computed(() => /^#[0-9A-Fa-f]{6}$/.test(form.primary) && /^#[0-9A-Fa-f]{6}$/.test(form.background) && /^#[0-9A-Fa-f]{6}$/.test(form.text) && (!form.accent || /^#[0-9A-Fa-f]{6}$/.test(form.accent)))
 const preview = computed(() => (valid.value ? deriveTokens(form.primary, form.accent || null, form.background, form.text) : {}))
@@ -75,8 +104,9 @@ async function reset() {
   if (!confirm('Reset to the default Signature palette?')) return // ADM-08
   busy.value = true
   try {
-    const res = await api<ThemeState>('/admin/theme/reset/', { method: 'POST', successMessage: 'Reset to Signature.' })
+    const res = await api<ThemeState>('/admin/theme/reset/', { method: 'POST', successMessage: 'Reset to Signature colours and fonts.' })
     theme.apply(res.tokens)
+    await theme.refresh() // THM-26: the reset also restores the default fonts
     await load()
   } catch { /* toast shown by api() */ } finally { busy.value = false }
 }
@@ -100,7 +130,7 @@ const fmt = (n: number) => `${n.toFixed(1)}:1`
 
 <template>
   <section>
-    <AdminHeading eyebrow="Theme" title="Theme colours" />
+    <AdminHeading eyebrow="Theme" title="Theme colours &amp; fonts" />
     <p class="hint mb-3"><span class="text-accent" aria-hidden="true">*</span> marks mandatory fields. Everything else is optional.</p>
     <div class="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
       <div class="card">
@@ -164,11 +194,38 @@ const fmt = (n: number) => `${n.toFixed(1)}:1`
         </div>
         <div class="flex flex-wrap gap-3">
           <button class="btn btn-spin" :disabled="!valid || busy" :aria-busy="busy" data-track="theme_publish" @click="publish">Save &amp; publish</button>
-          <button class="btn-secondary" :disabled="busy" @click="reset">Reset to Signature</button>
+          <button class="btn-secondary" :disabled="busy" @click="reset">Reset colours &amp; fonts</button>
         </div>
         <p class="hint">Last changed by {{ state?.updated_by || '—' }}<template v-if="state"> · {{ new Date(state.updated_at).toLocaleString() }}</template>. The storefront updates as soon as you publish; open pages pick it up on their next load.</p>
         <p v-if="error" class="err" role="alert">{{ error }}</p>
       </div>
+    </div>
+
+    <!-- THM-24 (v1.9): font pairings -->
+    <div class="card mt-6">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div><h2 class="text-2xl">Fonts</h2><p class="hint">Each pairing sets a heading font and a body font. Choose one for the website and one for the admin panel.</p></div>
+        <div class="flex flex-wrap gap-3">
+          <button class="btn btn-spin" :disabled="!fontsChanged || fontBusy" :aria-busy="fontBusy" data-track="theme_fonts_save" @click="publishFonts">Save fonts</button>
+          <button class="btn-secondary" :disabled="fontBusy" @click="resetFonts">Reset fonts</button>
+        </div>
+      </div>
+      <fieldset v-for="area in FONT_AREAS" :key="area.key" class="flex flex-col gap-3">
+        <legend class="mb-1 text-lg">{{ area.label }} <span class="hint">· {{ area.hint }}</span></legend>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="radiogroup" :aria-label="`${area.label} font pairing`">
+          <button
+            v-for="p in pairings" :key="p.key" type="button" role="radio" :aria-checked="fonts[area.key] === p.key"
+            class="flex flex-col gap-1.5 border p-3.5 text-left transition-colors" :class="fonts[area.key] === p.key ? 'border-2 border-primary' : 'border-border hover:border-ink'"
+            @click="fonts[area.key] = p.key"
+          >
+            <span class="flex items-baseline justify-between gap-2"><span class="text-[3.25rem] leading-none" :style="sampleHeading(p)" aria-hidden="true">Aa</span><span class="cap">{{ p.label }}<template v-if="p.key === 'signature'"> · default</template></span></span>
+            <span class="text-lg leading-snug" :style="sampleHeading(p)">Quiet luxury, worn close</span>
+            <span class="text-[14.5px] leading-relaxed text-body" :style="sampleBody(p)">Soft fabrics and an easy fit for every day.</span>
+            <span class="hint">{{ p.heading.family }}<template v-if="p.body.family !== p.heading.family"> + {{ p.body.family }}</template></span>
+          </button>
+        </div>
+      </fieldset>
+      <p class="hint">Last saved: website <b>{{ pairings.find((p) => p.key === state?.storefront_font)?.label }}</b>, admin panel <b>{{ pairings.find((p) => p.key === state?.admin_font)?.label }}</b>.</p>
     </div>
   </section>
 </template>

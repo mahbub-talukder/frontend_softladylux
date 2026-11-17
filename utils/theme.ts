@@ -17,3 +17,42 @@ export function tokensToCss(tokens: ThemeTokens | null | undefined): string {
     .map(([k, val]) => `${k}:${val};`)
   return rules.length ? `:root{${rules.join('')}}` : ''
 }
+
+// ---- fonts (SRS v1.9 THM-20..THM-23)
+
+/** One area's font selection as sent by GET /theme/ (`fonts.storefront` / `fonts.admin`). */
+export interface ThemeFont { key: string; display: string; sans: string; stylesheet: string }
+
+// A CSS font stack: quoted family names, letters, digits, spaces, commas and hyphens only.
+const STACK_RE = /^[A-Za-z0-9 ,'"-]{1,200}$/
+const STYLESHEET_PREFIX = 'https://fonts.googleapis.com/css2?'
+
+/** THM-22: `:root{--font-display:…;--font-sans:…}` from a server font entry; '' when unsafe or missing. */
+export function fontToCss(font: ThemeFont | null | undefined): string {
+  if (!font || !STACK_RE.test(font.display) || !STACK_RE.test(font.sans)) return ''
+  return `:root{--font-display:${font.display};--font-sans:${font.sans};}`
+}
+
+/** THM-23: the Google Fonts stylesheet URL, accepted only from fonts.googleapis.com css2. */
+export function fontStylesheet(font: ThemeFont | null | undefined): string {
+  const url = font?.stylesheet ?? ''
+  return url.startsWith(STYLESHEET_PREFIX) && !/["'<>\s]/.test(url) ? url : ''
+}
+
+/** THM-21: the admin panel uses its own pairing on /admin pages; everything else uses the storefront one. */
+export function fontForPath(fonts: { storefront?: ThemeFont; admin?: ThemeFont } | null | undefined, path: string): ThemeFont | undefined {
+  return path.startsWith('/admin') ? fonts?.admin : fonts?.storefront
+}
+
+export type FontLink = { key: string; rel: 'preconnect' | 'stylesheet'; href: string; crossorigin?: 'anonymous' }
+
+/** THM-23: preconnects + one stylesheet link for the given font. */
+export function fontLinks(font: ThemeFont | null | undefined): FontLink[] {
+  const href = fontStylesheet(font)
+  if (!href) return []
+  return [
+    { key: 'font-preconnect-api', rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+    { key: 'font-preconnect-static', rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
+    { key: 'theme-font', rel: 'stylesheet', href }
+  ]
+}
