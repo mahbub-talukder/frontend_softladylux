@@ -27,7 +27,7 @@ useSeoMeta({
   <div class="min-h-screen bg-bg text-ink">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-surface focus:p-3">Skip to content</a>
     <StoreHeader />
-    <main id="main" tabindex="-1" class="pb-20 outline-none sm:pb-0" :class="bleed ? '' : 'wrap py-6 md:py-9'"><slot /></main>
+    <main id="main" tabindex="-1" class="outline-none" :class="bleed ? '' : 'wrap py-6 md:py-9'"><slot /></main>
     <StoreFooter />
     <ClientOnly><StoreFloatingCart /></ClientOnly> <!-- cart lives in localStorage: client-only avoids a hydration mismatch -->
     <StoreBottomNav />

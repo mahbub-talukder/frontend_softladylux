@@ -38,15 +38,27 @@ const sigBanner = computed(() => home.value?.signature_banner ?? null) // WEB-02
     <!-- WEB-11 (v1.6): promotional popup once per full page load (not on in-app returns to home); renders nothing on the server -->
     <StorePromoModal v-if="home?.popup" :popup="home.popup" />
 
-    <section v-if="home?.trust.length" class="border-b border-border bg-bg" aria-label="Why shop with us">
-      <div class="wrap grid grid-cols-2 lg:grid-cols-4">
-        <div v-for="t in home.trust.slice(0, 4)" :key="t.id" class="flex flex-col gap-1 border-l border-border px-4 py-5 md:px-6 md:py-[26px]">
-          <div class="text-xs font-medium uppercase tracking-[0.16em]">{{ t.title }}</div><div class="text-sm text-muted">{{ t.text }}</div>
-        </div>
-      </div>
+    <!-- SRS WEB-08 trust strip (redesign 2026-11): line icon in a thin ring, title over muted text, hairline
+         dividers between items (2×2 on phones, one row from lg). Icon comes from the item's admin "Icon name". -->
+    <!-- Contained to the main 1320px content column (owner request), not full viewport width -->
+    <section v-if="home?.trust.length" class="wrap" aria-label="Why shop with us">
+      <ul class="grid grid-cols-2 border border-border bg-cream py-2 md:py-3":class="home.trust.length >= 4 ? 'lg:grid-cols-4' : home.trust.length === 3 ? 'lg:grid-cols-3' : ''">
+        <li
+          v-for="(t, i) in home.trust.slice(0, 4)" :key="t.id"
+          class="flex items-center gap-3 px-2 py-3 md:justify-center md:gap-4 md:px-5 md:py-4"
+          :class="[i % 2 ? 'border-l border-border' : '', i > 1 ? 'border-t border-border lg:border-t-0' : '', i === 2 ? 'lg:border-l' : '']"
+        >
+          <span class="flex h-10 w-10 flex-none items-center justify-center rounded-full border border-champagne bg-bg text-ink md:h-11 md:w-11"><StoreTrustIcon :name="t.icon" /></span>
+          <span class="flex min-w-0 flex-col gap-0.5">
+            <span class="text-[11px] font-semibold uppercase leading-snug tracking-[0.14em] text-ink md:text-xs">{{ t.title }}</span>
+            <span v-if="t.text" class="text-[12.5px] leading-snug text-muted md:text-[13px]">{{ t.text }}</span>
+          </span>
+        </li>
+      </ul>
     </section>
 
-    <section v-if="home?.categories.length" class="wrap section pb-6">
+    <!-- Tighter gap under the trust strip (owner request 2026-11): the shared .section top padding was 72px -->
+    <section v-if="home?.categories.length" class="wrap section pb-6 pt-6 md:pt-10">
       <StoreCategoryCarousel :categories="home.categories" />
     </section>
 

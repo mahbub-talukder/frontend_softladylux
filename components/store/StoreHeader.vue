@@ -36,7 +36,7 @@ const tel = computed(() => telLink(s.value?.support_phones?.[0]))
     <!-- Owner request: the announcement scrolls as a marquee. The track holds the messages twice and slides by
          half its width, so the loop is seamless; hover/focus pause it; reduced-motion shows one static line
          (CSS in main.css). The repeat is aria-hidden so a screen reader hears each message once. -->
-    <div v-if="notes.length" class="marquee bg-dark text-xs uppercase leading-4 tracking-[0.14em] text-on-dark/90" role="region" aria-label="Announcements">
+    <div v-if="notes.length" class="marquee bg-dark text-[11px] uppercase leading-4 tracking-[0.14em] text-on-dark/90" role="region" aria-label="Announcements">
       <div class="marquee-track" :style="{ '--marquee-secs': `${marqueeSecs}s` }">
         <div v-for="copy in 2" :key="copy" class="marquee-set" :aria-hidden="copy === 2 ? 'true' : undefined">
           <template v-for="a in notes" :key="`${copy}-${a.id}`">

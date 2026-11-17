@@ -63,18 +63,23 @@ watch(() => data.value?.results, (r) => {
 
 <template>
   <div>
-    <!-- Banner band (Listing board) -->
-    <section class="border-b border-border bg-cream">
-      <div class="wrap flex flex-col gap-2.5 py-8 md:gap-3 md:py-11">
-        <nav v-if="crumbs" class="flex flex-wrap items-center text-[13px] text-muted" aria-label="Breadcrumb">
-          <template v-for="(c, i) in crumbs" :key="c.name"><NuxtLink v-if="c.to" :to="c.to" class="inline-flex min-h-11 min-w-11 items-center justify-center transition-colors hover:text-ink">{{ c.name }}</NuxtLink><span v-else class="text-ink">{{ c.name }}</span><span v-if="i < crumbs.length - 1" class="px-0.5">/</span></template>
+    <!-- Banner band (Listing board). Compact (owner request, 2026-11): one slim row so the product grid starts
+         near the top. Phones: title, breadcrumb below; tablets: title left, breadcrumb right; large screens:
+         breadcrumb on top, then title + one-line blurb. Breadcrumb links keep a 24px target (WCAG 2.2 AA minimum). -->
+    <!-- Contained to the main 1320px content column (owner request), like the home trust strip -->
+    <section class="wrap pt-3 md:pt-4">
+      <div class="flex flex-col gap-1 border border-border bg-cream px-4 py-3 md:flex-row md:px-5 md:items-center md:justify-between md:gap-6 md:py-3.5 lg:flex-col-reverse lg:items-start lg:justify-start lg:gap-0.5">
+        <div class="flex min-w-0 items-baseline gap-4">
+          <h1 class="flex-none font-display text-[26px] leading-tight md:text-h3-lg">{{ title }}</h1>
+          <p class="hidden min-w-0 truncate text-sm text-body lg:block" :title="blurb || undefined">{{ blurb || 'Filter by sub-category, size, colour and price to find exactly what you need.' }}</p>
+        </div>
+        <nav v-if="crumbs" class="flex flex-none flex-wrap items-center text-[12.5px] text-muted" aria-label="Breadcrumb">
+          <template v-for="(c, i) in crumbs" :key="c.name"><NuxtLink v-if="c.to" :to="c.to" class="inline-flex min-h-6 items-center transition-colors hover:text-ink">{{ c.name }}</NuxtLink><span v-else class="text-ink">{{ c.name }}</span><span v-if="i < crumbs.length - 1" class="px-1.5">/</span></template>
         </nav>
-        <h1 class="font-display text-h1 leading-none md:text-h1-lg">{{ title }}</h1>
-        <p class="max-w-[560px] text-[15px] leading-relaxed text-body md:text-base">{{ blurb || 'Filter by sub-category, size, colour and price to find exactly what you need.' }}</p>
       </div>
     </section>
 
-    <div class="wrap flex flex-col gap-6 pb-16 pt-6 lg:flex-row lg:items-start lg:gap-14 lg:pb-24 lg:pt-12">
+    <div class="wrap flex flex-col gap-6 pb-16 pt-4 lg:flex-row lg:items-start lg:gap-14 lg:pb-24 lg:pt-7">
       <!-- Mobile: sticky filter + sort bar -->
       <div class="sticky top-0 z-20 -mx-5 flex gap-3 border-b border-border bg-bg px-5 py-3 md:-mx-10 md:px-10 lg:hidden">
         <button class="btn-secondary !h-11 flex-1 !px-4" aria-haspopup="dialog" @click="drawer = true">Filters<span v-if="chipList.length" class="ml-2 bg-ink px-1.5 text-xs text-bg">{{ chipList.length }}</span></button>

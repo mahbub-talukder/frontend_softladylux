@@ -30,7 +30,8 @@ async function subscribe() {
 </script>
 
 <template>
-  <footer class="bg-dark text-text-dark">
+  <!-- Phones: bottom padding clears the fixed BottomNav (56px + safe area) so the last footer row is never hidden under it -->
+  <footer class="bg-dark pb-[calc(56px+env(safe-area-inset-bottom))] text-text-dark sm:pb-0">
     <!-- Newsletter band -->
     <div v-if="showNewsletter" class="border-b border-line-dark">
       <div class="wrap grid items-center gap-6 py-10 md:grid-cols-2 md:gap-10 md:py-14">
@@ -61,13 +62,15 @@ async function subscribe() {
         <span class="mt-1">{{ s?.support_phones?.length ? s.support_phones.join(', ') : '[PHONE NUMBER]' }}</span><span>{{ ph(s?.support_email, 'EMAIL ADDRESS') }}</span>
         <span class="mt-1">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
         <span class="mt-1 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
+        <!-- Owner request (2026-11): on phones the credit sits under Contact instead of the bottom bar -->
+        <span class="mt-3 text-[12.5px] text-text-dark-3 md:hidden">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </address>
     </div>
 
     <div class="border-t border-line-dark">
       <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-1 text-[12.5px] text-text-dark-3">
         <span class="py-1.5">{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
-        <span>Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
+        <span class="hidden md:inline">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </div>
     </div>
   </footer>
