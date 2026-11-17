@@ -2,6 +2,7 @@
 // SRS ACC-09 / ORD-04 / STF /track. No board exists for this page: built from the SRS in the existing
 // style (Auth form + My account tracking timeline). A guest tracks an order with its number + phone
 // and may cancel it before Shipping with the same pair (decision: guests can cancel).
+// v1.7 CRR-16: courier steps and the Steadfast tracking link under the timeline.
 import type { CustomerOrder } from '~/types/api'
 
 useSeoMeta({ title: 'Track your order', robots: 'noindex' })
@@ -50,6 +51,7 @@ const when = (d: string) => new Date(d).toLocaleString('en-GB', { day: '2-digit'
           <div class="pb-[18px]"><div class="text-[15px] font-medium uppercase tracking-[0.12em]">{{ t.label }}</div><div class="mt-0.5 text-sm text-muted">{{ when(t.at) }}<template v-if="t.detail"> · {{ t.detail }}</template></div></div>
         </li>
       </ol>
+      <StoreCourierSteps :steps="order.courier_steps" :link="order.tracking_link" />
       <ul class="flex flex-col gap-2 border-t border-border pt-5 text-[15px]"><li v-for="i in order.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
       <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-h3">{{ taka(order.total) }}</span></div>
       <p class="-mt-3 text-[13.5px] text-muted">Payment: {{ order.payment_status }}</p>

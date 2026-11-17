@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Design: AdminOrders board. SRS ORD-07 (search, filters, sort, pagination, bulk Confirm / Ship /
 // Cancel with a failure report), ORD-12 (stale Drafts highlighted), PAY-08 (payments to verify).
+// v1.7: CRR-07 bulk Book with Steadfast, CRR-09 courier flag column and "Courier attention" / "To book" tabs.
 import type { AdminOrderRow, Paged } from '~/types/api'
 
 definePageMeta({ layout: 'admin', permission: 'orders.view' })
@@ -9,7 +10,7 @@ const { api, errorOf } = useApi()
 const route = useRoute()
 
 const STATUSES = ['', 'draft', 'confirmed', 'shipping', 'delivered', 'cancelled', 'returned']
-const f = reactive({ status: '', q: '', payment_method: '', payment_status: '', area: '', date_from: '', date_to: '', stale: !!route.query.stale, ...(route.query.verify ? { status: 'draft', payment_status: 'pending' } : {}) })
+const f = reactive({ status: '', q: '', payment_method: '', payment_status: '', area: '', date_from: '', date_to: '', stale: !!route.query.stale, attention: '', courier: '', ...(route.query.verify ? { status: 'draft', payment_status: 'pending' } : {}) })
 const page = ref(1)
 const selected = ref<number[]>([])
 const openId = ref<number | null>(Number(route.query.open) || null)
@@ -20,17 +21,22 @@ const courier = ref('')
 
 type OrdersPage = Paged<AdminOrderRow> & { counts: Record<string, number> }
 const { data, pending, refresh } = await useAsyncData('admin-orders', () =>
-  api<OrdersPage>('/admin/orders/', { query: { page: page.value, status: f.status || undefined, q: f.q || undefined, payment_method: f.payment_method || undefined, payment_status: f.payment_status || undefined, area: f.area || undefined, date_from: f.date_from || undefined, date_to: f.date_to || undefined, stale: f.stale ? 1 : undefined } }),
+  api<OrdersPage>('/admin/orders/', { query: { page: page.value, status: f.status || undefined, q: f.q || undefined, payment_method: f.payment_method || undefined, payment_status: f.payment_status || undefined, area: f.area || undefined, date_from: f.date_from || undefined, date_to: f.date_to || undefined, stale: f.stale ? 1 : undefined, attention: f.attention || undefined, courier: f.courier || undefined } }),
 { watch: [page] })
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / 20)))
 const total = computed(() => Object.values(data.value?.counts ?? {}).reduce((a, b) => a + b, 0))
 const allOn = computed(() => !!data.value?.results.length && data.value.results.every((r) => selected.value.includes(r.id)))
 const canManage = computed(() => auth.can('orders.manage'))
+const canCourier = computed(() => auth.can('courier.manage'))
 
 function apply() { page.value = 1; selected.value = []; refresh() }
-function tab(s: string) { f.status = s; f.stale = false; f.payment_status = ''; apply() }
-function toVerify() { f.status = 'draft'; f.payment_status = 'pending'; f.payment_method = ''; f.stale = false; apply() }
-function stale() { f.status = ''; f.stale = true; apply() }
+const clearSpecial = () => { f.stale = false; f.payment_status = ''; f.attention = ''; f.courier = '' }
+function tab(s: string) { clearSpecial(); f.status = s; apply() }
+function toVerify() { clearSpecial(); f.status = 'draft'; f.payment_status = 'pending'; f.payment_method = ''; apply() }
+function stale() { clearSpecial(); f.status = ''; f.stale = true; apply() }
+function attention() { clearSpecial(); f.status = ''; f.attention = 'any'; apply() } // CRR-09
+function toBook() { clearSpecial(); f.status = ''; f.courier = 'unbooked'; apply() } // CRR-07
+const special = computed(() => f.stale || !!f.payment_status || !!f.attention || !!f.courier)
 const toggleAll = () => { selected.value = allOn.value ? [] : data.value!.results.map((r) => r.id) }
 const d = (v: string) => new Date(v).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 
@@ -43,6 +49,15 @@ async function bulk(to: string) {
     selected.value = []; await refresh()
   } catch (e) { bulkError.value = errorOf(e).message }
 }
+// CRR-07: bulk Book with Steadfast; every failure is listed with Steadfast's reason.
+async function bulkBook() {
+  bulkError.value = ''; result.value = null
+  if (!selected.value.length) { bulkError.value = 'Select at least one order.'; return }
+  try {
+    result.value = await api('/admin/courier/bulk-book/', { method: 'POST', body: { ids: selected.value } })
+    selected.value = []; await refresh()
+  } catch (e) { bulkError.value = errorOf(e).message }
+}
 const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join(',')}`)
 </script>
 
@@ -52,9 +67,11 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
       <NuxtLink v-if="selected.length" :to="slipsUrl" class="btn-secondary" target="_blank">Print delivery slips ({{ selected.length }})</NuxtLink>
     </AdminHeading>
     <div class="mb-3 flex items-center overflow-x-auto border-b border-field" role="tablist">
-      <button v-for="s in STATUSES" :key="s" class="tab" :aria-pressed="f.status === s && !f.stale && !f.payment_status" @click="tab(s)">{{ s ? s[0].toUpperCase() + s.slice(1) : 'All' }} {{ s ? data?.counts[s] ?? 0 : total }}</button>
+      <button v-for="s in STATUSES" :key="s" class="tab" :aria-pressed="f.status === s && !special" @click="tab(s)">{{ s ? s[0].toUpperCase() + s.slice(1) : 'All' }} {{ s ? data?.counts[s] ?? 0 : total }}</button>
       <button class="tab ml-auto" :aria-pressed="f.payment_status === 'pending'" @click="toVerify">Payments to verify</button>
       <button class="tab" :aria-pressed="f.stale" @click="stale">Stale drafts</button>
+      <button class="tab" :aria-pressed="!!f.courier" @click="toBook">To book</button>
+      <button class="tab" :aria-pressed="!!f.attention" @click="attention">Courier attention</button>
     </div>
     <form class="mb-5 flex flex-wrap gap-3" @submit.prevent="apply">
       <input v-model="f.q" class="inp !w-64" placeholder="Search order, customer, mobile, TrxID…" aria-label="Search orders">
@@ -64,12 +81,15 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
       <button class="btn-secondary">Filter</button>
     </form>
 
-    <div v-if="canManage && selected.length" class="fade-in mb-4 flex flex-col gap-3 bg-dark px-[18px] py-3.5 text-on-dark">
+    <div v-if="(canManage || canCourier) && selected.length" class="fade-in mb-4 flex flex-col gap-3 bg-dark px-[18px] py-3.5 text-on-dark">
       <p class="text-[14.5px]">{{ selected.length }} selected for packing &amp; delivery</p>
       <div class="bulk flex flex-wrap items-end gap-2">
+        <button v-if="canCourier" class="btn-secondary" data-track="courier_bulk_book" @click="bulkBook">Book with Steadfast</button>
+        <template v-if="canManage">
         <button class="btn-secondary" @click="bulk('confirmed')">Confirm</button>
         <input v-model="courier" class="inp !w-44" placeholder="Courier (for Ship)" aria-label="Courier"><button class="btn-secondary" @click="bulk('shipping')">Ship</button>
         <input v-model="reason" class="inp !w-56" placeholder="Reason (for Cancel)" aria-label="Cancel reason"><button class="btn-secondary" @click="bulk('cancelled')">Cancel</button>
+        </template>
       </div>
       <p v-if="bulkError" class="err" role="alert">{{ bulkError }}</p>
     </div>
@@ -91,7 +111,7 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
                 <td class="p-3">{{ o.name }}<br><span class="text-xs text-muted">{{ o.phone }}</span></td>
                 <td class="p-3"><span class="uppercase">{{ o.payment_method }}</span> <span class="text-xs text-muted">· {{ o.payment_status }}</span></td>
                 <td class="p-3 text-right">{{ taka(o.total) }}</td>
-                <td class="p-3"><span class="stage" :data-stage="o.status">{{ o.status }}</span></td>
+                <td class="p-3"><span class="stage" :data-stage="o.status">{{ o.status }}</span><template v-if="o.attention"><br><b class="text-xs text-accent">{{ o.attention_label }}</b></template><template v-else-if="o.courier_status"><br><span class="text-xs text-muted">Steadfast · {{ o.courier_status }}</span></template></td>
               </tr>
               <tr v-if="!pending && !data?.results.length"><td colspan="6" class="p-6 text-center text-muted">No orders match.</td></tr>
             </tbody>

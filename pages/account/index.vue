@@ -101,6 +101,7 @@ const stepAt = (st: string) => STEPS.indexOf(st)
                   <div class="mt-0.5 text-sm text-muted">{{ sel.timeline.find((t) => t.status === n) ? when(sel.timeline.find((t) => t.status === n)!.at) + (sel.timeline.find((t) => t.status === n)!.detail ? ' · ' + sel.timeline.find((t) => t.status === n)!.detail : '') : 'Pending' }}</div></div>
               </li>
             </ol>
+            <StoreCourierSteps :steps="sel.courier_steps" :link="sel.tracking_link" /><!-- CRR-16 (v1.7) -->
             <ul class="flex flex-col gap-2 border-t border-border pt-5 text-[15px]"><li v-for="i in sel.items" :key="i.id" class="flex justify-between gap-4"><span>{{ i.quantity }} × {{ i.product_name }} <span class="text-[13.5px] text-muted">{{ i.variant_label }}</span></span><span class="whitespace-nowrap">{{ taka(i.line_total) }}</span></li></ul>
             <div class="flex items-baseline justify-between"><span class="sf-lbl">Total</span><span class="font-display text-h3">{{ taka(sel.total) }}</span></div>
             <p class="-mt-3 text-[13.5px] text-muted">Payment: {{ sel.payment_status }}</p>

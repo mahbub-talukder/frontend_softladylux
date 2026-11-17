@@ -106,15 +106,26 @@ export interface CustomerOrder {
   payment_status: string; courier: string; tracking_ref: string; can_cancel: boolean
   items: { id: number; variant: number; product_name: string; variant_label: string; sku: string; unit_price: string; quantity: number; line_total: string }[]
   timeline: { status: string; label: string; at: string; detail: string }[]
+  courier_steps: CourierStep[] // CRR-16 (v1.7)
+  tracking_link: string
 }
+export interface CourierStep { text: string; at: string }
 export interface AdminOrderRow {
   id: number; number: string; status: string; placed_at: string; name: string; phone: string; area: string
   payment_method: string; payment_status: string; trx_id: string | null; total: string; item_count: number; is_stale: boolean
+  courier_status: string; attention: string; attention_label: string; courier_booked: boolean // CRR-09 (v1.7)
 }
-export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_status' | 'can_cancel'> {
+// ---- Courier (SRS v1.7 §4.18)
+export interface Shipment {
+  consignment_id: number | null; tracking_code: string; tracking_link: string; courier_status: string; status_at: string | null
+  attention: string; attention_label: string; last_error: string; booked_at: string | null; is_booked: boolean
+}
+export interface CourierEvent { kind: 'status' | 'tracking'; status: string; message: string; occurred_at: string; source: string }
+export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_status' | 'can_cancel' | 'courier_steps' | 'tracking_link'> {
   id: number; is_stale: boolean; user_name: string | null; confirmed_at: string | null; shipped_at: string | null
   cancel_reason: string; return_reason: string
   total_weight_grams: number // CAT-26 (v1.7)
+  shipment: Shipment | null; courier_events: CourierEvent[] // CRR-05/09/10 (v1.7)
   payment: { id: number; method: string; amount: string; sender_number: string; trx_id: string | null; status: string; verified_by_name: string | null; verified_at: string | null; reject_reason: string; note: string }
   logs: { id: number; from_status: string; to_status: string; user: string | null; note: string; created_at: string; internal: boolean }[]
 }

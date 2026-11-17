@@ -33,11 +33,11 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | load_more | listing |
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
-| login_submit, register_submit, otp_verify, track_submit, contact_submit, newsletter_subscribe | account and engagement forms |
+| login_submit, register_submit, otp_verify, track_submit, track_courier_link (v1.7), contact_submit, newsletter_subscribe | account and engagement forms |
 | footer_whatsapp, footer_messenger, footer_credit | footer contact links |
 | cookie_accept, cookie_decline | cookie notice |
 | dashboard_stale_drafts, open_ga4 | admin dashboard and insights |
-| admin_login, settings_save, settings_sms_test, theme_publish, permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance | admin actions |
+| admin_login, settings_save, settings_sms_test, theme_publish, permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
 
 ## Setting up GA4 and GTM (owner's Google account, INS-07)
 1. **GA4** (analytics.google.com): create the property (time zone Asia/Dhaka, currency **BDT**) and a **Web** data
