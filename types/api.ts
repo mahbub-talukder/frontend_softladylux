@@ -46,10 +46,12 @@ export interface ThemeState {
   tokens: Record<string, string>; updated_by: string | null; updated_at: string
   low_contrast_warning: boolean; contrast_issues: string[]
   storefront_font: string; admin_font: string; font_pairings: FontPairing[] // THM-20/21 (v1.9)
+  storefront_text_size: string; admin_text_size: string; text_sizes: { key: string; label: string; body: number; heading: number }[] // THM-28 (v1.10)
 }
 export interface FontPairing {
   key: string; label: string; heading: { family: string; weights: string }; body: { family: string; weights: string }
   display: string; sans: string; stylesheet: string
+  adjust: Record<string, { display_adjust: string; sans_adjust: string }> // THM-30 (v1.10): per text size
 }
 export interface PermissionDef { code: string; group: string; description: string; default: boolean; sensitive: boolean }
 export interface StaffUser { id: number; full_name: string; email: string; role: 'owner' | 'staff'; is_active: boolean; permissions: string[] }

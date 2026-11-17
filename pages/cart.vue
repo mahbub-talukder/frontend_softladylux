@@ -89,7 +89,7 @@ const priceChanged = (l: { variant: number; price: string }) => {
         <h2 class="font-display text-h2">Order summary</h2>
         <div role="group" aria-label="Delivery area" class="flex flex-col gap-2.5">
           <div class="text-xs font-semibold uppercase tracking-[0.18em]">Delivery area</div>
-          <div class="grid grid-cols-2 gap-2.5">
+          <div class="grid grid-cols-1 gap-2.5 min-[400px]:grid-cols-2"><!-- THM-31 (v1.10): stacked on the smallest phones so any font fits -->
             <button v-for="a in ([['inside_dhaka', 'Inside Dhaka', inside], ['outside_dhaka', 'Outside Dhaka', outside]] as const)" :key="a[0]" type="button" class="min-h-14 border px-3.5 py-2.5 text-left text-[15px] transition-colors" :class="cart.area === a[0] ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="cart.area === a[0]" @click="cart.setArea(a[0] as Area)">{{ a[1] }}<br><span class="text-[13px] text-muted">{{ taka(a[2]) }}</span></button>
           </div>
         </div>

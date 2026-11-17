@@ -8,6 +8,13 @@
   :where(:root) { --font-display: Georgia, 'Times New Roman', serif; --font-sans: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif; }
   body { @apply bg-bg font-sans text-ink antialiased; font-variant-numeric: tabular-nums; }
   h1, h2, h3, h4 { @apply font-display font-medium; letter-spacing: 0.005em; }
+  /* SRS v1.10 THM-27/29: each pairing is drawn at its tuned visual size (never wider than the original design) without
+     changing computed font sizes, line heights or control heights. `none` (Signature, Standard) = untouched. */
+  body, .font-sans { font-size-adjust: var(--font-sans-adjust, none); }
+  h1, h2, h3, h4, .font-display { font-size-adjust: var(--font-display-adjust, none); }
+  /* THM-31 (v1.10): browsers give <fieldset> min-width: min-content, so a wide table inside (product variants) widened the
+     whole page on phones instead of scrolling in its own box. */
+  fieldset { min-inline-size: 0; }
   :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; } /* 2px rosewood ring */
   @media (prefers-reduced-motion: reduce) { *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; } }
 }

@@ -21,16 +21,28 @@ export function tokensToCss(tokens: ThemeTokens | null | undefined): string {
 // ---- fonts (SRS v1.9 THM-20..THM-23)
 
 /** One area's font selection as sent by GET /theme/ (`fonts.storefront` / `fonts.admin`). */
-export interface ThemeFont { key: string; display: string; sans: string; stylesheet: string }
+export interface ThemeFont {
+  key: string; display: string; sans: string; stylesheet: string
+  display_adjust?: string; sans_adjust?: string; text_size?: string // THM-27..29 (v1.10)
+}
 
 // A CSS font stack: quoted family names, letters, digits, spaces, commas and hyphens only.
 const STACK_RE = /^[A-Za-z0-9 ,'"-]{1,200}$/
 const STYLESHEET_PREFIX = 'https://fonts.googleapis.com/css2?'
 
-/** THM-22: `:root{--font-display:…;--font-sans:…}` from a server font entry; '' when unsafe or missing. */
+/** THM-29 (v1.10): a font-size-adjust value — `none`, or a number 0.2–1.0 computed by the server. */
+export function safeAdjust(value: string | null | undefined): string {
+  if (!value || value === 'none') return 'none'
+  if (!/^\d(\.\d{1,3})?$/.test(value)) return 'none'
+  const n = Number(value)
+  return n >= 0.2 && n <= 1 ? value : 'none'
+}
+
+/** THM-22/29: `:root{--font-display…;--font-sans…;--font-*-adjust…}` from a server font entry; '' when unsafe. */
 export function fontToCss(font: ThemeFont | null | undefined): string {
   if (!font || !STACK_RE.test(font.display) || !STACK_RE.test(font.sans)) return ''
-  return `:root{--font-display:${font.display};--font-sans:${font.sans};}`
+  return `:root{--font-display:${font.display};--font-sans:${font.sans};` +
+    `--font-display-adjust:${safeAdjust(font.display_adjust)};--font-sans-adjust:${safeAdjust(font.sans_adjust)};}`
 }
 
 /** THM-23: the Google Fonts stylesheet URL, accepted only from fonts.googleapis.com css2. */

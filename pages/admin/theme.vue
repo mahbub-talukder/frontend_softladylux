@@ -5,7 +5,7 @@
 // from them (THM-14), the admin keeps its own neutrals, and primary/accent still style both.
 // v1.9 THM-20..THM-26: Fonts section — one pairing for the storefront, one for the admin panel.
 import type { FontPairing, Palette, ThemeState } from '~/types/api'
-import { fontStylesheet } from '~/utils/theme'
+import { fontStylesheet, safeAdjust } from '~/utils/theme'
 import { contrastHex, DEFAULT_BG, DEFAULT_TEXT, deriveTokens, readabilityIssues } from '~/utils/themeDerive'
 
 definePageMeta({ layout: 'admin', permission: 'theme.manage' })
@@ -34,22 +34,27 @@ async function load() {
   Object.assign(form, { primary: t.primary_hex, accent: t.accent_hex ?? '', background: t.background_hex, text: t.text_hex })
   paletteId.value = t.palette
   Object.assign(fonts, { storefront: t.storefront_font, admin: t.admin_font })
+  Object.assign(sizes, { storefront: t.storefront_text_size, admin: t.admin_text_size })
 }
 const fonts = reactive({ storefront: 'signature', admin: 'signature' })
+const sizes = reactive({ storefront: 'standard', admin: 'standard' }) // THM-28 (v1.10)
 await load()
 
 // THM-24: every option is previewed in its own fonts, so this page (only) loads each pairing's stylesheet.
 const pairings = computed<FontPairing[]>(() => state.value?.font_pairings ?? [])
 useHead(() => ({ link: pairings.value.map((p) => ({ key: `font-sample-${p.key}`, rel: 'stylesheet', href: fontStylesheet(p) })).filter((l) => l.href) }))
-const sampleHeading = (p: FontPairing) => ({ fontFamily: p.display }) // stacks come from the API (THM-20), not literals
-const sampleBody = (p: FontPairing) => ({ fontFamily: p.sans })
+// Stacks and tuned adjust values come from the API (THM-20/27/30), so each sample looks as it will on the site.
+const sampleHeading = (p: FontPairing, size: string) => ({ fontFamily: p.display, fontSizeAdjust: safeAdjust(p.adjust?.[size]?.display_adjust) })
+const sampleBody = (p: FontPairing, size: string) => ({ fontFamily: p.sans, fontSizeAdjust: safeAdjust(p.adjust?.[size]?.sans_adjust) })
+const textSizes = computed(() => state.value?.text_sizes ?? [])
 const FONT_AREAS = [
   { key: 'storefront', label: 'Storefront', hint: 'The website, checkout, account pages and customer invoices.' },
   { key: 'admin', label: 'Admin panel', hint: 'Every admin page, including the sign-in page and printed slips.' }
 ] as const
-const fontsChanged = computed(() => !!state.value && (fonts.storefront !== state.value.storefront_font || fonts.admin !== state.value.admin_font))
+const fontsChanged = computed(() => !!state.value && (fonts.storefront !== state.value.storefront_font || fonts.admin !== state.value.admin_font ||
+  sizes.storefront !== state.value.storefront_text_size || sizes.admin !== state.value.admin_text_size))
 const fontBusy = ref(false)
-async function saveFonts(body: { storefront_font: string; admin_font: string }, message: string) {
+async function saveFonts(body: Record<string, string>, message: string) {
   fontBusy.value = true
   try {
     await api<ThemeState>('/admin/theme/', { method: 'PUT', successMessage: message, body })
@@ -57,10 +62,10 @@ async function saveFonts(body: { storefront_font: string; admin_font: string }, 
     await load()
   } catch { /* toast shown by api() */ } finally { fontBusy.value = false }
 }
-const publishFonts = () => saveFonts({ storefront_font: fonts.storefront, admin_font: fonts.admin }, 'Fonts saved. The website uses them on the next page load.')
+const publishFonts = () => saveFonts({ storefront_font: fonts.storefront, admin_font: fonts.admin, storefront_text_size: sizes.storefront, admin_text_size: sizes.admin }, 'Fonts saved. The website uses them on the next page load.')
 function resetFonts() {
-  if (!confirm('Reset both font choices to Signature?')) return // ADM-08
-  saveFonts({ storefront_font: 'signature', admin_font: 'signature' }, 'Fonts reset to Signature.')
+  if (!confirm('Reset both font choices to Signature at Standard size?')) return // ADM-08
+  saveFonts({ storefront_font: 'signature', admin_font: 'signature', storefront_text_size: 'standard', admin_text_size: 'standard' }, 'Fonts reset to Signature, Standard size.')
 }
 
 const valid = computed(() => /^#[0-9A-Fa-f]{6}$/.test(form.primary) && /^#[0-9A-Fa-f]{6}$/.test(form.background) && /^#[0-9A-Fa-f]{6}$/.test(form.text) && (!form.accent || /^#[0-9A-Fa-f]{6}$/.test(form.accent)))
@@ -212,20 +217,25 @@ const fmt = (n: number) => `${n.toFixed(1)}:1`
       </div>
       <fieldset v-for="area in FONT_AREAS" :key="area.key" class="flex flex-col gap-3">
         <legend class="mb-1 text-lg">{{ area.label }} <span class="hint">· {{ area.hint }}</span></legend>
+        <!-- THM-28 (v1.10): a simple size choice instead of free font sizes -->
+        <div class="flex flex-wrap items-center gap-2" role="radiogroup" :aria-label="`${area.label} text size`">
+          <span class="text-sm">Text size</span>
+          <button v-for="t in textSizes" :key="t.key" type="button" role="radio" class="chip-size !h-10" :aria-checked="sizes[area.key] === t.key" :class="sizes[area.key] === t.key ? '!border-primary !bg-primary !text-primary-contrast' : ''" @click="sizes[area.key] = t.key">{{ t.label }}</button>
+        </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="radiogroup" :aria-label="`${area.label} font pairing`">
           <button
             v-for="p in pairings" :key="p.key" type="button" role="radio" :aria-checked="fonts[area.key] === p.key"
             class="flex flex-col gap-1.5 border p-3.5 text-left transition-colors" :class="fonts[area.key] === p.key ? 'border-2 border-primary' : 'border-border hover:border-ink'"
             @click="fonts[area.key] = p.key"
           >
-            <span class="flex items-baseline justify-between gap-2"><span class="text-[3.25rem] leading-none" :style="sampleHeading(p)" aria-hidden="true">Aa</span><span class="cap">{{ p.label }}<template v-if="p.key === 'signature'"> · default</template></span></span>
-            <span class="text-lg leading-snug" :style="sampleHeading(p)">Quiet luxury, worn close</span>
-            <span class="text-[14.5px] leading-relaxed text-body" :style="sampleBody(p)">Soft fabrics and an easy fit for every day.</span>
+            <span class="flex items-baseline justify-between gap-2"><span class="text-[3.25rem] leading-none" :style="sampleHeading(p, sizes[area.key])" aria-hidden="true">Aa</span><span class="cap">{{ p.label }}<template v-if="p.key === 'signature'"> · default</template></span></span>
+            <span class="text-lg leading-snug" :style="sampleHeading(p, sizes[area.key])">Quiet luxury, worn close</span>
+            <span class="text-[14.5px] leading-relaxed text-body" :style="sampleBody(p, sizes[area.key])">Soft fabrics and an easy fit for every day.</span>
             <span class="hint">{{ p.heading.family }}<template v-if="p.body.family !== p.heading.family"> + {{ p.body.family }}</template></span>
           </button>
         </div>
       </fieldset>
-      <p class="hint">Last saved: website <b>{{ pairings.find((p) => p.key === state?.storefront_font)?.label }}</b>, admin panel <b>{{ pairings.find((p) => p.key === state?.admin_font)?.label }}</b>.</p>
+      <p class="hint">Last saved: website <b>{{ pairings.find((p) => p.key === state?.storefront_font)?.label }}</b> ({{ textSizes.find((t) => t.key === state?.storefront_text_size)?.label }}), admin panel <b>{{ pairings.find((p) => p.key === state?.admin_font)?.label }}</b> ({{ textSizes.find((t) => t.key === state?.admin_text_size)?.label }}). Every pairing is tuned so its text is never wider than the original design.</p>
     </div>
   </section>
 </template>

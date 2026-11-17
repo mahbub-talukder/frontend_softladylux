@@ -45,7 +45,7 @@ const stageMax = computed(() => Math.max(1, ...STAGES.map((s) => d.value.orders_
       </NuxtLink>
 
       <div class="grid gap-5 xl:grid-cols-[2fr_1fr]">
-        <div v-if="d.sales_7d" class="card !gap-[22px]"><div class="flex items-baseline justify-between"><h2 class="font-display">Sales, last 7 days</h2><span class="cap">৳ thousand</span></div><AdminBarChart :points="d.sales_7d" label="Sales in the last 7 days" tall /></div>
+        <div v-if="d.sales_7d" class="card !gap-[22px]"><div class="flex items-baseline justify-between gap-3"><h2 class="font-display">Sales, last 7 days</h2><span class="cap whitespace-nowrap">৳ thousand</span></div><!-- THM-31: unit label never wraps --><AdminBarChart :points="d.sales_7d" label="Sales in the last 7 days" tall /></div>
         <div v-if="d.orders_by_stage" class="card !gap-5"><div class="flex items-baseline justify-between"><h2 class="font-display">Orders by stage</h2><NuxtLink to="/admin/orders" class="cap border-b border-muted">Open</NuxtLink></div>
           <div v-for="s in STAGES" :key="s" class="flex flex-col gap-[7px]"><div class="flex justify-between text-[14.5px] capitalize"><span>{{ s }}</span><b class="font-medium">{{ d.orders_by_stage[s] }}</b></div><div class="h-2 bg-cream"><div class="h-2 transition-[width] duration-500" :style="{ width: (d.orders_by_stage[s] ? Math.max(3, Math.round((d.orders_by_stage[s] / stageMax) * 100)) : 0) + '%', background: `var(--stage-${s}-fg)` }" /></div></div>
           <p class="mt-auto text-[13px] leading-relaxed text-muted">Flow: Draft → Confirm → Shipping → Delivered. Cancelled and Returned are tracked separately.</p></div>

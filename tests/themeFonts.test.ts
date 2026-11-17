@@ -1,6 +1,6 @@
 // Covers SRS v1.9 THM-21/22/23: font tokens and stylesheet links built from the server's pairing entry.
 import { describe, expect, it } from 'vitest'
-import { fontForPath, fontLinks, fontStylesheet, fontToCss, type ThemeFont } from '../utils/theme'
+import { fontForPath, fontLinks, fontStylesheet, fontToCss, safeAdjust, type ThemeFont } from '../utils/theme'
 
 const editorial: ThemeFont = {
   key: 'editorial',
@@ -12,7 +12,7 @@ const clean: ThemeFont = { ...editorial, key: 'clean', display: "'Inter', sans-s
 
 describe('fontToCss', () => {
   it('writes both font tokens on :root', () => {
-    expect(fontToCss(editorial)).toBe(`:root{--font-display:${editorial.display};--font-sans:${editorial.sans};}`)
+    expect(fontToCss(editorial)).toBe(`:root{--font-display:${editorial.display};--font-sans:${editorial.sans};--font-display-adjust:none;--font-sans-adjust:none;}`)
   })
   it('rejects unsafe stacks and missing fonts', () => {
     expect(fontToCss({ ...editorial, display: "x;}body{color:red" })).toBe('')
@@ -40,5 +40,24 @@ describe('fontForPath', () => {
     expect(fontForPath(fonts, '/admin/orders')?.key).toBe('clean')
     expect(fontForPath(fonts, '/')?.key).toBe('editorial')
     expect(fontForPath(fonts, '/account/orders/SLL-1/invoice')?.key).toBe('editorial')
+  })
+})
+
+// SRS v1.10 THM-29: tuned font-size-adjust values are range-checked before they reach the page.
+
+describe('safeAdjust / adjust tokens', () => {
+  it('accepts none and numbers 0.2–1.0 only', () => {
+    expect(safeAdjust('0.452')).toBe('0.452')
+    expect(safeAdjust('none')).toBe('none')
+    expect(safeAdjust(undefined)).toBe('none')
+    expect(safeAdjust('1.5')).toBe('none')
+    expect(safeAdjust('0.1')).toBe('none')
+    expect(safeAdjust('0.4;}body{x:y')).toBe('none')
+  })
+  it('writes both adjust tokens next to the families', () => {
+    const css = fontToCss({ ...editorial, display_adjust: '0.452', sans_adjust: '0.481' })
+    expect(css).toContain('--font-display-adjust:0.452;')
+    expect(css).toContain('--font-sans-adjust:0.481;')
+    expect(fontToCss(editorial)).toContain('--font-display-adjust:none;--font-sans-adjust:none;')
   })
 })
