@@ -22,6 +22,9 @@ export default defineNuxtConfig({
   // SRS ARC-07 / SD-02: request-time WebP resizing by Nuxt Image.
   // Originals live in the shared media volume; NUXT_IMAGE_DIR points IPX at it (mounted at /media in Docker).
   image: { format: ['webp'], dir: process.env.NUXT_IMAGE_DIR || 'public' },
+  // SRS §9 performance: write .gz copies of the build files so production nginx serves them
+  // pre-compressed (gzip_static) instead of compressing on every request.
+  nitro: { compressPublicAssets: { gzip: true, brotli: false } },
   app: {
     head: {
       htmlAttrs: { lang: 'en' }, title: 'SoftLadyLux',

@@ -35,7 +35,7 @@ const sigBanner = computed(() => home.value?.signature_banner ?? null) // WEB-02
 <template>
   <div>
     <StoreHomeHero :slides="home?.carousel ?? []" />
-    <!-- WEB-11 (v1.6): promotional popup on every home page load; renders nothing on the server -->
+    <!-- WEB-11 (v1.6): promotional popup once per full page load (not on in-app returns to home); renders nothing on the server -->
     <StorePromoModal v-if="home?.popup" :popup="home.popup" />
 
     <section v-if="home?.trust.length" class="border-b border-border bg-bg" aria-label="Why shop with us">

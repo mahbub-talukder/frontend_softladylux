@@ -1,7 +1,14 @@
+<script lang="ts">
+// Module scope (a plain <script>, not <script setup>, which runs per instance) lives as long as the loaded app in the
+// browser and resets on every full page load. Only touched in onMounted, so the server never changes it.
+let shownThisLoad = false
+</script>
+
 <script setup lang="ts">
 // Promotional Ads Panel. SRS WEB-11 (amendment v1.6): Admin → Website content → "Promotional Ads Panel" sets the image,
-// heading, text, button and on/off. While it is on, it opens shortly after every full load of the home page (owner
-// decision 2026-11-15); ×, Esc, the backdrop and "Continue browsing" close it until the next load.
+// heading, text, button and on/off. While it is on, it opens once per application load: shortly after the first home
+// page view of a full page load (first visit, reload, or typed URL). Going back to the home page through in-app
+// navigation does not open it again. ×, Esc, the backdrop and "Continue browsing" close it until the next full load.
 import type { Banner } from '~/types/api'
 
 const props = defineProps<{ popup: Banner }>()
@@ -10,7 +17,8 @@ const hasText = computed(() => !!(props.popup.heading || props.popup.text || pro
 const cta = computed(() => props.popup.button_label || 'Shop now')
 let timer: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
-  if (props.popup.media) timer = setTimeout(() => { open.value = true }, 800)
+  if (!props.popup.media || shownThisLoad) return
+  timer = setTimeout(() => { shownThisLoad = true; open.value = true }, 800)
 })
 onBeforeUnmount(() => clearTimeout(timer))
 const close = () => { open.value = false }
