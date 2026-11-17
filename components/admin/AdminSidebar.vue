@@ -21,7 +21,7 @@ const ITEMS: Item[] = [
   { label: 'Reports', to: '/admin/reports', d: 'M4 20V10M10 20V4M16 20v-7M22 20H2', permission: 'reports.view' },
   { label: 'Wishlist insights', to: '/admin/insights', d: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', permission: 'insights.view' },
   { label: 'Website content', to: '/admin/website', d: 'M3 5h18v14H3zM3 9h18', permission: 'website.manage' },
-  { label: 'Theme colours', to: '/admin/theme', d: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z', permission: 'theme.manage' },
+  { label: 'Theme', to: '/admin/theme', d: 'M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4c0-5-4-10-9-10z', permission: 'theme.manage' },
   { label: 'Settings', to: '/admin/settings', d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12l2-1-2-4-2 1-2-1V5h-4v2l-2 1-2-1-2 4 2 1v2l-2 1 2 4 2-1 2 1v2h4v-2l2-1 2 1 2-4-2-1z', permission: 'settings.manage' },
   { label: 'Staff & permissions', to: '/admin/users', d: 'M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c0-4 4-6 8-6s8 2 8 6', ownerOnly: true },
   { label: 'Audit log', to: '/admin/audit-log', d: 'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4', ownerOnly: true }
