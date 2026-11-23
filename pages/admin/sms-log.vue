@@ -5,8 +5,11 @@ import type { Paged, SmsLogRow, SmsStatus } from '~/types/api'
 
 definePageMeta({ layout: 'admin', permission: 'sms_log.view' })
 const { api } = useApi()
+const auth = useAuthStore()
+const canSend = computed(() => auth.can('sms.send')) // v1.11: Send SMS button
+const sending = ref(false)
 
-const SOURCES: [string, string][] = [['', 'All sources'], ['otp_register', 'Registration OTP'], ['otp_reset', 'Password reset OTP'], ['otp_checkout', 'Checkout OTP'], ['order_received', 'Order received'], ['admin_test', 'Admin test']]
+const SOURCES: [string, string][] = [['', 'All sources'], ['otp_register', 'Registration OTP'], ['otp_reset', 'Password reset OTP'], ['otp_checkout', 'Checkout OTP'], ['order_received', 'Order received'], ['admin_test', 'Admin test'], ['admin_manual', 'Admin (manual)']]
 const STATUSES: [string, string][] = [['', 'All'], ['pending', 'Pending'], ['in_progress', 'In Progress'], ['sent', 'Sent'], ['failed', 'Failed']]
 const TONE: Record<SmsStatus, string> = {
   pending: 'border-field text-muted',
@@ -41,10 +44,17 @@ const toggle = (id: number) => { open.value = open.value === id ? null : id }
 
 <template>
   <section>
-    <AdminHeading eyebrow="Settings" title="SMS log" />
+    <AdminHeading eyebrow="Settings" title="SMS log">
+      <!-- v1.11 owner request: one-off SMS from this page (needs sms.send) -->
+      <button v-if="canSend" type="button" class="btn flex items-center gap-2" aria-haspopup="dialog" data-track="sms_send_open" @click="sending = true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z" stroke-linejoin="round" /></svg>
+        Send SMS
+      </button>
+    </AdminHeading>
+    <AdminSmsSendDialog v-if="sending" @close="sending = false" @sent="apply" />
     <p class="hint -mt-2 mb-4">Every SMS sent through MiMSMS, newest first. OTP codes are hidden.</p>
 
-    <div class="mb-3 flex items-center overflow-x-auto border-b border-field" role="tablist" aria-label="Status">
+    <div class="tabs-scroll mb-3 flex items-center border-b border-field" role="tablist" aria-label="Status">
       <button v-for="[v, l] in STATUSES" :key="v" class="tab whitespace-nowrap" :aria-pressed="f.status === v" @click="setStatus(v)">{{ l }}</button>
     </div>
     <form class="mb-5 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap" @submit.prevent="apply">

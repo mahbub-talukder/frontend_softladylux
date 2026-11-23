@@ -66,7 +66,7 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
     <AdminHeading eyebrow="Order management" title="Orders">
       <NuxtLink v-if="selected.length" :to="slipsUrl" class="btn-secondary" target="_blank">Print delivery slips ({{ selected.length }})</NuxtLink>
     </AdminHeading>
-    <div class="mb-3 flex items-center overflow-x-auto border-b border-field" role="tablist">
+    <div class="tabs-scroll mb-3 flex items-center border-b border-field" role="tablist">
       <button v-for="s in STATUSES" :key="s" class="tab" :aria-pressed="f.status === s && !special" @click="tab(s)">{{ s ? s[0].toUpperCase() + s.slice(1) : 'All' }} {{ s ? data?.counts[s] ?? 0 : total }}</button>
       <button class="tab ml-auto" :aria-pressed="f.payment_status === 'pending'" @click="toVerify">Payments to verify</button>
       <button class="tab" :aria-pressed="f.stale" @click="stale">Stale drafts</button>
