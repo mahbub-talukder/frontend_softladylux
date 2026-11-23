@@ -73,11 +73,12 @@ function submit() {
       <input :id="`s-${uid}`" v-model="q" type="search" autocomplete="off" :placeholder="placeholder" class="h-11 min-w-0 flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-muted">
     </div>
     <div v-if="open" class="absolute inset-x-0 top-[54px] z-40 grid gap-7 border border-border bg-surface p-5 shadow-pop md:grid-cols-[5fr_7fr] md:p-6" @mousedown.prevent>
-      <div class="flex flex-col gap-1.5">
+      <!-- CAT-10a (v1.11): below md, Products come first and Suggestions/Browse follow; md+ keeps the two columns -->
+      <div class="order-2 flex flex-col gap-1.5 md:order-1">
         <div class="mb-1.5 text-xs font-medium uppercase tracking-[0.2em] text-gold">{{ q.trim().length >= 2 ? 'Suggestions' : 'Browse' }}</div>
         <NuxtLink v-for="t in terms" :key="t.to" :to="t.to" class="flex min-h-11 items-center text-[15px] transition-colors hover:text-accent" @click="open = false">{{ t.label }}</NuxtLink>
       </div>
-      <div class="flex flex-col gap-1.5">
+      <div class="order-1 flex flex-col gap-1.5 md:order-2">
         <div class="mb-1.5 text-xs font-medium uppercase tracking-[0.2em] text-gold">Products</div>
         <p v-if="q.trim().length < 2" class="py-1.5 text-sm text-muted">Type at least two letters.</p>
         <p v-else-if="failed" class="py-1.5 text-sm text-muted" role="alert">Search is unavailable right now. Press Enter to see all results.</p>

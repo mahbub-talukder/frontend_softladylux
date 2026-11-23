@@ -74,3 +74,13 @@
   --tile-1: #e9dccb; --tile-2: #e6d2ca; --tile-3: #dcd2c3; --tile-4: #e2d6c6;
   --tile-5: #ebd7d0; --tile-6: #e3dacb; --tile-7: #dfd1c0; --tile-8: #e8d6cd;
 }
+
+/* STF-UI-02 (v1.11): fixed brand colours of the social networks (footer icon hover). Not theme-driven. */
+:root {
+  --brand-facebook: #1877f2;
+  --brand-instagram: #e4405f;
+  --brand-youtube: #ff0000;
+  --brand-tiktok: #fe2c55;
+  --brand-messenger: #0084ff;
+  --brand-whatsapp: #25d366;
+}

@@ -22,22 +22,26 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | Name | Where |
 |---|---|
 | add_to_bag | product page, Add to bag |
-| quick_add | product card, Quick Add |
+| quick_add | product card, Quick Add (replaced by buy_open in v1.11) |
+| buy_open, buy_add_to_cart, buy_checkout_now (v1.11) | product card Buy button and its product dialog (CAT-12) |
 | header_whatsapp, header_call, header_bag, header_wishlist, header_account, header_track_order, header_find_size | header |
 | menu_whatsapp, menu_call | phone slide-in menu |
 | floating_cart, floating_cart_hide | floating cart widget; floating_cart_show is the re-enable button on the cart page |
 | size_chart_open | product page size chart dialog |
+| product_zoom_in, product_zoom_out (v1.11) | product page photo zoom (CAT-27) |
 | bottom_nav_home, bottom_nav_shop, bottom_nav_wishlist, bottom_nav_bag, bottom_nav_account | mobile bottom navigation |
 | hero_cta, hero_find_size, home_signature, home_banner, home_category_tile, home_category_prev, home_category_next, home_size_finder, video_open | home page |
 | promo_cta, promo_close | home promotional popup |
 | load_more | listing |
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
+| checkout_otp_verify (v1.11) | checkout, guest mobile verification dialog (CHK-11) |
 | login_submit, register_submit, otp_verify, track_submit, track_courier_link (v1.7), contact_submit, newsletter_subscribe | account and engagement forms |
 | footer_whatsapp, footer_messenger, footer_credit | footer contact links |
+| footer_social_facebook, footer_social_instagram, footer_social_youtube, footer_social_tiktok, footer_social_messenger, footer_social_whatsapp (v1.11) | footer social icons (STF-UI-02) |
 | cookie_accept, cookie_decline | cookie notice |
 | dashboard_stale_drafts, open_ga4 | admin dashboard and insights |
-| admin_login, settings_save, settings_sms_test, theme_publish, theme_fonts_save (v1.9), permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
+| admin_login, settings_save, settings_sms_test, theme_publish, theme_fonts_save (v1.9), permissions_save, category_save, product_save_draft, product_save_draft_bottom (v1.11 ADM-13), product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
 
 ## Setting up GA4 and GTM (owner's Google account, INS-07)
 1. **GA4** (analytics.google.com): create the property (time zone Asia/Dhaka, currency **BDT**) and a **Web** data

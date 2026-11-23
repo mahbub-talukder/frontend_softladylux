@@ -99,8 +99,12 @@ const tabs = computed(() => [
           </button>
           <button v-if="!gallery.length" type="button" class="w-16 flex-none border border-ink md:w-[84px]" aria-label="Photo 1"><StoreTile :tile-key="p.id" :category="p.category.name" ratio="84/104" art-width="60%" /></button>
         </div>
-        <StoreTile :src="gallery[active]?.url" :alt="gallery[active]?.alt_text || p.name" :tile-key="p.id + active" :category="p.category.name" ratio="4/5" :width="720" :height="900" sizes="xs:100vw lg:50vw" eager class="min-w-0 flex-1" art-width="52%">
-          <div v-if="!gallery[active]" class="pointer-events-none absolute inset-5 border border-gold/30 md:inset-7" />
+        <!-- CAT-27 (v1.11): zoom buttons, pinch, Ctrl/⌘ + wheel, double-tap -->
+        <StoreProductZoom v-if="gallery[active]" :src="gallery[active]?.url" :alt="gallery[active]?.alt_text || p.name" :tile-key="p.id + active" :category="p.category.name" class="min-w-0 flex-1">
+          <span v-if="p.tag" class="pointer-events-none absolute right-4 top-4 bg-bg px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.16em] md:right-7 md:top-7">{{ p.tag }}</span>
+        </StoreProductZoom>
+        <StoreTile v-else :tile-key="p.id" :alt="p.name" :category="p.category.name" ratio="4/5" class="min-w-0 flex-1" art-width="52%">
+          <div class="pointer-events-none absolute inset-5 border border-gold/30 md:inset-7" />
           <span v-if="p.tag" class="absolute right-4 top-4 bg-bg px-2.5 py-1.5 text-xs font-medium uppercase tracking-[0.16em] md:right-7 md:top-7">{{ p.tag }}</span>
         </StoreTile>
       </div>

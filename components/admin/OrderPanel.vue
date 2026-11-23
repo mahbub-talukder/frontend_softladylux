@@ -2,8 +2,13 @@
 // Design: AdminOrders board (detail panel). SRS ORD-02..06, ORD-08..11, PAY-03/05/06. Buttons only
 // show for the permission the user holds (PRM-04); the server stays authoritative (PRM-03).
 // v1.7: the courier block (AdminCourierBlock) handles Steadfast; manual Ship stays as the ORD-10 fallback.
+// v1.11 ORD-14: on a Confirmed order "Move to Shipping" books with Steadfast when it is set up (and the user holds
+// courier.manage); while an auto-booking is queued it waits ("Booking with Steadfast…") and refreshes itself; after a
+// failure it reads "Retry booking". "Ship with another courier" opens the manual courier + tracking form.
 import type { AdminOrder } from '~/types/api'
 import { formatWeight } from '~/utils/weight'
+import type { Rule } from '~/utils/validators'
+const PAY_NAME: Record<string, string> = { cod: 'Cash on delivery', bkash: 'bKash', nagad: 'Nagad', bank: 'Bank transfer' }
 
 const props = defineProps<{ id: number }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -13,17 +18,22 @@ const order = ref<AdminOrder | null>(null)
 const error = ref('')
 const busy = ref(false)
 const mode = ref<'' | 'ship' | 'cancel' | 'return' | 'reject' | 'trx' | 'edit' | 'note'>('')
-const f = reactive({ reason: '', courier: '', tracking: '', trx_id: '', sender_number: '', note: '', phone: '', address_line: '', thana: '', district: '', name: '' })
+const f = reactive({ reason: '', courier: '', tracking: '', trx_id: '', sender_number: '', sender_name: '', note: '', phone: '', address_line: '', thana: '', district: '', name: '' })
 
 // UI-06 / §10: reasons 3-300 characters, TrxID 8-12 letters/digits, BD mobile numbers, and the order-field lengths the
 // database allows (name 150, thana/district 80, address 300), so an over-long value is caught here and not as a server error.
 const { required, between, maxLength, pattern, phoneBD } = rules
+// v1.11 CHK-04: a Bank payment has a 6-30 reference ID (letters, digits, -) and a holder name instead of a sender number.
+const isBank = () => order.value?.payment?.method === 'bank'
+const unlessBank = (r: Rule): Rule => (x, all) => (isBank() ? null : r(x, all))
+const onlyBank = (r: Rule): Rule => (x, all) => (isBank() ? r(x, all) : null)
 const v = useFormValidation(() => f, {
   reason: [required('Enter a reason.'), between(3, 300, 'Use 3-300 characters.')],
   courier: [maxLength(80)],
   tracking: [maxLength(80)],
-  trx_id: [required('Enter the transaction ID.'), pattern(/^[A-Za-z0-9]{8,12}$/, 'Use 8-12 letters or digits.')],
-  sender_number: [required('Enter the sender number.'), phoneBD()],
+  trx_id: [required('Enter the transaction ID.'), unlessBank(pattern(/^[A-Za-z0-9]{8,12}$/, 'Use 8-12 letters or digits.')), onlyBank(pattern(/^[A-Za-z0-9][A-Za-z0-9-]{4,28}[A-Za-z0-9]$/, 'Use 6-30 letters, digits or -.'))],
+  sender_number: [unlessBank(required('Enter the sender number.')), unlessBank(phoneBD())],
+  sender_name: [onlyBank(required('Enter the account holder name.')), maxLength(120)],
   note: [required('Write a note first.'), between(1, 500, 'Use up to 500 characters.')],
   name: [required('Enter the customer name.'), maxLength(150)],
   phone: [required('Enter a phone number.'), phoneBD()],
@@ -47,7 +57,7 @@ const NEXT: Record<string, { to: string; label: string } | undefined> = {
   draft: { to: 'confirmed', label: 'Confirm order' }, confirmed: { to: 'shipping', label: 'Move to Shipping' }, shipping: { to: 'delivered', label: 'Mark delivered' }
 }
 const next = computed(() => (order.value ? NEXT[order.value.status] : undefined))
-const needsVerify = computed(() => !!order.value && ['bkash', 'nagad'].includes(order.value.payment_method) && order.value.payment?.status !== 'verified' && order.value.status === 'draft')
+const needsVerify = computed(() => !!order.value && ['bkash', 'nagad', 'bank'].includes(order.value.payment_method) && order.value.payment?.status !== 'verified' && order.value.status === 'draft')
 
 const loadFailed = ref(false)
 async function load() {
@@ -55,7 +65,7 @@ async function load() {
   try { order.value = await api<AdminOrder>(`/admin/orders/${props.id}/`) } catch { order.value = null; loadFailed.value = true; return }
   mode.value = ''; error.value = ''; v.reset()
   if (!order.value) return
-  Object.assign(f, { reason: '', courier: '', tracking: '', trx_id: order.value.payment?.trx_id ?? '', sender_number: order.value.payment?.sender_number ?? '', note: '', phone: order.value.phone, address_line: order.value.address_line, thana: order.value.thana, district: order.value.district, name: order.value.name })
+  Object.assign(f, { reason: '', courier: '', tracking: '', trx_id: order.value.payment?.trx_id ?? '', sender_number: order.value.payment?.sender_number ?? '', sender_name: order.value.payment?.sender_name ?? '', note: '', phone: order.value.phone, address_line: order.value.address_line, thana: order.value.thana, district: order.value.district, name: order.value.name })
 }
 watch(() => props.id, load, { immediate: true })
 
@@ -69,12 +79,36 @@ const DONE: Record<string, string> = { confirmed: 'Order confirmed', shipping: '
 const transition = (to: string, extra: Record<string, string> = {}) => run(() => api(`/admin/orders/${props.id}/transition/`, { method: 'POST', body: { to, ...extra }, toast: false }), DONE[to] ?? 'Order updated')
 const verify = () => run(() => api(`/admin/orders/${props.id}/payment/verify/`, { method: 'POST', toast: false }), 'Payment verified')
 const reject = () => ok(['reason']) && run(() => api(`/admin/orders/${props.id}/payment/reject/`, { method: 'POST', body: { reason: f.reason.trim() }, toast: false }), 'Payment rejected')
-const editTrx = () => ok(['trx_id', 'sender_number']) && run(() => api(`/admin/orders/${props.id}/payment/`, { method: 'PATCH', body: { trx_id: f.trx_id.trim().toUpperCase(), sender_number: f.sender_number.trim() }, toast: false }), 'Payment details corrected')
+const editTrx = () => ok(['trx_id', isBank() ? 'sender_name' : 'sender_number']) && run(() => api(`/admin/orders/${props.id}/payment/`, { method: 'PATCH', body: isBank() ? { trx_id: f.trx_id.trim().toUpperCase(), sender_name: f.sender_name.trim() } : { trx_id: f.trx_id.trim().toUpperCase(), sender_number: f.sender_number.trim() }, toast: false }), 'Payment details corrected')
 const saveEdit = () => ok(['name', 'phone', 'address_line', 'thana', 'district']) && run(() => api(`/admin/orders/${props.id}/`, { method: 'PATCH', body: { name: f.name.trim(), phone: f.phone.trim(), district: f.district.trim(), thana: f.thana.trim(), address_line: f.address_line.trim() }, toast: false }), 'Customer details updated')
 const addNote = () => ok(['note']) && run(() => api(`/admin/orders/${props.id}/notes/`, { method: 'POST', body: { note: f.note.trim() }, toast: false }), 'Note added')
+// ORD-14 (v1.11)
+const canCourier = computed(() => auth.can('courier.manage'))
+const shipViaSteadfast = computed(() => !!order.value && order.value.status === 'confirmed' && order.value.steadfast_ready && canCourier.value && !order.value.shipment?.is_booked)
+const bookingNow = computed(() => !!order.value?.shipment?.booking_in_progress)
+const nextLabel = computed(() => {
+  if (!next.value) return ''
+  if (shipViaSteadfast.value) return bookingNow.value ? 'Booking with Steadfast…' : order.value?.shipment?.attention === 'booking_failed' ? 'Retry booking' : 'Move to Shipping'
+  return next.value.label
+})
+const bookSteadfast = () => run(() => api(`/admin/courier/orders/${props.id}/book/`, { method: 'POST', toast: false }), 'Booked with Steadfast · moved to Shipping')
+// While a queued booking runs, look again every 4 s (at most 10 times) so the panel moves on by itself.
+let poll: ReturnType<typeof setTimeout> | undefined
+let polls = 0
+watch(bookingNow, (on) => {
+  clearTimeout(poll)
+  if (!on) { polls = 0; return }
+  const again = () => { if (polls++ < 10) poll = setTimeout(async () => { await load(); if (bookingNow.value) again() }, 4000) }
+  again()
+}, { immediate: true })
+onBeforeUnmount(() => clearTimeout(poll))
+
 function advance() {
   if (!next.value) return
-  if (next.value.to === 'shipping') { mode.value = 'ship'; return }
+  if (next.value.to === 'shipping') {
+    if (shipViaSteadfast.value) { if (!bookingNow.value) bookSteadfast(); return }
+    mode.value = 'ship'; return
+  }
   transition(next.value.to)
 }
 const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
@@ -117,10 +151,11 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       </dl>
     </section>
     <section v-if="order.payment" class="flex flex-col gap-1.5 bg-admin-bg p-4 text-[14.5px]">
-      <div class="cap">Payment · {{ order.payment.method === 'cod' ? 'Cash on delivery' : order.payment.method }} · {{ order.payment.status }}</div>
+      <div class="cap">Payment · {{ PAY_NAME[order.payment.method] ?? order.payment.method }} · {{ order.payment.status }}</div>
       <template v-if="order.payment.method !== 'cod'">
-        <p>Transaction ID <b>{{ order.payment.trx_id }}</b> · sender {{ order.payment.sender_number }}</p>
-        <p>Paid <b>{{ taka(order.payment.amount) }}</b> · order total <b>{{ taka(order.total) }}</b>. Verify the amount in the merchant app before confirming.</p>
+        <p v-if="order.payment.method === 'bank'">Reference ID <b>{{ order.payment.trx_id }}</b> · account holder {{ order.payment.sender_name }}</p>
+        <p v-else>Transaction ID <b>{{ order.payment.trx_id }}</b> · sender {{ order.payment.sender_number }}</p>
+        <p>Paid <b>{{ taka(order.payment.amount) }}</b> · order total <b>{{ taka(order.total) }}</b>. Verify the amount in the {{ order.payment.method === 'bank' ? 'bank statement' : 'merchant app' }} before confirming.</p>
         <p v-if="order.payment.reject_reason" class="text-accent">Rejected: {{ order.payment.reject_reason }}</p>
         <p v-if="order.payment.verified_by_name" class="hint">By {{ order.payment.verified_by_name }} · {{ when(order.payment.verified_at) }}</p>
       </template>
@@ -128,10 +163,10 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <div v-if="canVerify && order.payment.method !== 'cod' && order.status === 'draft'" class="mt-2 flex flex-wrap gap-2">
         <button v-if="order.payment.status !== 'verified'" class="btn !px-4" :disabled="busy" data-track="payment_verify" @click="verify">Verify payment</button>
         <button v-if="order.payment.status !== 'rejected'" class="btn-secondary !px-4" @click="mode = 'reject'">Reject</button>
-        <button class="btn-secondary !px-4" @click="mode = mode === 'trx' ? '' : 'trx'">Correct TrxID</button>
+        <button class="btn-secondary !px-4" @click="mode = mode === 'trx' ? '' : 'trx'">{{ order.payment.method === 'bank' ? 'Correct reference' : 'Correct TrxID' }}</button>
       </div>
       <form v-if="mode === 'reject'" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="reject"><label for="rj">Rejection reason <span class="text-accent" aria-hidden="true">*</span></label><input id="rj" v-model="f.reason" class="inp" maxlength="300" :aria-invalid="!!v.errorFor('reason')" @input="v.onInput('reason')" @blur="v.touch('reason')"><p v-if="v.errorFor('reason')" class="err" role="alert">{{ v.errorFor('reason') }}</p><button class="btn-secondary">Reject payment</button></form>
-      <form v-if="mode === 'trx'" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="editTrx"><input v-model="f.trx_id" class="inp uppercase" maxlength="12" aria-label="Transaction ID" :aria-invalid="!!v.errorFor('trx_id')" @input="v.onInput('trx_id')" @blur="v.touch('trx_id')"><p v-if="v.errorFor('trx_id')" class="err" role="alert">{{ v.errorFor('trx_id') }}</p><input v-model="f.sender_number" class="inp" aria-label="Sender number" :aria-invalid="!!v.errorFor('sender_number')" @input="v.onInput('sender_number')" @blur="v.touch('sender_number')"><p v-if="v.errorFor('sender_number')" class="err" role="alert">{{ v.errorFor('sender_number') }}</p><button class="btn-secondary">Save correction</button></form>
+      <form v-if="mode === 'trx'" class="mt-2 flex flex-col gap-2" novalidate @submit.prevent="editTrx"><input v-model="f.trx_id" class="inp uppercase" :maxlength="isBank() ? 30 : 12" :aria-label="isBank() ? 'Reference ID' : 'Transaction ID'" :aria-invalid="!!v.errorFor('trx_id')" @input="v.onInput('trx_id')" @blur="v.touch('trx_id')"><p v-if="v.errorFor('trx_id')" class="err" role="alert">{{ v.errorFor('trx_id') }}</p><template v-if="isBank()"><input v-model="f.sender_name" class="inp" maxlength="120" aria-label="Account holder name" :aria-invalid="!!v.errorFor('sender_name')" @input="v.onInput('sender_name')" @blur="v.touch('sender_name')"><p v-if="v.errorFor('sender_name')" class="err" role="alert">{{ v.errorFor('sender_name') }}</p></template><template v-else><input v-model="f.sender_number" class="inp" aria-label="Sender number" :aria-invalid="!!v.errorFor('sender_number')" @input="v.onInput('sender_number')" @blur="v.touch('sender_number')"><p v-if="v.errorFor('sender_number')" class="err" role="alert">{{ v.errorFor('sender_number') }}</p></template><button class="btn-secondary">Save correction</button></form>
     </section>
     <!-- SRS v1.7 §4.18: Steadfast booking, status, steps, return request, delivery record -->
     <AdminCourierBlock :order="order" @changed="load(); emit('changed')" />
@@ -140,8 +175,13 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <NuxtLink :to="`/admin/orders/${order.id}/slip`" class="btn-secondary !px-4" target="_blank">Delivery slip</NuxtLink>
     </div>
     <div v-if="canManage" class="flex flex-col gap-2">
-      <button v-if="next" class="btn" :disabled="busy || needsVerify" data-track="order_advance" @click="advance">{{ next.label }}</button>
-      <p v-if="needsVerify" class="hint">Verify the payment first (bKash/Nagad orders can’t be confirmed until it is verified).</p>
+      <button v-if="next" class="btn btn-spin" :disabled="busy || needsVerify || (shipViaSteadfast && bookingNow)" :aria-busy="busy || bookingNow" data-track="order_advance" @click="advance">{{ nextLabel }}</button>
+      <!-- ORD-14 (v1.11): other couriers, or Steadfast without booking (fallback ORD-10) -->
+      <template v-if="shipViaSteadfast">
+        <p class="hint !m-0">{{ bookingNow ? 'Auto-booking is running. This updates by itself in a few seconds.' : 'Books the parcel with Steadfast and moves the order to Shipping with its tracking code.' }}</p>
+        <button v-if="!bookingNow && mode !== 'ship'" type="button" class="self-start border-b border-ink py-1.5 text-sm" @click="mode = 'ship'">Ship with another courier</button>
+      </template>
+      <p v-if="needsVerify" class="hint">Verify the payment first (bKash, Nagad and Bank orders can’t be confirmed until it is verified).</p>
       <form v-if="mode === 'ship'" class="flex flex-col gap-2" novalidate @submit.prevent="ok(['courier', 'tracking']) && transition('shipping', { courier: f.courier.trim(), tracking: f.tracking.trim() })"><input v-model="f.courier" class="inp" placeholder="Courier name (e.g. Steadfast)" aria-label="Courier"><input v-model="f.tracking" class="inp" placeholder="Tracking number" aria-label="Tracking number"><button class="btn">Move to Shipping</button></form>
       <button v-if="['draft', 'confirmed'].includes(order.status)" class="btn-secondary !border-accent !text-accent hover:!bg-accent hover:!text-primary-contrast" @click="mode = 'cancel'">Cancel order</button>
       <button v-if="['shipping', 'delivered'].includes(order.status)" class="btn-secondary" @click="mode = 'return'">Mark whole order returned</button>

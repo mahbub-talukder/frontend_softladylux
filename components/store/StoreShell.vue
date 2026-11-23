@@ -9,7 +9,8 @@ const url = useRequestURL()
 const route = useRoute()
 const sizeFinder = useSizeFinder()
 // A page change closes the dialog (e.g. "Shop in 32B" from inside it).
-watch(() => route.fullPath, () => sizeFinder.hide())
+const buy = useBuyDialog() // CAT-12 (v1.11): one Buy dialog for all cards
+watch(() => route.fullPath, () => { sizeFinder.hide(); buy.close() })
 // Read once in setup: composables like useRuntimeConfig() must not run lazily inside computed().
 const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', ''))
 useHead({
@@ -32,6 +33,7 @@ useSeoMeta({
     <ClientOnly><StoreFloatingCart /></ClientOnly> <!-- cart lives in localStorage: client-only avoids a hydration mismatch -->
     <StoreBottomNav />
     <StoreCookieBanner />
+    <StoreBuyDialog v-if="buy.product.value" :key="buy.product.value.id" :product="buy.product.value" @close="buy.close()" />
     <StoreSizeModal v-if="sizeFinder.open.value" @close="sizeFinder.hide()" />
   </div>
 </template>

@@ -91,10 +91,12 @@ const steps = computed(() => props.order.courier_events ?? [])
 
     <template v-else>
       <p v-if="ship?.attention === 'booking_failed'" class="err" role="alert">Booking failed: {{ ship.last_error }}</p>
-      <p v-else-if="order.status === 'confirmed'" class="hint">Not booked yet. Confirmed orders are booked automatically when auto-booking is on.</p>
+      <p v-else-if="order.status === 'confirmed' && ship?.booking_in_progress" class="hint" role="status">Booking with Steadfast…</p>
+      <p v-else-if="order.status === 'confirmed'" class="hint">Not booked yet. Use <b class="font-medium">Move to Shipping</b> to book it with Steadfast (confirmed orders are booked automatically when auto-booking is on).</p>
       <p v-else-if="order.status === 'draft'" class="hint">Booked when the order is confirmed.</p>
       <p v-else class="hint">Not booked through Steadfast<template v-if="order.courier"> (shipped by hand: {{ order.courier }} {{ order.tracking_ref }})</template>.</p>
-      <button v-if="canManage && order.status === 'confirmed'" type="button" class="btn btn-spin self-start" :disabled="busy" :aria-busy="busy" @click="book">{{ ship?.attention === 'booking_failed' ? 'Retry booking' : 'Book with Steadfast' }}</button>
+      <!-- ORD-14 (v1.11): Move to Shipping in the order actions books with Steadfast; this stays for orders it cannot cover -->
+      <button v-if="canManage && order.status === 'confirmed' && !(order.steadfast_ready && auth.can('orders.manage')) && !ship?.booking_in_progress" type="button" class="btn btn-spin self-start" :disabled="busy" :aria-busy="busy" @click="book">{{ ship?.attention === 'booking_failed' ? 'Retry booking' : 'Book with Steadfast' }}</button>
     </template>
 
     <p v-if="error" class="err" role="alert">{{ error }}</p>
