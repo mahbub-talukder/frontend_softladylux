@@ -190,10 +190,10 @@ async function place() {
           <!-- CHK-04 (v1.11): Bank transfer details from Admin → Settings → Payment -->
           <div v-if="form.payment_method === 'bank'" class="flex flex-col gap-[18px] bg-cream p-6 md:p-7">
             <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-              <div v-for="[k, v] in bankRows" :key="k" class="flex items-center justify-between gap-3 border-b border-border pb-2.5 sm:block sm:border-0 sm:pb-0">
+              <div v-for="[k, v] in bankRows" :key="k" class="flex flex-col gap-0.5 border-b border-border pb-2.5 last:border-0 sm:border-0 sm:pb-0">
                 <dt class="sf-lbl">{{ k }}</dt>
-                <dd class="flex items-center gap-2 text-right font-display text-[19px] sm:mt-0.5 sm:text-left">
-                  <span class="break-all">{{ v }}</span>
+                <dd class="flex min-h-9 items-center gap-1.5 font-display text-[19px]">
+                  <span class="whitespace-nowrap tabular-nums tracking-[0.02em]">{{ v }}</span>
                   <button v-if="k === 'Account number' || k === 'Routing number'" type="button" class="flex h-9 w-9 flex-none items-center justify-center text-muted transition-colors hover:text-ink" :aria-label="`Copy ${k.toLowerCase()}`" @click="copy(v!)">
                     <svg v-if="copied !== v" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></svg>
                     <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
