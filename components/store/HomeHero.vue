@@ -6,6 +6,8 @@
 // Task 2 (SRS WEB-09, UI-05): the picture is a literal CSS background (cover, no-repeat, centre) inside a
 // fixed-height box per breakpoint, so any upload ratio fills it and never changes its size. Phones
 // (< 640 px) use `mobile_media` when set, wider screens use `media`. The first slide is preloaded (LCP).
+// v1.11 WEB-01/WEB-12: slides keep their DOM node across moves (keyed by id only), so pictures never reload and no blank
+// frame flashes between slides; on phones the box takes the image's own aspect ratio and shows it whole (contain).
 import type { Slide } from '~/types/api'
 
 const props = defineProps<{ slides: Slide[] }>()
@@ -48,11 +50,25 @@ let pending: 1 | -1 | 0 = 0
 let settleTimer: ReturnType<typeof setTimeout> | undefined
 const width = () => box.value?.clientWidth ?? 600
 const reduced = () => import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+// Each slide sits at its circular offset from the current one; only -1, 0, +1 are rendered. A slide keeps its key (its id)
+// while its offset changes, so the element and its loaded picture survive the move (WEB-01, v1.11: no white flash).
+// With two slides the other one is both "previous" and "next": it goes to the side the drag or slide is heading.
 const slots = computed(() => {
   const m = n.value
   if (!m) return []
-  const at = (o: number) => ({ off: o, x: props.slides[(i.value + o + m * 2) % m] as Slide })
-  return m > 1 ? [at(-1), at(0), at(1)] : [at(0)]
+  const side = dragX.value > 0 ? -1 : 1
+  return props.slides.map((x, k) => {
+    let off = (k - i.value + m) % m
+    if (off > m / 2) off -= m
+    if (m === 2 && off !== 0) off = side
+    return { off, x }
+  }).filter((sl) => Math.abs(sl.off) <= 1)
+})
+// WEB-12 (v1.11): phone box ratio = the first slide's mobile picture (or desktop picture), clamped 4:5 … 16:9.
+const mobileRatio = computed(() => {
+  const m = props.slides[0] && (props.slides[0].mobile_media ?? props.slides[0].media)
+  const r = m?.width && m?.height ? m.width / m.height : 4 / 5
+  return Math.min(16 / 9, Math.max(4 / 5, r)).toFixed(4)
 })
 function finish() {
   if (!settling.value) return
@@ -129,10 +145,10 @@ const href = (x: Slide) => (x.link_type === 'category' ? `/shop/${x.link_value}`
       </div>
     </div>
     <!-- Owner request: section follows the theme background (THM-03); the picture sits in a borderless box with a 5 px radius; swipe or drag it to change slides. -->
-    <div class="order-1 h-[320px] px-4 sm:h-[400px] md:px-6 lg:order-2 lg:h-auto lg:pl-0 lg:pr-[max(40px,calc((100vw-1320px)/2+40px))]">
-      <div ref="box" class="relative h-full cursor-grab touch-pan-y select-none overflow-hidden rounded-[5px] bg-cream active:cursor-grabbing" @pointerdown="swipeStart" @pointermove="swipeMove" @pointerup="swipeEnd" @pointercancel="swipeCancel" @dragstart.prevent>
+    <div class="order-1 px-4 sm:h-[400px] md:px-6 lg:order-2 lg:h-auto lg:pl-0 lg:pr-[max(40px,calc((100vw-1320px)/2+40px))]">
+      <div ref="box" class="hero-box relative cursor-grab touch-pan-y select-none overflow-hidden rounded-[5px] bg-cream active:cursor-grabbing" :style="{ '--hero-ratio': mobileRatio }" @pointerdown="swipeStart" @pointermove="swipeMove" @pointerup="swipeEnd" @pointercancel="swipeCancel" @dragstart.prevent>
         <div class="absolute inset-0 will-change-transform" :class="settling ? 'transition-transform duration-[350ms] ease-out' : ''" :style="{ transform: `translate3d(${dragX}px,0,0)` }" @transitionend.self="finish">
-          <div v-for="slot in slots" :key="`${slot.off}-${slot.x.id}`" class="absolute inset-0" :style="{ left: `${slot.off * 100}%` }" :aria-hidden="slot.off !== 0 ? 'true' : undefined">
+          <div v-for="slot in slots" :key="slot.x.id" class="absolute inset-0" :style="{ left: `${slot.off * 100}%` }" :aria-hidden="slot.off !== 0 ? 'true' : undefined">
             <div v-if="slot.x.media?.url" role="img" :aria-label="slot.x.media.alt_text || slot.x.heading" class="hero-bg absolute inset-0" :style="vars(slot.x)" />
             <StoreTile v-else src="" ratio="auto" tint="bg-tile-1" class="h-full !aspect-auto" art-width="380px" category="bras" />
           </div>
@@ -144,7 +160,12 @@ const href = (x: Slide) => (x.link_type === 'category' ? `/shop/${x.link_value}`
 </template>
 
 <style scoped>
-/* WEB-09: literal CSS background, as the owner asked. Fixed box, any ratio fills it. */
-.hero-bg { background-image: var(--hero-m); background-size: cover; background-repeat: no-repeat; background-position: center; }
-@media (min-width: 640px) { .hero-bg { background-image: var(--hero-d); } }
+/* WEB-09: literal CSS background, as the owner asked. WEB-12 (v1.11): on phones the box has the picture's own ratio and the
+   picture is shown whole (contain), so nothing is cropped; from 640 px the fixed-height box is filled (cover) as before. */
+.hero-box { aspect-ratio: var(--hero-ratio); }
+.hero-bg { background-image: var(--hero-m); background-size: contain; background-repeat: no-repeat; background-position: center; }
+@media (min-width: 640px) {
+  .hero-box { aspect-ratio: auto; height: 100%; }
+  .hero-bg { background-image: var(--hero-d); background-size: cover; }
+}
 </style>

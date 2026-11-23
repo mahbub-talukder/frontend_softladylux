@@ -33,8 +33,10 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | load_more | listing |
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
+| checkout_otp_verify (v1.11) | checkout, guest mobile verification dialog (CHK-11) |
 | login_submit, register_submit, otp_verify, track_submit, track_courier_link (v1.7), contact_submit, newsletter_subscribe | account and engagement forms |
 | footer_whatsapp, footer_messenger, footer_credit | footer contact links |
+| footer_social_facebook, footer_social_instagram, footer_social_youtube, footer_social_tiktok, footer_social_messenger, footer_social_whatsapp (v1.11) | footer social icons (STF-UI-02) |
 | cookie_accept, cookie_decline | cookie notice |
 | dashboard_stale_drafts, open_ga4 | admin dashboard and insights |
 | admin_login, settings_save, settings_sms_test, theme_publish, theme_fonts_save (v1.9), permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
