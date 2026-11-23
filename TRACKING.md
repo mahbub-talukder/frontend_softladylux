@@ -27,6 +27,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | menu_whatsapp, menu_call | phone slide-in menu |
 | floating_cart, floating_cart_hide | floating cart widget; floating_cart_show is the re-enable button on the cart page |
 | size_chart_open | product page size chart dialog |
+| product_zoom_in, product_zoom_out (v1.11) | product page photo zoom (CAT-27) |
 | bottom_nav_home, bottom_nav_shop, bottom_nav_wishlist, bottom_nav_bag, bottom_nav_account | mobile bottom navigation |
 | hero_cta, hero_find_size, home_signature, home_banner, home_category_tile, home_category_prev, home_category_next, home_size_finder, video_open | home page |
 | promo_cta, promo_close | home promotional popup |

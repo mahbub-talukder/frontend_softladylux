@@ -234,6 +234,6 @@ async function place() {
         <p class="text-center text-[13px] leading-relaxed text-muted">You can cancel this order any time before it ships.</p>
       </aside>
     </form>
-    <CheckoutOtpDialog v-if="otpFor" :phone="otpFor" @verified="onVerified" @close="otpFor = ''" />
+    <StoreCheckoutOtpDialog v-if="otpFor" :phone="otpFor" @verified="onVerified" @close="otpFor = ''" />
   </div>
 </template>
