@@ -4,7 +4,9 @@ import { buildSitemap, siteOrigin, type SitemapUrl } from '../../utils/seo'
 export default defineEventHandler(async (event) => {
   const cfg = useRuntimeConfig(event)
   const api = cfg.apiBaseInternal as string
-  const get = async <T>(p: string): Promise<T | null> => { try { return (await $fetch(`${api}${p}`, { timeout: 5000, headers: { 'X-Forwarded-Proto': 'https' } })) as T } catch { return null } }
+  // Plain URL fetch (Django API): skips Nuxt's server-route typing, which hits TypeScript's depth limit (TS2321).
+  const fetchUrl = $fetch as unknown as (url: string, o: unknown) => Promise<unknown>
+  const get = async <T>(p: string): Promise<T | null> => { try { return (await fetchUrl(`${api}${p}`, { timeout: 5000, headers: { 'X-Forwarded-Proto': 'https' } })) as T } catch { return null } }
   const urls: SitemapUrl[] = [
     { path: '/', changefreq: 'daily', priority: 1 }, { path: '/shop/offers', changefreq: 'daily', priority: 0.7 },
     { path: '/shop/new', changefreq: 'daily', priority: 0.7 }, { path: '/size-guide', priority: 0.5 }, { path: '/contact', priority: 0.4 }

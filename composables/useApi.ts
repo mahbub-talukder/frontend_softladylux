@@ -25,6 +25,8 @@ function isTracked(path: string) {
 /** SRS ARC-05 / ARC-06 / §7. Typed API client for /api/v1. Sends cookies; adds the CSRF header on
  * unsafe methods. On a 401 from an admin call it rotates the refresh cookie once and retries
  * (access tokens live 15 min). */
+const fetchUrl: unknown = $fetch
+
 export function useApi() {
   const config = useRuntimeConfig()
   const base = import.meta.server ? config.apiBaseInternal : config.public.apiBase
@@ -47,7 +49,9 @@ export function useApi() {
       // HTTPS so production's SSL redirect doesn't bounce them (nginx did the TLS).
       headers['X-Forwarded-Proto'] = 'https'
     }
-    return (await $fetch(path, { baseURL: base, credentials: 'include', ...opts, headers } as never)) as T
+    // Plain URL fetch: checking `path` against Nuxt's generated server-route types adds nothing here (the API is
+    // Django) and pushes TypeScript past its type-depth limit (TS2321) as the app grows.
+    return (await (fetchUrl as (url: string, o: unknown) => Promise<unknown>)(path, { baseURL: base, credentials: 'include', ...opts, headers })) as T
   }
 
   async function withRefresh<T>(path: string, opts: FetchOptions): Promise<T> {

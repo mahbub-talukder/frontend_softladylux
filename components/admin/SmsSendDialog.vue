@@ -7,6 +7,8 @@
 import type { SmsLogRow } from '~/types/api'
 import { normalizePhone } from '~/utils/otp'
 
+type SendResult = { ok: boolean; detail: string; log: SmsLogRow | null }
+
 const emit = defineEmits<{ close: []; sent: [] }>()
 const { api, errorOf } = useApi()
 const MAX = 640
@@ -33,7 +35,7 @@ async function send() {
   if (Object.keys(errors.value).length) return
   busy.value = true
   try {
-    const r = await api<{ ok: boolean; detail: string; log: SmsLogRow | null }>('/admin/sms-log/send/', { method: 'POST', body: { phone: p, message: message.value }, toast: false })
+    const r: SendResult = await api<SendResult>('/admin/sms-log/send/', { method: 'POST', body: { phone: p, message: message.value }, toast: false })
     result.value = { ok: r.ok, detail: r.detail }
     emit('sent')
     if (r.ok) message.value = ''
