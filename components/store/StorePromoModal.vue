@@ -41,15 +41,14 @@ const img = computed(() => ({ format: 'webp', src: mediaSrc(props.popup.media?.u
     </button>
 
     <!-- Image only: the whole picture is the link (when one is set) -->
-    <!-- The picture is never cropped: the box takes the image's own proportions (so it fills the box exactly), and the
-         image service resizes to that shape. Only a very tall picture that would pass the height cap is letterboxed
-         on the tinted background instead of being cut. -->
+    <!-- v1.11 owner request: the picture always fills its box (object-fit: cover), whatever its size, so there are no
+         empty bands. Phones with text: a full-width band 42vh tall. Wider screens keep the picture's own proportions. -->
     <NuxtLink v-if="!hasText && popup.link" :to="popup.link" class="flex items-center justify-center bg-tile-2" data-track="promo_cta" @click="close">
-      <NuxtImg v-bind="img" class="block h-auto max-h-[85vh] w-full object-contain" :style="{ aspectRatio: shape.ratio }" />
+      <NuxtImg v-bind="img" class="block h-auto max-h-[85vh] w-full object-cover" :style="{ aspectRatio: shape.ratio }" />
       <h2 id="promo-title" class="sr-only">Special offer</h2>
     </NuxtLink>
     <div v-else class="flex items-center justify-center bg-tile-2">
-      <NuxtImg v-bind="img" class="block h-auto w-full object-contain" :class="hasText ? 'max-h-[45vh] sm:max-h-[88vh]' : 'max-h-[85vh]'" :style="{ aspectRatio: shape.ratio }" />
+      <NuxtImg v-bind="img" class="block w-full object-cover" :class="hasText ? 'h-[42vh] sm:h-full sm:max-h-[88vh] sm:min-h-[420px]' : 'h-auto max-h-[85vh] [aspect-ratio:var(--r)]'" :style="{ '--r': shape.ratio }" />
       <h2 v-if="!hasText" id="promo-title" class="sr-only">Special offer</h2>
     </div>
 
