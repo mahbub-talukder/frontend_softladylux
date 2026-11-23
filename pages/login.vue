@@ -110,16 +110,32 @@ async function doReset() {
 
 <template>
   <section class="flex min-h-[640px] flex-col md:flex-row">
-    <!-- v1.11: the owner's picture fills the panel (cover) with a soft shade under the text; without one, the drawn panel stays -->
-    <div v-if="panel?.media" class="relative hidden min-h-[420px] flex-1 overflow-hidden bg-tile-2 md:flex">
-      <NuxtImg format="webp" :src="mediaSrc(panel.media.url)" :alt="panel.media.alt_text" width="900" height="1200" sizes="md:50vw" loading="eager" class="absolute inset-0 h-full w-full object-cover" />
-      <div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-dark/75 via-dark/30 to-transparent" aria-hidden="true" />
-      <div class="absolute bottom-16 left-16 right-10 max-w-[420px] text-on-dark"><h2 class="font-display text-h1 leading-[1.05]">{{ panel.heading || 'Your wardrobe, always within reach' }}</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-on-dark/90">{{ panel.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p></div>
-    </div>
-    <div v-else class="relative hidden min-h-[420px] flex-1 items-center justify-center bg-tile-2 md:flex">
-      <div class="absolute inset-9 border border-gold/35" />
-      <div class="-mt-28 w-[260px] text-gold" aria-hidden="true"><StoreArt kind="set" /></div>
-      <div class="absolute bottom-16 left-16 max-w-[380px]"><h2 class="font-display text-h1 leading-[1.05]">{{ panel?.heading || 'Your wardrobe, always within reach' }}</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-body">{{ panel?.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p></div>
+    <!-- v1.11 (WEB-13, owner feedback): the side panel is a framed card on the panel's soft background: padding around it,
+         rounded corners, a fine inner frame and a soft shadow. With the owner's picture (Admin → Website content → Login
+         page) the picture covers the card and the text sits on a soft shade; without one, the drawn illustration shows. -->
+    <div class="relative hidden flex-1 bg-tile-2 p-8 md:flex lg:p-12">
+      <div class="login-card relative flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-[18px] bg-surface shadow-pop">
+        <template v-if="panel?.media">
+          <NuxtImg format="webp" :src="mediaSrc(panel.media.url)" :alt="panel.media.alt_text" width="900" height="1200" sizes="md:50vw" loading="eager" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out" />
+          <div class="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-dark/80 via-dark/35 to-transparent" aria-hidden="true" />
+          <div class="relative mt-auto max-w-[440px] p-9 text-on-dark lg:p-11">
+            <span class="mb-3 block h-px w-12 bg-champagne" aria-hidden="true" />
+            <h2 class="font-display text-h2 leading-[1.08] lg:text-h1">{{ panel.heading || 'Your wardrobe, always within reach' }}</h2>
+            <p class="mt-3 text-[15px] leading-[1.65] text-on-dark/90">{{ panel.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p>
+          </div>
+        </template>
+        <template v-else>
+          <div class="relative min-h-0 flex-1 bg-cream">
+            <img src="/brand/login-illustration.svg" alt="" width="600" height="800" class="absolute inset-0 h-full w-full object-contain object-bottom px-2 pt-3" loading="eager" decoding="async">
+          </div>
+          <div class="relative p-9 lg:p-11">
+            <span class="mb-3 block h-px w-12 bg-gold" aria-hidden="true" />
+            <h2 class="font-display text-h2 leading-[1.08] lg:text-h1">{{ panel?.heading || 'Your wardrobe, always within reach' }}</h2>
+            <p class="mt-3 text-[15px] leading-[1.65] text-body">{{ panel?.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p>
+          </div>
+        </template>
+        <div class="pointer-events-none absolute inset-3 rounded-[12px] border border-on-dark/40" aria-hidden="true" />
+      </div>
     </div>
 
     <div class="flex flex-1 items-start justify-center px-5 py-10 md:items-center md:px-10 md:py-16">
@@ -182,3 +198,8 @@ async function doReset() {
     </div>
   </section>
 </template>
+
+<style scoped>
+/* v1.11: a slow, subtle zoom on the panel picture while the pointer is over it */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .login-card:hover img { transform: scale(1.03); } }
+</style>

@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-label="A stylish woman carrying shopping bags full of lingerie">
+  <title>Shopping lingerie at SoftLadyLux</title>
+  <!-- v1.11 login / register panel illustration (flat vector, SoftLadyLux palette). Drawn for this project. -->
+  <!-- soft background shapes -->
+  <circle cx="300" cy="440" r="232" fill="#F2DFD0"/>
+  <circle cx="132" cy="250" r="74" fill="#F5D6D6"/>
+  <circle cx="478" cy="590" r="62" fill="#E3EBE1"/>
+  <circle cx="470" cy="210" r="26" fill="#F5D6D6" opacity=".8"/>
+  <ellipse cx="300" cy="716" rx="128" ry="14" fill="#231E1C" opacity=".08"/>
+
+  <!-- floating hanger with a bra, top left -->
+  <g stroke="#B08A4E" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M118 96c0-8 10-10 12-3 1 5-3 7-6 9v6"/>
+    <path d="M86 122l38-14 38 14z"/>
+  </g>
+  <g stroke="#C4566B" stroke-width="3" fill="#FCE8EC" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M98 128l4 16M150 128l-4 16" fill="none"/>
+    <path d="M94 146c6 16 26 18 30 2 4 16 24 14 30-2z"/>
+    <path d="M94 146h60" fill="none"/>
+  </g>
+
+  <!-- sparkles and hearts -->
+  <g fill="#C9A25E">
+    <path d="M492 112l5 13 13 5-13 5-5 13-5-13-13-5 13-5z"/>
+    <path d="M86 418l4 10 10 4-10 4-4 10-4-10-10-4 10-4z"/>
+    <path d="M520 452l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/>
+  </g>
+  <g fill="#E79AA8">
+    <path d="M168 330c-6-7-18-2-14 7 2 5 9 9 14 13 5-4 12-8 14-13 4-9-8-14-14-7z"/>
+    <path d="M466 318c-4-5-12-1-9 5 1 3 6 6 9 8 3-2 8-5 9-8 3-6-5-10-9-5z"/>
+  </g>
+
+  <!-- hair (back) -->
+  <path d="M256 178c-6-42 24-62 50-60 34 2 48 32 42 70 10 48 22 92 12 136l-112 0c-14-46-2-98 8-146z" fill="#2A1B18"/>
+
+  <!-- legs and heels -->
+  <path d="M266 540h22l-2 150h-16z" fill="#E7B597"/>
+  <path d="M312 540h22l-4 150h-16z" fill="#E7B597"/>
+  <path d="M262 688h28c4 0 6 6 4 10-4 6-18 8-34 8-6 0-6-6-2-9z" fill="#231E1C"/>
+  <path d="M286 700l-4 14" stroke="#231E1C" stroke-width="4" stroke-linecap="round"/>
+  <path d="M310 688h28c4 0 6 6 4 10-4 6-18 8-34 8-6 0-6-6-2-9z" fill="#231E1C"/>
+  <path d="M334 700l-4 14" stroke="#231E1C" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- skirt -->
+  <path d="M236 376h128l42 168c-36 14-170 14-212 0z" fill="#5B2A58"/>
+  <path d="M300 380v160M266 380l-22 160M334 380l22 160" stroke="#4A2147" stroke-width="2" opacity=".55"/>
+
+  <!-- neck -->
+  <path d="M288 218h24v40h-24z" fill="#D9A386"/>
+
+  <!-- left arm (down, holding bags) -->
+  <path d="M244 284c-12 40-22 90-30 136" stroke="#E7B597" stroke-width="24" stroke-linecap="round" fill="none"/>
+  <!-- right arm (raised, holding a bag) -->
+  <path d="M354 282c26-14 46-46 56-106" stroke="#E7B597" stroke-width="24" stroke-linecap="round" fill="none"/>
+
+  <!-- blouse -->
+  <path d="M250 262c14-14 86-14 100 0l16 118h-132z" fill="#C4566B"/>
+  <ellipse cx="246" cy="282" rx="24" ry="22" fill="#C4566B"/>
+  <ellipse cx="354" cy="282" rx="24" ry="22" fill="#C4566B"/>
+  <path d="M282 256c6 14 30 14 36 0" fill="#D9A386"/>
+  <path d="M234 380h132" stroke="#231E1C" stroke-width="7"/>
+  <rect x="290" y="374" width="20" height="12" rx="2" fill="#C9A25E"/>
+  <!-- necklace -->
+  <path d="M286 254c6 16 22 16 28 0" stroke="#C9A25E" stroke-width="2" fill="none"/>
+  <circle cx="300" cy="268" r="3.5" fill="#C9A25E"/>
+
+  <!-- head -->
+  <ellipse cx="300" cy="190" rx="36" ry="42" fill="#E7B597"/>
+  <path d="M262 184c0-38 26-54 52-50 24 4 38 22 34 52-12-22-36-32-58-24-12 4-22 12-28 22z" fill="#2A1B18"/>
+  <circle cx="264" cy="198" r="4" fill="#C9A25E"/>
+  <path d="M283 194q8-7 16 0M305 194q8-7 16 0" stroke="#2A1B18" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <circle cx="282" cy="210" r="7" fill="#E9848F" opacity=".35"/>
+  <circle cx="320" cy="210" r="7" fill="#E9848F" opacity=".35"/>
+  <path d="M291 216q9 8 18 0" stroke="#B44B5E" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+
+  <!-- bags in the left hand -->
+  <path d="M138 470c0-30 34-32 36 0" stroke="#7C6036" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="116" y="468" width="80" height="96" rx="10" fill="#C9A25E"/>
+  <path d="M132 506h46c-2 18-14 30-23 36-9-6-21-18-23-36z" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linejoin="round"/>
+  <path d="M134 518h42" stroke="#FFFFFF" stroke-width="2" opacity=".8"/>
+  <path d="M176 446c0-34 40-36 40 0" stroke="#7C6036" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="154" y="444" width="100" height="116" rx="12" fill="#E79AA8"/>
+  <path d="M178 492l5-18M230 492l-5-18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M174 492c6 18 28 20 30 2 2 18 24 16 30-2z" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linejoin="round"/>
+  <path d="M174 492h60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M170 530h68" stroke="#FFFFFF" stroke-width="2" opacity=".6"/>
+  <circle cx="214" cy="424" r="13" fill="#E7B597"/>
+
+  <!-- bag in the raised right hand -->
+  <path d="M396 196c0-34 34-36 36 0" stroke="#231E1C" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="372" y="194" width="88" height="104" rx="12" fill="#FFFFFF" stroke="#5B2A58" stroke-width="3"/>
+  <g stroke="#5B2A58" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M396 236l4-16M436 236l-4-16"/>
+    <path d="M392 236c5 15 22 16 24 1 2 15 19 14 24-1z" fill="#F5D6D6"/>
+    <path d="M392 236h48"/>
+  </g>
+  <path d="M392 258h48" stroke="#C9A25E" stroke-width="2"/>
+  <path d="M400 272c4-4 10-4 14 0 4-4 10-4 14 0" stroke="#C4566B" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="410" cy="172" r="13" fill="#E7B597"/>
+</svg>
