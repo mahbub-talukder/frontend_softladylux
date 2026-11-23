@@ -157,6 +157,11 @@ html.reveal-on [data-in="5"] { transition-delay: 350ms, 350ms, 0s; }
 .admin-main .tab[aria-pressed='false'] { color: var(--color-muted); }
 .admin-main .tab:hover { color: var(--color-ink); }
 .admin-main .tab[aria-pressed='true'] { border-bottom-color: var(--color-accent); font-weight: 600; }
+/* Scrollable tab rows (owner report, v1.11): the tabs' -1px bottom margin made the row overflow vertically, so a
+   vertical scrollbar appeared. Swipe/scroll sideways only, no visible scrollbar, active underline sits on the border. */
+.admin-main .tabs-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.admin-main .tabs-scroll::-webkit-scrollbar { display: none; }
+.admin-main .tabs-scroll .tab { margin-bottom: 0; }
 .admin-main .bulk .btn-secondary { color: var(--color-bg); border-color: var(--color-line-dark-2); }
 .admin-main .bulk .btn-secondary:hover { background: var(--color-bg); color: var(--color-ink); }
 .admin-main .bulk .inp { background: transparent; color: var(--color-bg); border-color: var(--color-line-dark-2); }
