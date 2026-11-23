@@ -149,7 +149,8 @@ watch(sizeFinder.open, (o) => { if (!o) document.documentElement.style.overflow 
       <p class="mb-2.5 min-h-[18px] text-center text-[13px] font-medium text-rose-deep" role="status">{{ full ? live : hint }}</p>
       <div class="grid grid-cols-2 gap-2.5">
         <button type="button" class="btn flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_checkout_now" @click="onCheckout">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" stroke-linejoin="round" /></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><!-- cart with an arrow: "go to checkout" -->
+            <path d="M2.5 4h2.3l2.4 11.3a1.5 1.5 0 0 0 1.5 1.2h8.7a1.5 1.5 0 0 0 1.5-1.1L21 7.5H5.6" stroke-linejoin="round" /><path d="M9.5 11.5h6.5M13.8 9.2l2.2 2.3-2.2 2.3" stroke-linecap="round" stroke-linejoin="round" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17.5" cy="20" r="1.3" /></svg>
           <span>Checkout Now</span>
         </button>
         <button type="button" class="btn-o flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_add_to_cart" @click="onAdd">
