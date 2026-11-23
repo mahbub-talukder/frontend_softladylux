@@ -4,6 +4,7 @@
 // placeholders shown until the owner supplies real data. Compact layout (amendment v1.6): tighter rows,
 // 36 px link targets (WCAG 2.2 minimum is 24 px), smaller logo.
 import type { StaticPage } from '~/types/api'
+import { SOCIAL_ICON_PATHS } from '~/utils/socialIcons'
 
 const { data: s } = await useSiteSettings()
 const { api } = useApi()
@@ -14,7 +15,12 @@ const { data: pages } = await useAsyncData('footer-pages', async () => {
 })
 const ph = (v: string | undefined, label: string) => v || `[${label}]`
 const wa = computed(() => waLink(s.value?.whatsapp_number)) // 01… is turned into 8801… for wa.me
-const social = computed(() => ([['Facebook', s.value?.facebook_url, 'Fb'], ['Instagram', s.value?.instagram_url, 'Ig'], ['YouTube', s.value?.youtube_url, 'Yt'], ['TikTok', s.value?.tiktok_url, 'Tt']] as [string, string | undefined, string][]).filter(([, u]) => u) as [string, string, string][])
+// STF-UI-02 (v1.11): an icon for every configured social link (incl. Messenger and WhatsApp), brand colour on hover.
+const social = computed(() => ([
+  ['Facebook', s.value?.facebook_url, 'facebook'], ['Instagram', s.value?.instagram_url, 'instagram'],
+  ['YouTube', s.value?.youtube_url, 'youtube'], ['TikTok', s.value?.tiktok_url, 'tiktok'],
+  ['Messenger', s.value?.messenger_link, 'messenger'], ['WhatsApp', wa.value, 'whatsapp']
+] as [string, string | undefined, string][]).filter(([, u]) => u) as [string, string, string][])
 const { data: cats } = await useCategories()
 const { errorOf } = useApi()
 // Newsletter band is hidden for now (owner request); flip to show it again.
@@ -31,7 +37,7 @@ async function subscribe() {
 
 <template>
   <!-- Phones: bottom padding clears the fixed BottomNav (56px + safe area) so the last footer row is never hidden under it -->
-  <footer class="bg-dark pb-[calc(56px+env(safe-area-inset-bottom))] text-text-dark sm:pb-0">
+  <footer class="bg-dark pb-[calc(56px+env(safe-area-inset-bottom))] text-on-dark sm:pb-0">
     <!-- Newsletter band -->
     <div v-if="showNewsletter" class="border-b border-line-dark">
       <div class="wrap grid items-center gap-6 py-10 md:grid-cols-2 md:gap-10 md:py-14">
@@ -48,8 +54,14 @@ async function subscribe() {
     <div class="wrap grid grid-cols-2 gap-x-6 gap-y-5 pb-4 pt-6 md:grid-cols-[4fr_2fr_3fr_3fr] md:gap-x-8 md:gap-y-4 md:pt-7">
       <div class="col-span-2 flex flex-col gap-2.5 md:col-span-1">
         <img src="/brand/logo-full-reversed.svg" :alt="s?.company_name || 'SoftLadyLux'" width="188" height="48" class="h-12 w-auto self-start" loading="lazy">
-        <p class="max-w-[330px] text-[13px] leading-[1.55] text-text-dark-2">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
-        <div class="flex gap-2"><a v-for="[n, u, t] in social" :key="n" :href="u" :aria-label="n" target="_blank" rel="noopener" class="flex h-9 w-9 items-center justify-center border border-line-dark-2 text-xs font-medium tracking-[0.06em] text-on-dark/90 transition-colors hover:border-champagne hover:text-champagne">{{ t }}</a></div>
+        <p class="max-w-[330px] text-[13px] leading-[1.55] text-on-dark/85">{{ s?.footer_about || "Premium women's fashion and intimates, made to feel as good as they look." }}</p>
+        <ul v-if="social.length" class="mt-1 flex flex-wrap gap-2.5" aria-label="Follow us">
+          <li v-for="([n, u, icon], i) in social" :key="n" class="social-in" :style="{ animationDelay: `${i * 70}ms` }">
+            <a :href="u" :aria-label="n" :title="n" target="_blank" rel="noopener" class="social-btn" :style="{ '--brand': `var(--brand-${icon})` }" :data-track="`footer_social_${icon}`">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="SOCIAL_ICON_PATHS[icon]" /></svg>
+            </a>
+          </li>
+        </ul>
       </div>
       <nav class="flex flex-col gap-0.5" aria-label="Shop"><div class="mb-1 text-xs font-medium uppercase tracking-[0.22em] text-champagne">Shop</div><NuxtLink v-for="c in cats ?? []" :key="c.slug" :to="`/shop/${c.slug}`" class="flex min-h-9 items-center text-[13.5px] leading-normal transition-colors hover:text-white">{{ c.name }}</NuxtLink></nav>
       <!-- THM-31 (v1.10): two Help sub-columns only from xl; at md/lg they were too narrow and links wrapped -->
@@ -63,15 +75,33 @@ async function subscribe() {
         <span class="mt-1">Support: {{ ph(s?.working_hours, 'SUPPORT HOURS') }}</span>
         <span class="mt-1 flex gap-[18px]"><a v-if="wa" :href="wa" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_whatsapp">WhatsApp</a><span v-else class="opacity-60">WhatsApp [NUMBER]</span><a v-if="s?.messenger_link" :href="s.messenger_link" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne transition-colors hover:text-white" data-track="footer_messenger">Messenger</a><span v-else class="opacity-60">Messenger [LINK]</span></span>
         <!-- Owner request (2026-11): on phones the credit sits under Contact instead of the bottom bar -->
-        <span class="mt-3 text-[12.5px] text-text-dark-3 md:hidden">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
+        <span class="mt-3 text-[12.5px] text-on-dark/75 md:hidden">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-on-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </address>
     </div>
 
     <div class="border-t border-line-dark">
-      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-1 text-[12.5px] text-text-dark-3">
+      <div class="wrap flex flex-wrap items-center justify-between gap-x-6 gap-y-0 py-1 text-[12.5px] text-on-dark/75">
         <span class="py-1.5">{{ s?.copyright_text || `© ${new Date().getFullYear()} ${s?.company_name}. All rights reserved.` }}</span>
-        <span class="hidden md:inline">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-text-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
+        <span class="hidden md:inline">Designed and Developed by <a href="https://sonetverse.com" target="_blank" rel="noopener" class="inline-flex min-h-9 items-center border-b border-champagne text-on-dark transition-colors hover:text-white" data-track="footer_credit">Sonetverse</a></span>
       </div>
     </div>
   </footer>
 </template>
+
+<style scoped>
+/* STF-UI-02 (v1.11): round outline buttons; on hover they lift, fill with the network's colour and the icon turns white. */
+.social-btn {
+  display: flex; height: 2.5rem; width: 2.5rem; align-items: center; justify-content: center; border-radius: 9999px;
+  border: 1px solid var(--color-line-dark-2); color: var(--color-on-dark);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s, border-color 0.25s, color 0.25s, box-shadow 0.25s;
+}
+.social-btn:hover { transform: translateY(-3px); background-color: var(--brand); border-color: var(--brand); color: var(--color-on-dark); box-shadow: 0 8px 18px -8px var(--brand); }
+.social-btn:focus-visible { outline: 2px solid var(--color-champagne); outline-offset: 3px; }
+.social-btn svg { transition: transform 0.25s; }
+.social-btn:hover svg { transform: scale(1.08); }
+@media (prefers-reduced-motion: no-preference) {
+  .social-in { animation: social-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes social-pop { from { opacity: 0; transform: translateY(8px) scale(0.9); } to { opacity: 1; transform: none; } }
+}
+@media (prefers-reduced-motion: reduce) { .social-btn, .social-btn svg { transition: none; } .social-btn:hover { transform: none; } }
+</style>

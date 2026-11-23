@@ -122,6 +122,9 @@
 .page-leave-to { opacity: 0; }
 @keyframes sl-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fade-in { animation: sl-fade-in 0.35s ease both; }
+/* STF-UI-03 (v1.11): v-reveal Fade-In-Up (plugins/reveal.ts). Opacity/transform only. */
+.reveal { opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal.reveal-in { opacity: 1; transform: none; }
 /* Product card hover zoom (owner request, 2026-11-15): grows a little on mouse hover and eases back on leave. Uses the
    `scale` property, not `transform`, because .fade-in's fill-mode holds `transform`. Mouse devices only. */
 .card-zoom { position: relative; transition: scale 300ms ease-out; }

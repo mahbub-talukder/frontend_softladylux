@@ -73,7 +73,7 @@ onBeforeUnmount(() => { clearTimeout(timer); if (import.meta.client) document.re
 </script>
 
 <template>
-  <article ref="root" class="fade-in card-zoom group flex w-full flex-col gap-3" @keydown.esc="escape" @focusout="onFocusOut">
+  <article ref="root" v-reveal class="card-zoom group flex w-full flex-col gap-3" @keydown.esc="escape" @focusout="onFocusOut">
     <StoreTile :src="p.image?.url" :alt="p.image?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="3/4" :sizes="'xs:50vw md:33vw lg:25vw'">
       <NuxtLink :to="`/product/${p.slug}`" class="absolute inset-0" :aria-label="p.name" />
       <div class="pointer-events-none absolute left-3.5 top-3.5 flex flex-col items-start gap-1.5">

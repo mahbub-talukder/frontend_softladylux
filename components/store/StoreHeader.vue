@@ -26,6 +26,8 @@ watch(menu, (o) => { if (import.meta.client) document.documentElement.style.over
 const active = (slug: string) => route.path === `/shop/${slug}`
 const wa = computed(() => waLink(s.value?.whatsapp_number))
 const tel = computed(() => telLink(s.value?.support_phones?.[0]))
+// STF-UI-01 (v1.11): bigger logo; one step smaller while the sticky header is compact.
+const logoH = computed(() => (scrolled.value ? 'h-10 md:h-12 lg:h-14' : 'h-11 md:h-14 lg:h-16'))
 </script>
 
 <template>
@@ -50,15 +52,16 @@ const tel = computed(() => telLink(s.value?.support_phones?.[0]))
 
     <!-- TEST (owner, to be confirmed): 80 % opacity once stuck -->
     <div class="sticky top-0 z-50 transition-[box-shadow,background-color] duration-300" :class="scrolled ? 'bg-bg/80 shadow-pop backdrop-blur-sm' : 'bg-bg'">
-    <div class="wrap grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 transition-[height] duration-300 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_auto] 2xl:gap-8" :class="scrolled ? 'h-14 md:h-16' : 'h-14 md:h-[72px]'">
+    <div class="wrap grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 transition-[height] duration-300 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(0,560px)_auto] 2xl:gap-8" :class="scrolled ? 'h-14 md:h-16 lg:h-[72px]' : 'h-16 md:h-[76px] lg:h-[84px]'">
       <div class="flex min-w-0 items-center gap-1">
         <button class="-ml-2 inline-flex h-11 w-11 items-center justify-center md:hidden" :aria-expanded="menu" aria-controls="mobile-menu" aria-label="Open menu" @click="menu = true">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         </button>
         <NuxtLink to="/" class="flex min-h-11 flex-col justify-center leading-none" :aria-label="`${s?.company_name} home`">
-          <NuxtImg v-if="s?.logo" format="webp" :src="mediaSrc(s.logo.url)" :alt="s.logo.alt_text" height="40" class="h-10 w-auto" />
+          <!-- STF-UI-01 (v1.11): logo 2.75rem / 3.5rem / 4rem (phone / tablet / desktop); it eases one step smaller once the header sticks -->
+          <NuxtImg v-if="s?.logo" format="webp" :src="mediaSrc(s.logo.url)" :alt="s.logo.alt_text" height="64" class="w-auto transition-[height] duration-300" :class="logoH" />
           <!-- Brand logo (brand/ kit): default when no logo is uploaded in Settings. The mark already carries name and tagline. -->
-          <img v-else src="/brand/logo-full.svg" :alt="s?.company_name || 'SoftLadyLux'" width="188" height="48" class="h-9 w-auto md:h-11 lg:h-12">
+          <img v-else src="/brand/logo-full.svg" :alt="s?.company_name || 'SoftLadyLux'" width="188" height="48" class="w-auto transition-[height] duration-300" :class="logoH">
         </NuxtLink>
       </div>
 
