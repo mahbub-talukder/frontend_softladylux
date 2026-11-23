@@ -41,7 +41,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | footer_social_facebook, footer_social_instagram, footer_social_youtube, footer_social_tiktok, footer_social_messenger, footer_social_whatsapp (v1.11) | footer social icons (STF-UI-02) |
 | cookie_accept, cookie_decline | cookie notice |
 | dashboard_stale_drafts, open_ga4 | admin dashboard and insights |
-| admin_login, settings_save, settings_sms_test, theme_publish, theme_fonts_save (v1.9), permissions_save, category_save, product_save_draft, product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
+| admin_login, settings_save, settings_sms_test, theme_publish, theme_fonts_save (v1.9), permissions_save, category_save, product_save_draft, product_save_draft_bottom (v1.11 ADM-13), product_publish, size_chart_save, coupon_save, stock_adjust, payment_verify, order_advance, settings_courier_test, courier_bulk_book, courier_pickup | admin actions (courier ones: SRS v1.7) |
 
 ## Setting up GA4 and GTM (owner's Google account, INS-07)
 1. **GA4** (analytics.google.com): create the property (time zone Asia/Dhaka, currency **BDT**) and a **Web** data

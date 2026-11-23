@@ -485,6 +485,16 @@ const serverErr = (k: string) => v.server[k]?.join(' ') ?? ''
         <p v-if="serverErr('is_active')" class="err" role="alert">{{ serverErr('is_active') }}</p>
       </fieldset>
 
+      <!-- ADM-13 (v1.11): a second Save right before SEO, so long forms are saved without scrolling back up.
+           Same action, label, busy state and validation as the top button (which stays unchanged). -->
+      <div v-if="canEdit" class="flex flex-col gap-2 border border-border bg-surface px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <p v-if="error" class="err !m-0" role="alert">{{ error }}</p>
+        <p v-else class="hint !m-0">{{ busy ? 'Saving…' : 'Done editing? Save your changes here or at the top.' }}</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn-secondary btn-spin" :disabled="busy" :aria-busy="busy" data-track="product_save_draft_bottom" @click="save(false)">{{ isNew ? (publishOnSave ? 'Save & publish' : 'Save draft') : form.is_active ? 'Save' : 'Save draft' }}</button>
+        </div>
+      </div>
+
       <fieldset class="card" :disabled="!canEdit">
         <h2 class="text-2xl">SEO</h2>
         <AdminFormField name="seo_title" label="SEO title" :error="v.errorFor('seo_title')" :counter="{ value: form.seo_title, max: 120 }">

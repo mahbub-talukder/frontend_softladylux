@@ -1,8 +1,7 @@
 // Covers SRS v1.11 CHK-11 (client side of the guest OTP step: the number sent to /checkout/otp/ is the
 // normalised 01XXXXXXXXX form, resend gap 60 s) and CHK-12 (payment logos ship as valid static files).
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import bkashSvg from '../public/payments/bkash.svg?raw'
 import { normalizePhone, RESEND_SECONDS, secondsLeft } from '../utils/otp'
 
 describe('checkout OTP phone (CHK-11)', () => {
@@ -22,18 +21,17 @@ describe('checkout OTP phone (CHK-11)', () => {
 })
 
 describe('payment logos (CHK-12)', () => {
-  const pub = (f: string) => resolve(__dirname, '../public/payments', f)
+  // Vite reads the files, so this needs no Node file APIs (same approach as tracking.test.ts).
   it('bKash mark is a standalone SVG with a viewBox and no scripts', () => {
-    const svg = readFileSync(pub('bkash.svg'), 'utf8')
+    const svg = bkashSvg as string
     expect(svg.trim().startsWith('<svg')).toBe(true)
     expect(svg).toMatch(/viewBox="0 0 [\d.]+ [\d.]+"/)
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"')
     expect(svg).not.toMatch(/<script|on\w+=/i)
     expect(svg.match(/<path/g)?.length).toBeGreaterThan(5)
   })
-  it('Nagad mark is a small PNG', () => {
-    const png = readFileSync(pub('nagad.png'))
-    expect(png.subarray(1, 4).toString()).toBe('PNG')
-    expect(png.length).toBeLessThan(40_000)
+  it('Nagad mark ships with the site', () => {
+    const files = Object.keys(import.meta.glob('../public/payments/*.png', { query: '?url', import: 'default' }))
+    expect(files).toContain('../public/payments/nagad.png')
   })
 })

@@ -2,6 +2,9 @@
 // Design: AdminOrders board (detail panel). SRS ORD-02..06, ORD-08..11, PAY-03/05/06. Buttons only
 // show for the permission the user holds (PRM-04); the server stays authoritative (PRM-03).
 // v1.7: the courier block (AdminCourierBlock) handles Steadfast; manual Ship stays as the ORD-10 fallback.
+// v1.11 ORD-14: on a Confirmed order "Move to Shipping" books with Steadfast when it is set up (and the user holds
+// courier.manage); while an auto-booking is queued it waits ("Booking with Steadfast…") and refreshes itself; after a
+// failure it reads "Retry booking". "Ship with another courier" opens the manual courier + tracking form.
 import type { AdminOrder } from '~/types/api'
 import { formatWeight } from '~/utils/weight'
 import type { Rule } from '~/utils/validators'
@@ -79,9 +82,33 @@ const reject = () => ok(['reason']) && run(() => api(`/admin/orders/${props.id}/
 const editTrx = () => ok(['trx_id', isBank() ? 'sender_name' : 'sender_number']) && run(() => api(`/admin/orders/${props.id}/payment/`, { method: 'PATCH', body: isBank() ? { trx_id: f.trx_id.trim().toUpperCase(), sender_name: f.sender_name.trim() } : { trx_id: f.trx_id.trim().toUpperCase(), sender_number: f.sender_number.trim() }, toast: false }), 'Payment details corrected')
 const saveEdit = () => ok(['name', 'phone', 'address_line', 'thana', 'district']) && run(() => api(`/admin/orders/${props.id}/`, { method: 'PATCH', body: { name: f.name.trim(), phone: f.phone.trim(), district: f.district.trim(), thana: f.thana.trim(), address_line: f.address_line.trim() }, toast: false }), 'Customer details updated')
 const addNote = () => ok(['note']) && run(() => api(`/admin/orders/${props.id}/notes/`, { method: 'POST', body: { note: f.note.trim() }, toast: false }), 'Note added')
+// ORD-14 (v1.11)
+const canCourier = computed(() => auth.can('courier.manage'))
+const shipViaSteadfast = computed(() => !!order.value && order.value.status === 'confirmed' && order.value.steadfast_ready && canCourier.value && !order.value.shipment?.is_booked)
+const bookingNow = computed(() => !!order.value?.shipment?.booking_in_progress)
+const nextLabel = computed(() => {
+  if (!next.value) return ''
+  if (shipViaSteadfast.value) return bookingNow.value ? 'Booking with Steadfast…' : order.value?.shipment?.attention === 'booking_failed' ? 'Retry booking' : 'Move to Shipping'
+  return next.value.label
+})
+const bookSteadfast = () => run(() => api(`/admin/courier/orders/${props.id}/book/`, { method: 'POST', toast: false }), 'Booked with Steadfast · moved to Shipping')
+// While a queued booking runs, look again every 4 s (at most 10 times) so the panel moves on by itself.
+let poll: ReturnType<typeof setTimeout> | undefined
+let polls = 0
+watch(bookingNow, (on) => {
+  clearTimeout(poll)
+  if (!on) { polls = 0; return }
+  const again = () => { if (polls++ < 10) poll = setTimeout(async () => { await load(); if (bookingNow.value) again() }, 4000) }
+  again()
+}, { immediate: true })
+onBeforeUnmount(() => clearTimeout(poll))
+
 function advance() {
   if (!next.value) return
-  if (next.value.to === 'shipping') { mode.value = 'ship'; return }
+  if (next.value.to === 'shipping') {
+    if (shipViaSteadfast.value) { if (!bookingNow.value) bookSteadfast(); return }
+    mode.value = 'ship'; return
+  }
   transition(next.value.to)
 }
 const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
@@ -148,7 +175,12 @@ const when = (d: string | null) => (d ? new Date(d).toLocaleString() : '')
       <NuxtLink :to="`/admin/orders/${order.id}/slip`" class="btn-secondary !px-4" target="_blank">Delivery slip</NuxtLink>
     </div>
     <div v-if="canManage" class="flex flex-col gap-2">
-      <button v-if="next" class="btn" :disabled="busy || needsVerify" data-track="order_advance" @click="advance">{{ next.label }}</button>
+      <button v-if="next" class="btn btn-spin" :disabled="busy || needsVerify || (shipViaSteadfast && bookingNow)" :aria-busy="busy || bookingNow" data-track="order_advance" @click="advance">{{ nextLabel }}</button>
+      <!-- ORD-14 (v1.11): other couriers, or Steadfast without booking (fallback ORD-10) -->
+      <template v-if="shipViaSteadfast">
+        <p class="hint !m-0">{{ bookingNow ? 'Auto-booking is running. This updates by itself in a few seconds.' : 'Books the parcel with Steadfast and moves the order to Shipping with its tracking code.' }}</p>
+        <button v-if="!bookingNow && mode !== 'ship'" type="button" class="self-start border-b border-ink py-1.5 text-sm" @click="mode = 'ship'">Ship with another courier</button>
+      </template>
       <p v-if="needsVerify" class="hint">Verify the payment first (bKash, Nagad and Bank orders can’t be confirmed until it is verified).</p>
       <form v-if="mode === 'ship'" class="flex flex-col gap-2" novalidate @submit.prevent="ok(['courier', 'tracking']) && transition('shipping', { courier: f.courier.trim(), tracking: f.tracking.trim() })"><input v-model="f.courier" class="inp" placeholder="Courier name (e.g. Steadfast)" aria-label="Courier"><input v-model="f.tracking" class="inp" placeholder="Tracking number" aria-label="Tracking number"><button class="btn">Move to Shipping</button></form>
       <button v-if="['draft', 'confirmed'].includes(order.status)" class="btn-secondary !border-accent !text-accent hover:!bg-accent hover:!text-primary-contrast" @click="mode = 'cancel'">Cancel order</button>

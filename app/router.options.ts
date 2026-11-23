@@ -22,7 +22,7 @@ export default <RouterConfig>{
       let fired = false
       const once = () => { if (!fired) { fired = true; go() } }
       nuxtApp.hooks.hookOnce('page:transition:finish', once)
-      nuxtApp.hooks.hookOnce('page:finish', () => setTimeout(once, 350)) // fallback when no transition runs
+      nuxtApp.hooks.hookOnce('page:finish', () => { setTimeout(once, 350) }) // fallback when no transition runs
     })
   }
 }
