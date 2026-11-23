@@ -36,6 +36,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 | wishlist_toggle, reorder | wishlist heart, account orders |
 | proceed_to_checkout, checkout_submit | cart, checkout |
 | checkout_otp_verify (v1.11) | checkout, guest mobile verification dialog (CHK-11) |
+| contact_map_open (v1.11) | Contact page, Open in Google Maps |
 | login_submit, register_submit, otp_verify, track_submit, track_courier_link (v1.7), contact_submit, newsletter_subscribe | account and engagement forms |
 | footer_whatsapp, footer_messenger, footer_credit | footer contact links |
 | footer_social_facebook, footer_social_instagram, footer_social_youtube, footer_social_tiktok, footer_social_messenger, footer_social_whatsapp (v1.11) | footer social icons (STF-UI-02) |

@@ -10,6 +10,7 @@ export interface PublicSettings {
   bkash_number: string; bkash_account_type: string; nagad_number: string; nagad_account_type: string
   // SRS v1.11 CHK-04: Bank
   bank_name: string; bank_account_name: string; bank_account_number: string; bank_branch: string; bank_routing_number: string
+  map_latitude: string | null; map_longitude: string | null // v1.11: Contact page map
   payment_instructions: string; cod_enabled: boolean
   delivery_fee_inside_dhaka: string; delivery_fee_outside_dhaka: string
   delivery_time_inside_dhaka: string; delivery_time_outside_dhaka: string

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { SOCIAL_ICON_PATHS } from '~/utils/socialIcons'
 // Design: Contact board. SRS NTF-01 (stored, emailed to support, honeypot + rate limit), NTF-05
 // (WhatsApp/Messenger in the footer), SET-08 (address, phone, email from Settings).
 useSeoMeta({ title: 'Contact us' })
@@ -10,7 +11,14 @@ const errors = ref<Record<string, string>>({})
 const message = ref('')
 const sent = ref(false)
 const busy = ref(false)
-const social = computed(() => ([['Facebook', s.value?.facebook_url], ['Instagram', s.value?.instagram_url], ['YouTube', s.value?.youtube_url], ['TikTok', s.value?.tiktok_url]] as [string, string | undefined][]).filter(([, u]) => u))
+const social = computed(() => ([['Facebook', s.value?.facebook_url, 'facebook'], ['Instagram', s.value?.instagram_url, 'instagram'], ['YouTube', s.value?.youtube_url, 'youtube'], ['TikTok', s.value?.tiktok_url, 'tiktok'], ['Messenger', s.value?.messenger_link, 'messenger']] as [string, string | undefined, string][]).filter(([, u]) => u))
+// v1.11 owner request: Google map from the coordinates in Admin → Settings → Contact & social (no API key needed).
+const map = computed(() => {
+  const lat = Number(s.value?.map_latitude), lng = Number(s.value?.map_longitude)
+  if (!s.value?.map_latitude || !s.value?.map_longitude || !Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  return { embed: `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`, open: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}` }
+})
+const tel = (n: string) => `tel:${n.replace(/[^\d+]/g, '')}`
 
 async function send() {
   busy.value = true; errors.value = {}; message.value = ''
@@ -43,14 +51,35 @@ function again() { Object.assign(f, { name: '', phone: '', email: '', subject: '
         <div v-else class="flex flex-col items-start gap-4 bg-cream px-6 py-12 md:px-11 md:py-14" role="status"><div class="eyebrow">Message sent</div><h2 class="font-display text-h2 leading-[1.05] md:text-h2-lg">Thank you for reaching out</h2><p class="max-w-[440px] text-base leading-[1.7] text-body">We have received your message and notified our team by email. You will hear back soon.</p><button class="btn-secondary" @click="again">Send another message</button></div>
       </div>
       <aside class="min-w-0 lg:w-[400px] lg:flex-none">
-        <div class="relative flex aspect-[16/10] items-center justify-center bg-tile-6">
+        <!-- v1.11: live Google map when the owner has set the coordinates; the drawn placeholder otherwise -->
+        <div v-if="map" class="relative aspect-[16/10] overflow-hidden bg-tile-6">
+          <iframe :src="map.embed" :title="`Map: ${s?.company_name || 'our shop'}`" class="absolute inset-0 h-full w-full border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen />
+        </div>
+        <div v-else class="relative flex aspect-[16/10] items-center justify-center bg-tile-6">
           <div class="absolute inset-0 bg-[linear-gradient(var(--color-field)_1px,transparent_1px),linear-gradient(90deg,var(--color-field)_1px,transparent_1px)] bg-[length:48px_48px] opacity-50" />
           <div class="relative flex flex-col items-center gap-2 text-accent"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg><span class="text-xs uppercase tracking-[0.2em] text-gold">Our location</span></div>
         </div>
-        <div class="border-b border-border py-7"><div class="sf-lbl mb-2.5">Visit us</div><p class="text-base leading-[1.7] text-body">{{ s?.address_line1 || '[STORE ADDRESS]' }}<br>{{ s?.city || '[CITY]' }}, {{ s?.country }}</p></div>
-        <div class="py-7" :class="social.length ? 'border-b border-border' : ''"><div class="sf-lbl mb-2.5">Call or write</div><p class="text-base leading-[1.7] text-body">{{ s?.support_phones?.[0] || '[PHONE NUMBER]' }}<br>{{ s?.support_email || '[EMAIL ADDRESS]' }}</p><p v-if="s?.working_hours" class="mt-1 text-sm text-muted">Support: {{ s.working_hours }}</p></div>
-        <div v-if="social.length" class="py-7"><div class="sf-lbl mb-3">Follow</div><div class="flex gap-2.5"><a v-for="[n, u] in social" :key="n" :href="u" target="_blank" rel="noopener" :aria-label="n" class="flex h-11 w-11 items-center justify-center border border-ink text-xs font-medium transition-colors hover:bg-ink hover:text-bg">{{ n.slice(0, 2) }}</a></div></div>
+        <a v-if="map" :href="map.open" target="_blank" rel="noopener" class="lnk mt-3 inline-flex text-sm" data-track="contact_map_open">Open in Google Maps</a>
+
+        <!-- v1.11 owner request: an icon for every detail -->
+        <div class="border-b border-border py-7">
+          <div class="sf-lbl mb-3">Visit us</div>
+          <p class="ci-row"><svg class="ci-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg><span>{{ s?.address_line1 || '[STORE ADDRESS]' }}<template v-if="s?.address_line2">, {{ s.address_line2 }}</template><br>{{ s?.city || '[CITY]' }}, {{ s?.country }}</span></p>
+        </div>
+        <div class="flex flex-col gap-2.5 py-7" :class="social.length ? 'border-b border-border' : ''">
+          <div class="sf-lbl mb-0.5">Call or write</div>
+          <p class="ci-row"><svg class="ci-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2" /><path d="M10.5 18.5h3" /></svg><span class="flex flex-wrap gap-x-2"><template v-if="s?.support_phones?.length"><a v-for="(n, k) in s.support_phones" :key="n" :href="tel(n)" class="transition-colors hover:text-accent">{{ n }}{{ k < s.support_phones.length - 1 ? ',' : '' }}</a></template><template v-else>[PHONE NUMBER]</template></span></p>
+          <p class="ci-row"><svg class="ci-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3.5 6.5 8.5 6.5 8.5-6.5" /></svg><a v-if="s?.support_email" :href="`mailto:${s.support_email}`" class="break-all transition-colors hover:text-accent">{{ s.support_email }}</a><span v-else>[EMAIL ADDRESS]</span></p>
+          <p v-if="s?.working_hours" class="ci-row !text-sm !text-muted"><svg class="ci-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2" /><rect x="3" y="13" width="4" height="6" rx="1.5" /><rect x="17" y="13" width="4" height="6" rx="1.5" /><path d="M19 19c0 1.5-1.5 2.5-4 2.5h-2" /></svg><span>Support: {{ s.working_hours }}</span></p>
+        </div>
+        <div v-if="social.length" class="py-7"><div class="sf-lbl mb-3">Follow</div><div class="flex flex-wrap gap-2.5"><a v-for="[n, u, icon] in social" :key="n" :href="u" target="_blank" rel="noopener" :aria-label="n" :title="n" class="flex h-11 w-11 items-center justify-center rounded-full border border-ink transition-colors hover:bg-ink hover:text-bg"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="SOCIAL_ICON_PATHS[icon]" /></svg></a></div></div>
       </aside>
     </section>
   </div>
 </template>
+
+<style scoped>
+/* v1.11: icon + value rows on the Contact page */
+.ci-row { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 1rem; line-height: 1.7; color: var(--color-body); }
+.ci-ico { margin-top: 0.3rem; height: 1.125rem; width: 1.125rem; flex: none; color: var(--color-accent); }
+</style>

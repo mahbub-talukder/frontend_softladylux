@@ -33,6 +33,8 @@
   --stage-delivered-fg: #3f5b3c; --stage-delivered-bg: #dee9da;
   --stage-cancelled-fg: #5b514b; --stage-cancelled-bg: #e8e2d9;
   --color-success: #5e7a5a;
+  --color-warning: #9a5b00;      /* v1.11: notices (amber text, AA on warning-soft) */
+  --color-warning-soft: #fdf1dc;
   --color-gold: #7c6036;        /* eyebrow / bronze accent text */
   --color-champagne: #c9b28d;   /* accent on dark */
   --color-rose-soft: #c9a39d;   /* italic wordmark accent on dark */

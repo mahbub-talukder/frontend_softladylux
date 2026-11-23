@@ -9,6 +9,13 @@ definePageMeta({ layout: 'admin', permission: 'settings.manage' })
 const { api, errorOf, toast } = useApi()
 
 type Kind = 'email' | 'url' | 'money' | 'int'
+// v1.11: a map coordinate is empty or a number within ±limit (6 decimals are kept)
+const coord = (limit: number) => (x: unknown) => {
+  const v = String(x ?? '').trim()
+  if (!v) return null
+  const n = Number(v)
+  return Number.isFinite(n) && Math.abs(n) <= limit ? null : `Enter a number between -${limit} and ${limit}.`
+}
 type Field = { key: string; label: string; ph?: string; type?: 'text' | 'textarea' | 'number' | 'password' | 'switch' | 'list'; note?: string; req?: boolean; max?: number; kind?: Kind; rule?: Rule }
 const TABS: { id: string; label: string; title: string; fields: Field[]; note?: string }[] = [
   { id: 'company', label: 'Company', title: 'Company', fields: [
@@ -27,7 +34,10 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
     { key: 'whatsapp_number', label: 'WhatsApp number', ph: '[WHATSAPP NUMBER]', max: 20 },
     { key: 'messenger_link', label: 'Messenger link', ph: 'https://m.me/[PAGE]', kind: 'url', max: 200 },
     { key: 'facebook_url', label: 'Facebook URL', kind: 'url', max: 200 }, { key: 'instagram_url', label: 'Instagram URL', kind: 'url', max: 200 },
-    { key: 'youtube_url', label: 'YouTube URL', kind: 'url', max: 200 }, { key: 'tiktok_url', label: 'TikTok URL', kind: 'url', max: 200 }] },
+    { key: 'youtube_url', label: 'YouTube URL', kind: 'url', max: 200 }, { key: 'tiktok_url', label: 'TikTok URL', kind: 'url', max: 200 },
+    // v1.11: Google map on the Contact page. In Google Maps, right-click the shop and click the numbers to copy them.
+    { key: 'map_latitude', label: 'Map latitude (Contact page)', ph: 'e.g. 23.780573', note: 'In Google Maps, right-click your shop and click the coordinates to copy them. Leave both empty to hide the map.', rule: coord(90) },
+    { key: 'map_longitude', label: 'Map longitude (Contact page)', ph: 'e.g. 90.414140', rule: coord(180) }] },
   { id: 'payment', label: 'Payment', title: 'Payment', note: 'No gateway is connected. bKash, Nagad and Bank payments are matched by transaction / reference ID and verified manually. A method is hidden at checkout while its number is empty.', fields: [
     { key: 'bkash_number', label: 'bKash merchant number', ph: '[MERCHANT NUMBER]', max: 20 },
     { key: 'bkash_account_type', label: 'bKash account type', ph: 'Personal / Merchant', max: 20 },
@@ -139,6 +149,7 @@ async function save() {
   body.support_phones = String(body.support_phones || '').split(',').map((s) => s.trim()).filter(Boolean)
   body.logo = logo.value?.id ?? null; body.favicon = favicon.value?.id ?? null
   body.seo_share_image = share.value?.id ?? null
+  for (const k of ['map_latitude', 'map_longitude']) { const v = String(body[k] ?? '').trim(); body[k] = v ? Number(v).toFixed(6) : null } // v1.11
   // Not edited here: sending these back could overwrite changes made meanwhile on the Website content page.
   delete body.id; delete body.home_sections
   busy.value = true

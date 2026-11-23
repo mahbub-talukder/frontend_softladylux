@@ -43,9 +43,10 @@ const priceChanged = (l: { variant: number; price: string }) => {
   <section class="pb-8">
     <div class="mb-8 flex flex-col gap-3 md:mb-10"><div class="eyebrow">Step 1 of 3 · Bag</div><h1 class="font-display text-h1 leading-none md:text-[60px]">Shopping bag</h1></div>
     <!-- Re-enable point for the floating bag widget (owner request): shown only while the widget is hidden. -->
-    <div v-if="float.ready.value && float.hidden.value" class="mb-6 flex flex-wrap items-center justify-between gap-3 border border-border bg-cream px-4 py-3 text-sm" role="status">
-      <span>The floating bag shortcut is hidden. Your bag is unchanged.</span>
-      <button type="button" class="btn-o !h-11 !px-5" data-track="floating_cart_show" @click="float.show()">Show floating bag</button>
+    <!-- v1.11 owner request: compact warning-style notice -->
+    <div v-if="float.ready.value && float.hidden.value" class="mb-5 flex items-center justify-between gap-3 rounded-[6px] border border-warning/30 bg-warning-soft px-3 py-2 text-[13px] text-warning" role="status">
+      <span class="flex min-w-0 items-center gap-2"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="flex-none" aria-hidden="true"><path d="M12 3 2 20h20z" stroke-linejoin="round" /><path d="M12 10v4.5M12 17.2v.3" stroke-linecap="round" /></svg><span>Floating bag shortcut is hidden.</span></span>
+      <button type="button" class="flex-none rounded-[4px] border border-warning/50 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-warning hover:text-warning-soft" data-track="floating_cart_show" @click="float.show()">Show</button>
     </div>
     <p v-if="!cart.storageOk" class="mb-6 border-l-[3px] border-gold bg-cream p-3 text-sm" role="status">Your bag could not be saved on this device (private mode or blocked storage). It works for this visit only.</p>
 
