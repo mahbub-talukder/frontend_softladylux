@@ -8,6 +8,8 @@ export interface PublicSettings {
   facebook_url: string; instagram_url: string; youtube_url: string; tiktok_url: string
   messenger_link: string; footer_about: string; copyright_text: string
   bkash_number: string; bkash_account_type: string; nagad_number: string; nagad_account_type: string
+  // SRS v1.11 CHK-04: Bank
+  bank_name: string; bank_account_name: string; bank_account_number: string; bank_branch: string; bank_routing_number: string
   payment_instructions: string; cod_enabled: boolean
   delivery_fee_inside_dhaka: string; delivery_fee_outside_dhaka: string
   delivery_time_inside_dhaka: string; delivery_time_outside_dhaka: string
@@ -56,6 +58,12 @@ export interface FontPairing {
 export interface PermissionDef { code: string; group: string; description: string; default: boolean; sensitive: boolean }
 export interface StaffUser { id: number; full_name: string; email: string; role: 'owner' | 'staff'; is_active: boolean; permissions: string[] }
 export interface Paged<T> { count: number; results: T[] }
+// SRS v1.11 NTF-07 / ADM-14
+export type SmsStatus = 'pending' | 'in_progress' | 'sent' | 'failed'
+export interface SmsLogRow {
+  id: number; created_at: string; receiver: string; message: string; source: string; source_label: string
+  status: SmsStatus; status_label: string; provider_ref: string; error: string; attempts: number; sent_at: string | null
+}
 export interface AuditRow { id: number; created_at: string; user: string | null; action: string; model: string; object_id: string }
 
 // Loosely-typed form rows for generic admin editors.
@@ -133,7 +141,7 @@ export interface AdminOrder extends Omit<CustomerOrder, 'timeline' | 'payment_st
   cancel_reason: string; return_reason: string
   total_weight_grams: number // CAT-26 (v1.7)
   shipment: Shipment | null; courier_events: CourierEvent[] // CRR-05/09/10 (v1.7)
-  payment: { id: number; method: string; amount: string; sender_number: string; trx_id: string | null; status: string; verified_by_name: string | null; verified_at: string | null; reject_reason: string; note: string }
+  payment: { id: number; method: string; amount: string; sender_number: string; sender_name: string; trx_id: string | null; status: string; verified_by_name: string | null; verified_at: string | null; reject_reason: string; note: string }
   logs: { id: number; from_status: string; to_status: string; user: string | null; note: string; created_at: string; internal: boolean }[]
 }
 export interface StockRow { id: number; sku: string; product: string; category: string; label: string; on_hand: number; level: 'in_stock' | 'low' | 'out'; is_active: boolean }

@@ -26,7 +26,7 @@ const date = (d: string) => new Date(d).toLocaleDateString('en-GB', { day: '2-di
       <div v-if="Number(order.coupon_discount)">Coupon {{ order.coupon_code }} − {{ taka(order.coupon_discount) }}</div>
       <div>Delivery ({{ order.area === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka' }}) {{ taka(order.delivery_fee) }}</div>
       <div class="text-base"><b class="font-semibold">Total {{ taka(order.total) }}</b></div>
-      <div>{{ order.payment_method === 'cod' ? 'Cash on delivery' : `Paid via ${order.payment_method}${order.payment?.trx_id ? ` · TrxID ${order.payment.trx_id}` : ''}` }}</div>
+      <div>{{ order.payment_method === 'cod' ? 'Cash on delivery' : `Paid via ${order.payment_method === 'bank' ? 'bank transfer' : order.payment_method}${order.payment?.trx_id ? ` · ${order.payment_method === 'bank' ? 'Ref' : 'TrxID'} ${order.payment.trx_id}` : ''}` }}</div>
     </div>
     <p class="border-t border-border pt-3 text-xs text-muted">Thank you for shopping with {{ site?.company_name }}.</p>
   </article>

@@ -75,7 +75,7 @@ const slipsUrl = computed(() => `/admin/orders/slips?ids=${selected.value.join('
     </div>
     <form class="mb-5 flex flex-wrap gap-3" @submit.prevent="apply">
       <input v-model="f.q" class="inp !w-64" placeholder="Search order, customer, mobile, TrxID…" aria-label="Search orders">
-      <select v-model="f.payment_method" class="inp !w-40" aria-label="Payment method"><option value="">All payments</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="cod">Cash on delivery</option></select>
+      <select v-model="f.payment_method" class="inp !w-40" aria-label="Payment method"><option value="">All payments</option><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="bank">Bank</option><option value="cod">Cash on delivery</option></select>
       <select v-model="f.area" class="inp !w-40" aria-label="Area"><option value="">All areas</option><option value="inside_dhaka">Inside Dhaka</option><option value="outside_dhaka">Outside Dhaka</option></select>
       <input v-model="f.date_from" type="date" class="inp !w-40" aria-label="From date"><input v-model="f.date_to" type="date" class="inp !w-40" aria-label="To date">
       <button class="btn-secondary">Filter</button>

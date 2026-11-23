@@ -28,11 +28,17 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
     { key: 'messenger_link', label: 'Messenger link', ph: 'https://m.me/[PAGE]', kind: 'url', max: 200 },
     { key: 'facebook_url', label: 'Facebook URL', kind: 'url', max: 200 }, { key: 'instagram_url', label: 'Instagram URL', kind: 'url', max: 200 },
     { key: 'youtube_url', label: 'YouTube URL', kind: 'url', max: 200 }, { key: 'tiktok_url', label: 'TikTok URL', kind: 'url', max: 200 }] },
-  { id: 'payment', label: 'Payment', title: 'Payment', note: 'No gateway is connected. bKash/Nagad payments are matched by transaction ID and verified manually.', fields: [
+  { id: 'payment', label: 'Payment', title: 'Payment', note: 'No gateway is connected. bKash, Nagad and Bank payments are matched by transaction / reference ID and verified manually. A method is hidden at checkout while its number is empty.', fields: [
     { key: 'bkash_number', label: 'bKash merchant number', ph: '[MERCHANT NUMBER]', max: 20 },
     { key: 'bkash_account_type', label: 'bKash account type', ph: 'Personal / Merchant', max: 20 },
     { key: 'nagad_number', label: 'Nagad merchant number', ph: '[MERCHANT NUMBER]', max: 20 },
     { key: 'nagad_account_type', label: 'Nagad account type', ph: 'Personal / Merchant', max: 20 },
+    // SRS v1.11 CHK-04: static Bank method, configured like bKash/Nagad.
+    { key: 'bank_name', label: 'Bank name', ph: '[BANK NAME]', max: 80 },
+    { key: 'bank_account_name', label: 'Bank account name', ph: '[ACCOUNT NAME]', max: 120 },
+    { key: 'bank_account_number', label: 'Bank account number', ph: '[ACCOUNT NUMBER]', max: 40, note: 'Leave empty to hide Bank at checkout.' },
+    { key: 'bank_branch', label: 'Branch', ph: '[BRANCH]', max: 80 },
+    { key: 'bank_routing_number', label: 'Routing number', ph: '[ROUTING NUMBER]', max: 20 },
     { key: 'payment_instructions', label: 'Payment instructions (shown at checkout)', type: 'textarea' },
     { key: 'cod_enabled', label: 'Cash on delivery enabled', type: 'switch' }] },
   { id: 'delivery', label: 'Delivery fees', title: 'Delivery fees', fields: [
@@ -47,12 +53,14 @@ const TABS: { id: string; label: string; title: string; fields: Field[]; note?: 
   { id: 'analytics', label: 'Analytics', title: 'Analytics', note: 'GTM loads only after the visitor accepts the cookie banner. GA4 is configured inside GTM.', fields: [
     { key: 'gtm_id', label: 'Google Tag Manager ID', ph: 'GTM-XXXXXXX', max: 20, rule: (x) => (x && !String(x).trim().startsWith('GTM-') ? 'A Tag Manager ID starts with GTM-.' : null) }] },
   // ACC-02 / NTF-02 (amendment v1.6): MiMSMS JSON API, configured only here.
-  { id: 'sms', label: 'SMS', title: 'SMS provider (MiMSMS)', note: 'Used for OTP codes (registration, forgot password) and the order confirmation SMS. All four fields are needed before any SMS can be sent.', fields: [
+  { id: 'sms', label: 'SMS', title: 'SMS provider (MiMSMS)', note: 'Used for OTP codes (registration, forgot password, guest checkout) and the order confirmation SMS. Every SMS is listed in SMS log. All four fields are needed before any SMS can be sent.', fields: [
     { key: 'mimsms_api_key', label: 'API key', type: 'password', ph: 'Paste the API key from MiMSMS', max: 200 },
     { key: 'mimsms_username', label: 'Username', ph: 'Your MiMSMS login email', max: 120 },
     { key: 'mimsms_sender_name', label: 'Sender name', ph: 'Sender number from MiMSMS, e.g. 8809…', max: 40 },
     { key: 'mimsms_url', label: 'API URL', ph: 'https://api.mimsms.com/api/V2/SMS', kind: 'url', max: 200 },
-    { key: 'sms_order_enabled', label: 'Send order confirmation SMS to customers', type: 'switch' }] },
+    { key: 'sms_order_enabled', label: 'Send order confirmation SMS to customers', type: 'switch' },
+    // SRS v1.11 CHK-11: guests verify their mobile with a 4-digit SMS code before ordering.
+    { key: 'checkout_otp_enabled', label: 'Guests verify their mobile number by SMS code before ordering', type: 'switch', note: 'Turn off only while SMS is not set up; otherwise guests cannot place orders.' }] },
   // CRR-01 (v1.7): Steadfast courier. Keys and token are write-only, like the SMS key.
   { id: 'courier', label: 'Courier', title: 'Courier (Steadfast)', note: 'Keys are on the Steadfast dashboard under API. The webhook token is the one you generate on the Steadfast Webhook page.', fields: [
     { key: 'steadfast_api_key', label: 'API key', type: 'password', ph: 'Paste the Steadfast API key', max: 200 },

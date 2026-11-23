@@ -1,8 +1,10 @@
 <script setup lang="ts">
 // Design: Checkout board. SRS CHK-01..CHK-09, CRT-03/09, §11. Guest or logged-in; the server
 // recomputes every price (CHK-06) and the form keeps what the customer typed on any error (UI-06).
+// v1.11: CHK-11 guest mobile OTP before placing, CHK-04 Bank method, CHK-12 payment logos.
 import type { ApiError } from '~/utils/apiError'
 import type { Address, CustomerOrder } from '~/types/api'
+import { normalizePhone } from '~/utils/otp'
 
 useSeoMeta({ title: 'Checkout', robots: 'noindex' })
 const cart = useCartStore()
@@ -10,7 +12,7 @@ const { api, errorOf } = useApi()
 const { data: s } = await useSiteSettings()
 const { data: methods } = await useAsyncData('payment-methods', () => api<Record<string, boolean>>('/payment-methods/'))
 
-const form = reactive({ name: '', phone: '', email: '', district: '', thana: '', address_line: '', note: '', payment_method: '', sender_number: '', trx_id: '' })
+const form = reactive({ name: '', phone: '', email: '', district: '', thana: '', address_line: '', note: '', payment_method: '', sender_number: '', sender_name: '', trx_id: '' })
 const errors = ref<Record<string, string>>({})
 const message = ref('')
 const busy = ref(false)
@@ -42,7 +44,12 @@ onMounted(async () => {
 })
 watch(() => [cart.area, cart.coupon], () => cart.validate())
 
-const enabled = computed(() => (['bkash', 'nagad', 'cod'] as const).filter((m) => methods.value?.[m]))
+const enabled = computed(() => (['bkash', 'nagad', 'bank', 'cod'] as const).filter((m) => methods.value?.[m]))
+const METHOD_NAME: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', bank: 'Bank transfer', cod: 'Cash on Delivery' }
+const LOGO: Record<string, string> = { bkash: '/payments/bkash.svg', nagad: '/payments/nagad.png' } // CHK-12 official marks
+const bankRows = computed(() => ([['Bank', s.value?.bank_name], ['Account name', s.value?.bank_account_name], ['Account number', s.value?.bank_account_number], ['Branch', s.value?.bank_branch], ['Routing number', s.value?.bank_routing_number]] as [string, string | undefined][]).filter(([, v]) => v))
+const copied = ref('')
+async function copy(v: string) { try { await navigator.clipboard.writeText(v); copied.value = v; setTimeout(() => { copied.value = '' }, 1500) } catch { /* clipboard blocked */ } }
 if (!form.payment_method) form.payment_method = ''
 watch(enabled, (e) => { if (!form.payment_method && e.length) form.payment_method = e[e.length - 1] === 'cod' ? 'cod' : e[0] }, { immediate: true })
 const payName = computed(() => (form.payment_method === 'bkash' ? 'bKash' : 'Nagad'))
@@ -61,9 +68,30 @@ function fieldMsg(f: Record<string, unknown>) {
   for (const [k, v] of Object.entries(f)) out[k] = Array.isArray(v) ? v.join(' ') : String(v)
   return out
 }
+// CHK-11 (v1.11): guests verify their mobile once. The server answers "verified" straight away for a
+// number that needs no code (already verified, registered, or the check is off), so only new numbers see the dialog.
+const otpFor = ref('')
+const verifiedPhone = ref('')
+async function needsOtp(): Promise<boolean> {
+  if (customer.me) return false
+  const phone = normalizePhone(form.phone)
+  if (!phone) return false // the server reports the phone error on submit
+  if (verifiedPhone.value === phone) return false
+  const r = await api<{ status: string }>('/checkout/otp/', { method: 'POST', body: { phone } })
+  if (r.status === 'verified') { verifiedPhone.value = phone; return false }
+  otpFor.value = phone
+  return true
+}
+function onVerified() { verifiedPhone.value = otpFor.value; otpFor.value = ''; place() }
+
 async function place() {
   errors.value = {}; message.value = ''; lineProblems.value = []; busy.value = true
   if (!cart.area) { errors.value = { area: 'Choose a delivery area.' }; busy.value = false; return }
+  try {
+    if (await needsOtp()) return
+  } catch (e) {
+    const er = errorOf(e); errors.value = fieldMsg(er.fields); message.value = er.message; busy.value = false; return
+  }
   try {
     const order = await api<CustomerOrder>('/checkout/', {
       method: 'POST', headers: { 'Idempotency-Key': key.value },
@@ -80,6 +108,10 @@ async function place() {
       lineProblems.value = (er.fields.lines as unknown as typeof lineProblems.value) ?? []
       message.value = 'Some items in your bag need attention. Nothing was charged and no order was created.'
       await cart.validate()
+    } else if (er.code === 'phone_unverified') { // CHK-11: e.g. the number was edited after verifying
+      verifiedPhone.value = ''
+      busy.value = false
+      return place()
     } else if (er.code === 'price_changed') {
       changedTotal.value = String((er.fields as unknown as Record<string, string>).total)
       message.value = `Prices changed. Your new total is ${taka(changedTotal.value)}. Press Place order again to confirm.`
@@ -129,11 +161,19 @@ async function place() {
         </section>
 
         <section class="flex flex-col gap-5">
-          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash or Nagad and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
+          <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash, Nagad or a bank transfer and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
           <div class="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" role="group" aria-label="Payment method">
-            <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[64px] items-center gap-3.5 border px-[18px] py-5 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().ecommerce('add_payment_info', { payment_type: m, items: cart.lines.map(useTrack().line) })">
+            <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[72px] items-center gap-3.5 border px-[18px] py-4 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().ecommerce('add_payment_info', { payment_type: m, items: cart.lines.map(useTrack().line) })">
               <span class="h-[18px] w-[18px] flex-none rounded-full border border-ink" :class="form.payment_method === m ? 'bg-[radial-gradient(var(--color-ink)_0_45%,transparent_50%)]' : ''" />
-              <span class="font-display text-h3 font-semibold leading-[1.1]">{{ m === 'cod' ? 'Cash on Delivery' : m === 'bkash' ? 'bKash' : 'Nagad' }}</span>
+              <span class="flex min-w-0 flex-1 items-center justify-between gap-3">
+                <span class="font-display text-h3 font-semibold leading-[1.1]">{{ METHOD_NAME[m] }}</span>
+                <!-- CHK-12 (v1.11): official marks on a white chip so they read on any theme background -->
+                <span class="flex h-10 w-[68px] flex-none items-center justify-center rounded-[6px] bg-white px-1.5 ring-1 ring-black/5" aria-hidden="true">
+                  <img v-if="LOGO[m]" :src="LOGO[m]" alt="" width="60" height="28" class="max-h-7 w-auto" loading="lazy" decoding="async">
+                  <svg v-else-if="m === 'bank'" width="26" height="26" viewBox="0 0 24 24" fill="none" class="text-ink" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5M4.5 10v8M9.5 10v8M14.5 10v8M19.5 10v8M3 20h18" /></svg>
+                  <svg v-else width="28" height="24" viewBox="0 0 28 24" fill="none" class="text-success" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="5" width="25" height="14" rx="2" /><circle cx="14" cy="12" r="3.2" /><path d="M5.5 9v6M22.5 9v6" /></svg>
+                </span>
+              </span>
             </button>
           </div>
           <p v-if="!enabled.length" class="err" role="alert">No payment method is available right now. Please contact us.</p>
@@ -145,6 +185,27 @@ async function place() {
             <div class="grid gap-[18px] sm:grid-cols-2">
               <div class="fld"><label class="sf-lbl" for="sn">Sender {{ payName }} number</label><input id="sn" v-model="form.sender_number" class="sf-inp" inputmode="tel" placeholder="01XXXXXXXXX"><p v-if="errors.sender_number" class="err">{{ errors.sender_number }}</p></div>
               <div class="fld"><label class="sf-lbl" for="tx">Transaction ID</label><input id="tx" v-model="form.trx_id" class="sf-inp uppercase" placeholder="e.g. 8N7A6D5EE7"><p v-if="errors.trx_id" class="err">{{ errors.trx_id }}</p></div>
+            </div>
+          </div>
+          <!-- CHK-04 (v1.11): Bank transfer details from Admin → Settings → Payment -->
+          <div v-if="form.payment_method === 'bank'" class="flex flex-col gap-[18px] bg-cream p-6 md:p-7">
+            <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+              <div v-for="[k, v] in bankRows" :key="k" class="flex items-center justify-between gap-3 border-b border-border pb-2.5 sm:block sm:border-0 sm:pb-0">
+                <dt class="sf-lbl">{{ k }}</dt>
+                <dd class="flex items-center gap-2 text-right font-display text-[19px] sm:mt-0.5 sm:text-left">
+                  <span class="break-all">{{ v }}</span>
+                  <button v-if="k === 'Account number' || k === 'Routing number'" type="button" class="flex h-9 w-9 flex-none items-center justify-center text-muted transition-colors hover:text-ink" :aria-label="`Copy ${k.toLowerCase()}`" @click="copy(v!)">
+                    <svg v-if="copied !== v" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="1.5" /><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8" /></svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                  </button>
+                </dd>
+              </div>
+            </dl>
+            <ol class="list-decimal pl-5 text-[15px] leading-[1.8] text-body"><li>Transfer <b class="font-medium">{{ taka(total) }}</b> to the account above (online banking, app or at a branch).</li><li>Enter the transaction / reference ID from your receipt and the account holder name below.</li></ol>
+            <p v-if="s?.payment_instructions" class="whitespace-pre-line text-[15px] text-body">{{ s.payment_instructions }}</p>
+            <div class="grid gap-[18px] sm:grid-cols-2">
+              <div class="fld"><label class="sf-lbl" for="bn">Account holder name</label><input id="bn" v-model="form.sender_name" class="sf-inp" autocomplete="name" placeholder="Name on the paying account"><p v-if="errors.sender_name" class="err">{{ errors.sender_name }}</p></div>
+              <div class="fld"><label class="sf-lbl" for="br">Transaction / reference ID</label><input id="br" v-model="form.trx_id" class="sf-inp uppercase" placeholder="e.g. FT26112300042"><p v-if="errors.trx_id" class="err">{{ errors.trx_id }}</p></div>
             </div>
           </div>
           <p v-if="errors.payment_method" class="err">{{ errors.payment_method }}</p>
@@ -173,5 +234,6 @@ async function place() {
         <p class="text-center text-[13px] leading-relaxed text-muted">You can cancel this order any time before it ships.</p>
       </aside>
     </form>
+    <CheckoutOtpDialog v-if="otpFor" :phone="otpFor" @verified="onVerified" @close="otpFor = ''" />
   </div>
 </template>
