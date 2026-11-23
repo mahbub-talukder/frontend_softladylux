@@ -14,6 +14,9 @@ const { api, errorOf } = useApi()
 const { data: s } = await useSiteSettings()
 // v1.11 owner request: side-panel picture (and optional heading/text) from Admin → Website content → Login page.
 const { data: panel } = await useAsyncData('login-banner', () => api<Banner | null>('/banners/login/').catch(() => null))
+// The photo's own shape (from its upload size), so `cover` fills the area without cutting anything off.
+const photoRatio = computed(() => { const m = panel.value?.media; return m?.width && m?.height ? `${m.width} / ${m.height}` : '3 / 4' })
+const photoH = computed(() => { const m = panel.value?.media; return m?.width && m?.height ? Math.round((900 * m.height) / m.width) : 1200 })
 
 type Step = 'login' | 'register' | 'verify' | 'forgot' | 'reset'
 const step = ref<Step>(route.query.tab === 'register' ? 'register' : 'login')
@@ -110,25 +113,25 @@ async function doReset() {
 
 <template>
   <section class="flex min-h-[640px] flex-col md:flex-row">
-    <!-- v1.11 (WEB-13, owner feedback): the side panel is a framed card on the panel's soft background: padding around it,
-         rounded corners, a fine inner frame and a soft shadow. Picture from Admin → Website content → Login page, else the
-         drawn illustration. -->
-    <div class="relative hidden flex-1 bg-tile-2 p-8 md:flex lg:p-12">
-      <div class="login-card relative flex min-h-[520px] flex-1 flex-col overflow-hidden rounded-[18px] bg-surface shadow-pop">
-        <!-- One layout for both (owner request): picture on top, heading and text below. Only the picture differs: the
-             owner's photo fills its area with rounded corners; the default illustration is shown whole. -->
-        <div class="relative min-h-0 flex-1 bg-cream" :class="panel?.media ? 'p-4 pb-0 lg:p-5 lg:pb-0' : ''">
-          <div v-if="panel?.media" class="relative h-full overflow-hidden rounded-[12px]">
-            <NuxtImg format="webp" :src="mediaSrc(panel.media.url)" :alt="panel.media.alt_text" width="900" height="1200" sizes="md:50vw" loading="eager" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out" />
-          </div>
-          <img v-else src="/brand/login-illustration.svg" alt="" width="600" height="800" class="absolute inset-0 h-full w-full object-contain object-bottom px-2 pt-3" loading="eager" decoding="async">
+    <!-- v1.11 (WEB-13, owner feedback): the side panel is a card on the panel's soft background: padding around it, rounded
+         corners and a soft shadow, no frame line. Picture from Admin → Website content → Login page, else the drawn
+         illustration. -->
+    <div class="relative hidden flex-1 bg-tile-2 p-8 md:flex lg:p-12" :class="panel?.media ? 'items-center justify-center' : ''">
+      <div class="login-card relative flex flex-col overflow-hidden rounded-[18px] bg-surface shadow-pop" :class="panel?.media ? 'w-full' : 'min-h-[520px] flex-1'" :style="panel?.media ? { maxWidth: `min(520px, calc(62vh * ${photoRatio}))` } : undefined">
+        <!-- One layout for both (owner request): picture on top, heading and text below; only the picture differs. -->
+        <!-- Photo: edge to edge at the top of the card, no frame, in the uploaded picture's own shape, so it covers its
+             area and still shows whole. On short screens the whole card narrows (photo height ≤ 62vh) instead of cropping. -->
+        <div v-if="panel?.media" class="relative overflow-hidden bg-cream" :style="{ aspectRatio: photoRatio }">
+          <NuxtImg format="webp" :src="mediaSrc(panel.media.url)" :alt="panel.media.alt_text" :width="900" :height="photoH" sizes="md:50vw lg:520px" loading="eager" class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] ease-out" />
+        </div>
+        <div v-else class="relative min-h-0 flex-1 bg-cream">
+          <img src="/brand/login-illustration.svg" alt="" width="600" height="800" class="absolute inset-0 h-full w-full object-contain object-bottom px-2 pt-3" loading="eager" decoding="async">
         </div>
         <div class="relative p-9 lg:p-11">
           <span class="mb-3 block h-px w-12 bg-gold" aria-hidden="true" />
           <h2 class="font-display text-h2 leading-[1.08] lg:text-h1">{{ panel?.heading || 'Your wardrobe, always within reach' }}</h2>
           <p class="mt-3 text-[15px] leading-[1.65] text-body">{{ panel?.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p>
         </div>
-        <div class="pointer-events-none absolute inset-3 rounded-[12px] border border-gold/15" aria-hidden="true" />
       </div>
     </div>
 
