@@ -3,7 +3,7 @@
 // ACC-02 (clear message when the SMS can't be sent), ACC-03 (mobile + password, remember me),
 // ACC-11 (forgot password by OTP), ACC-12/14. Guest checkout always stays available.
 import type { ApiError } from '~/utils/apiError'
-import type { CustomerMe } from '~/types/api'
+import type { CustomerMe, Banner } from '~/types/api'
 import { cleanCode, isCode, normalizePhone, passwordProblem, RESEND_SECONDS, secondsLeft } from '~/utils/otp'
 
 useSeoMeta({ title: 'Log in', robots: 'noindex' })
@@ -12,6 +12,8 @@ const route = useRoute()
 const customer = useCustomerStore()
 const { api, errorOf } = useApi()
 const { data: s } = await useSiteSettings()
+// v1.11 owner request: side-panel picture (and optional heading/text) from Admin → Website content → Login page.
+const { data: panel } = await useAsyncData('login-banner', () => api<Banner | null>('/banners/login/').catch(() => null))
 
 type Step = 'login' | 'register' | 'verify' | 'forgot' | 'reset'
 const step = ref<Step>(route.query.tab === 'register' ? 'register' : 'login')
@@ -108,10 +110,16 @@ async function doReset() {
 
 <template>
   <section class="flex min-h-[640px] flex-col md:flex-row">
-    <div class="relative hidden min-h-[420px] flex-1 items-center justify-center bg-tile-2 md:flex">
+    <!-- v1.11: the owner's picture fills the panel (cover) with a soft shade under the text; without one, the drawn panel stays -->
+    <div v-if="panel?.media" class="relative hidden min-h-[420px] flex-1 overflow-hidden bg-tile-2 md:flex">
+      <NuxtImg format="webp" :src="mediaSrc(panel.media.url)" :alt="panel.media.alt_text" width="900" height="1200" sizes="md:50vw" loading="eager" class="absolute inset-0 h-full w-full object-cover" />
+      <div class="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-dark/75 via-dark/30 to-transparent" aria-hidden="true" />
+      <div class="absolute bottom-16 left-16 right-10 max-w-[420px] text-on-dark"><h2 class="font-display text-h1 leading-[1.05]">{{ panel.heading || 'Your wardrobe, always within reach' }}</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-on-dark/90">{{ panel.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p></div>
+    </div>
+    <div v-else class="relative hidden min-h-[420px] flex-1 items-center justify-center bg-tile-2 md:flex">
       <div class="absolute inset-9 border border-gold/35" />
       <div class="-mt-28 w-[260px] text-gold" aria-hidden="true"><StoreArt kind="set" /></div>
-      <div class="absolute bottom-16 left-16 max-w-[380px]"><h2 class="font-display text-h1 leading-[1.05]">Your wardrobe, always within reach</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-body">Save favourites and follow every order from confirmation to delivery.</p></div>
+      <div class="absolute bottom-16 left-16 max-w-[380px]"><h2 class="font-display text-h1 leading-[1.05]">{{ panel?.heading || 'Your wardrobe, always within reach' }}</h2><p class="mt-3 text-[15.5px] leading-[1.65] text-body">{{ panel?.text || 'Save favourites and follow every order from confirmation to delivery.' }}</p></div>
     </div>
 
     <div class="flex flex-1 items-start justify-center px-5 py-10 md:items-center md:px-10 md:py-16">

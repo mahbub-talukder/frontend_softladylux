@@ -6,7 +6,7 @@ import type { FieldDef } from '~/components/admin/ContentList.vue'
 definePageMeta({ layout: 'admin', permission: 'website.manage' })
 
 const LINK_TYPES = ['url', 'category', 'product']
-const BANNER_TITLES = { home_promo: 'Home promo banner', home_offer: 'Home offer banner', signature: 'Signature collection (big panel)', popup: 'Promotional popup' }
+const BANNER_TITLES = { home_promo: 'Home promo banner', home_offer: 'Home offer banner', signature: 'Signature collection (big panel)', popup: 'Promotional popup', login: 'Login / register page panel' }
 type Tab = { id: string; label: string; endpoint: string; titleKey: string; canCreate: boolean; canDelete: boolean; note?: string; fields: FieldDef[]; defaults?: Record<string, unknown>; query?: Record<string, string>; titles?: Record<string, string>; hideSort?: boolean }
 const TABS: Tab[] = [
   { id: 'carousel', label: 'Carousel', endpoint: '/admin/website/carousel/', titleKey: 'heading', canCreate: true, canDelete: true,
@@ -31,6 +31,13 @@ const TABS: Tab[] = [
       { key: 'media', label: 'Promotional image', type: 'media', kind: 'banner', hint: '800 × 800 px, JPG/PNG/WebP up to 5 MB', required: true },
       { key: 'heading', label: 'Heading', max: 120 }, { key: 'text', label: 'Promotional text', type: 'textarea', max: 240 },
       { key: 'button_label', label: 'Button label', max: 40, hint: 'Default: Shop now' }, { key: 'link', label: 'Button link', max: 300, hint: 'A page on this site such as /shop/offers, or a full https:// link' }] },
+  // v1.11 owner request: the picture beside the login / register form (tablets and desktops)
+  { id: 'login', label: 'Login page', endpoint: '/admin/website/banners/', titleKey: 'placement', canCreate: false, canDelete: false,
+    query: { placement: 'login' }, titles: BANNER_TITLES, hideSort: true,
+    note: 'The panel beside the login and register form on tablets and desktops (phones show only the form). The picture fills the panel and is cropped from the centre, so a portrait picture works best: 900 × 1200 px. The heading and text sit on it, bottom left; leave them empty to keep the default wording. Without a picture the drawn panel is shown.', fields: [
+      { key: 'media', label: 'Picture', type: 'media', kind: 'banner', hint: '900 × 1200 px (portrait), JPG/PNG/WebP up to 5 MB' },
+      { key: 'heading', label: 'Heading', max: 120, hint: 'Default: Your wardrobe, always within reach' },
+      { key: 'text', label: 'Text', type: 'textarea', max: 240, hint: 'Default: Save favourites and follow every order…' }] },
   { id: 'videos', label: 'Videos', endpoint: '/admin/website/videos/', titleKey: 'title', canCreate: true, canDelete: true,
     note: 'Paste a YouTube, Vimeo or direct video link (.mp4/.webm). It plays in place on the home page. Other links open in the same tab.', fields: [
       { key: 'title', label: 'Title', required: true, max: 120 }, { key: 'url', label: 'Video URL', required: true, url: true, max: 200 },

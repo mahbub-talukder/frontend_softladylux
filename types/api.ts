@@ -24,7 +24,7 @@ export interface Slide {
 }
 // WEB-02 / WEB-11 (amendment v1.6): fixed placements; `signature` is the big Signature panel, `popup` the promo dialog
 export interface Banner {
-  id: number; placement: 'home_promo' | 'home_offer' | 'signature' | 'popup'; media: Media | null; heading: string
+  id: number; placement: 'home_promo' | 'home_offer' | 'signature' | 'popup' | 'login'; media: Media | null; heading: string
   text: string; button_label: string; link: string; is_active: boolean; updated_at: string
 }
 export interface Video { id: number; title: string; url: string; thumbnail: Media | null; sort: number; is_active: boolean }
