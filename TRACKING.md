@@ -23,7 +23,7 @@ Keep this list in step with the code: `tests/tracking.test.ts` fails when a name
 |---|---|
 | add_to_bag | product page, Add to bag |
 | quick_add | product card, Quick Add (replaced by buy_open in v1.11) |
-| buy_open, buy_add_to_cart, buy_checkout_now (v1.11) | product card Buy button and its product dialog (CAT-12) |
+| buy_open, buy_add_to_cart (Add to Bag), buy_checkout_now (v1.11) | product card Buy button and its product dialog (CAT-12) |
 | header_whatsapp, header_call, header_bag, header_wishlist, header_account, header_track_order, header_find_size | header |
 | menu_whatsapp, menu_call | phone slide-in menu |
 | floating_cart, floating_cart_hide | floating cart widget; floating_cart_show is the re-enable button on the cart page |

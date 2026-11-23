@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // SRS v1.11 CAT-12: compact product dialog opened by a card's "Buy" button (interaction modelled on the owner's reference).
 // Photo, name, price, colour tiles (the colour's own photo when one is tagged, else a swatch), size chips (sold-out sizes
-// struck through), size guide, quantity, then two actions with icons: Add to Cart (adds, confirms, closes) and Checkout Now
+// struck through), size guide, quantity, then two actions with icons: Add to Bag (adds, confirms, closes) and Checkout Now
 // (adds, opens /checkout with the whole bag). Both stay disabled until every required option is chosen.
 // Phones: bottom sheet with the actions pinned at the bottom. Wider screens: centred two-column card.
 // Dialog behaviour (Esc, backdrop, focus trap and return, scroll lock) comes from StoreDialog.
@@ -153,8 +153,9 @@ watch(sizeFinder.open, (o) => { if (!o) document.documentElement.style.overflow 
           <span>Checkout Now</span>
         </button>
         <button type="button" class="btn-o flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_add_to_cart" @click="onAdd">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4h2.2l2.3 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.1" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17.5" cy="20" r="1.3" /></svg>
-          <span>Add to Cart</span>
+          <!-- bag with a plus: "add to bag" -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 12.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /><path d="M12 11.5v6M9 14.5h6" /></svg>
+          <span>Add to Bag</span>
         </button>
       </div>
     </div>
