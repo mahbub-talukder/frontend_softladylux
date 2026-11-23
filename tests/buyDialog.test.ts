@@ -12,8 +12,8 @@ describe('Buy dialog selection (CAT-12)', () => {
     const st = initialState(multi)
     expect(st).toEqual({ colour: '', size: '' })
     expect(chosenVariant(multi, st)).toBeNull()
-    expect(missing(multi, st)).toBe('Select a colour and size')
-    expect(missing(multi, { colour: 'Rose', size: '' })).toBe('Select a size')
+    expect(missing(multi, st)).toBe('Please select a colour and size')
+    expect(missing(multi, { colour: 'Rose', size: '' })).toBe('Please select a size')
     expect(chosenVariant(multi, { colour: 'Rose', size: '' })).toBeNull()
     expect(chosenVariant(multi, { colour: 'Rose', size: '34B' })?.id).toBe(2)
     expect(missing(multi, { colour: 'Rose', size: '34B' })).toBe('')
@@ -38,7 +38,7 @@ describe('Buy dialog selection (CAT-12)', () => {
   it('a colour without size labels needs no size', () => {
     const noSize = [v(5, 'Rose', ''), v(6, 'Black', '')]
     expect(needsSize(noSize, 'Rose')).toBe(false)
-    expect(missing(noSize, { colour: '', size: '' })).toBe('Select a colour')
+    expect(missing(noSize, { colour: '', size: '' })).toBe('Please select a colour')
     expect(chosenVariant(noSize, { colour: 'Black', size: '' })?.id).toBe(6)
     expect(coloursOf(noSize)).toEqual(['Rose', 'Black'])
   })

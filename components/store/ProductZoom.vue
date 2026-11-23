@@ -6,7 +6,8 @@
 // - Desktop: Ctrl/⌘ + mouse wheel zooms around the pointer (a plain wheel keeps scrolling the page); drag pans.
 // - Double-tap / double-click toggles 2× at that point. Changing photo resets the zoom.
 // - Only `transform` changes (GPU, no layout). A 2× sharper rendition is fetched the first time the photo is zoomed.
-const props = defineProps<{ src?: string | null; alt: string; tileKey: number | string; category?: string }>()
+// `ratio` / `fit` (v1.11, Buy dialog): the box shape, and whether the photo fills it (cover) or shows whole (contain).
+const props = withDefaults(defineProps<{ src?: string | null; alt: string; tileKey: number | string; category?: string; ratio?: string; fit?: 'cover' | 'contain'; compact?: boolean }>(), { src: null, category: undefined, ratio: '4/5', fit: 'cover', compact: false })
 
 const MIN = 1
 const MAX = 4
@@ -135,27 +136,27 @@ const hiSrc = computed(() => (props.src ? img(mediaSrc(props.src), { width: 1440
 <template>
   <div
     ref="box"
-    class="zoom-box relative aspect-[4/5] select-none overflow-hidden"
-    :class="[zoomed ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in', zoomed ? 'touch-none' : 'touch-pan-y']"
+    class="zoom-box relative select-none overflow-hidden"
+    :class="[zoomed ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in', zoomed ? 'touch-none' : 'touch-pan-y', fit === 'contain' ? 'fit-contain' : '']" :style="{ aspectRatio: ratio }"
     tabindex="0" role="group" :aria-label="`${alt}, photo. Use plus and minus to zoom.`"
     @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up" @dblclick="dbl" @keydown="key" @dragstart.prevent
   >
     <div class="origin-center will-change-transform" :class="animate ? 'transition-transform duration-300 ease-out' : ''" :style="{ transform: `translate3d(${tx}px, ${ty}px, 0) scale(${scale})` }">
-      <StoreTile :src="src" :alt="alt" :tile-key="tileKey" :category="category" ratio="4/5" :width="720" :height="900" sizes="xs:100vw lg:50vw" eager art-width="52%">
+      <StoreTile :src="src" :alt="alt" :tile-key="tileKey" :category="category" :ratio="ratio" :width="720" :height="900" sizes="xs:100vw lg:50vw" eager art-width="52%">
         <img v-if="src && hiRes" :src="hiSrc" alt="" aria-hidden="true" class="media-cover pointer-events-none absolute inset-0 h-full w-full opacity-0 transition-opacity duration-300" decoding="async" @load="($event.target as HTMLImageElement).classList.remove('opacity-0')">
       </StoreTile>
     </div>
     <slot />
 
     <!-- Controls: bottom right, 44 px targets, frosted so they read on any photo -->
-    <div data-zoom-ui class="absolute bottom-3 right-3 flex items-center overflow-hidden rounded-full bg-bg/85 text-ink shadow-pop backdrop-blur-sm md:bottom-5 md:right-5">
+    <div data-zoom-ui class="absolute flex" :class="compact ? 'bottom-2 right-2 scale-90 origin-bottom-right' : 'bottom-3 right-3 md:bottom-5 md:right-5'"><div class="flex items-center overflow-hidden rounded-full bg-bg/85 text-ink shadow-pop backdrop-blur-sm">
       <button type="button" class="zoom-btn" :disabled="scale <= MIN" aria-label="Zoom out" data-track="product_zoom_out" @click="zoomOut"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14" /></svg></button>
       <span class="min-w-[46px] text-center text-xs tabular-nums text-body" aria-hidden="true">{{ pct }}</span>
       <button type="button" class="zoom-btn" :disabled="scale >= MAX" aria-label="Zoom in" data-track="product_zoom_in" @click="zoomIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></button>
       <Transition enter-active-class="transition-[opacity,width] duration-200" leave-active-class="transition-[opacity,width] duration-150" enter-from-class="w-0 opacity-0" leave-to-class="w-0 opacity-0">
         <button v-if="zoomed" type="button" class="zoom-btn w-11 border-l border-border" aria-label="Reset zoom" @click="reset"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6" /></svg></button>
       </Transition>
-    </div>
+    </div></div>
     <p class="sr-only" aria-live="polite">{{ live }}</p>
   </div>
 </template>
@@ -164,5 +165,6 @@ const hiSrc = computed(() => (props.src ? img(mediaSrc(props.src), { width: 1440
 .zoom-btn { display: flex; height: 2.75rem; width: 2.75rem; flex: none; align-items: center; justify-content: center; transition: background-color 0.2s, color 0.2s; }
 .zoom-btn:hover:not(:disabled) { background-color: var(--color-cream); }
 .zoom-btn:disabled { color: var(--color-muted); opacity: 0.5; cursor: default; }
+.fit-contain :deep(img) { object-fit: contain; }
 .zoom-box:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 </style>

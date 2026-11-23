@@ -11,20 +11,56 @@
 import type { Slide } from '~/types/api'
 
 const props = defineProps<{ slides: Slide[] }>()
+const img = useImage()
 const i = ref(0)
 const n = computed(() => props.slides.length)
 const s = computed(() => props.slides[i.value % Math.max(n.value, 1)])
 const go = (k: number) => { i.value = (k + n.value) % n.value }
 const paused = ref(false)
-let timer: ReturnType<typeof setInterval> | undefined
+// WEB-01 (v1.11): 5 s per slide. Root cause of the old "white flash": on a cold cache the image server needs 3–6 s to make
+// each resized picture, so a 3 s autoplay often slid in a slide whose picture did not exist yet (the empty box showed).
+// Now every picture is preloaded and decoded first, and autoplay never moves to a slide that is not ready.
+const INTERVAL = 5000
+const ready = ref<Set<number>>(new Set()) // slide ids whose picture is decoded (or failed: never block forever)
+const isReady = (x: Slide) => !x.media?.url || ready.value.has(x.id)
+let timer: ReturnType<typeof setTimeout> | undefined
+function schedule(delay = INTERVAL) {
+  clearTimeout(timer)
+  timer = setTimeout(() => {
+    if (n.value < 2 || paused.value || document.hidden || settling.value) return schedule()
+    const nextSlide = props.slides[(i.value + 1) % n.value]!
+    if (!isReady(nextSlide)) return schedule(300) // wait for the picture, check again shortly
+    slide(1)
+    schedule()
+  }, delay)
+}
+// The exact URL the CSS image-set will pick (same width, density and quality), so the preload fills the browser cache.
+function shownUrl(x: Slide) {
+  const phone = window.matchMedia('(max-width: 639px)').matches
+  const dense = window.devicePixelRatio >= 1.5
+  const src = phone ? (x.mobile_media ?? x.media).url : x.media.url
+  const w = (phone ? 640 : 1200) * (dense ? 2 : 1)
+  return img(mediaSrc(src), { width: w, format: 'webp', quality: dense ? 70 : 80 })
+}
+async function preload() {
+  const m = n.value
+  for (let k = 1; k <= m; k++) { // next slide first, then the rest in order, current last (it is already on screen)
+    const x = props.slides[(i.value + k) % m]
+    if (!x?.media?.url || ready.value.has(x.id)) continue
+    const pic = new Image()
+    pic.src = shownUrl(x)
+    try { await pic.decode() } catch { /* a broken picture must not stop the carousel */ }
+    ready.value = new Set(ready.value).add(x.id)
+  }
+}
 onMounted(() => {
+  preload()
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  timer = setInterval(() => { if (n.value > 1 && !paused.value && !document.hidden) slide(1) }, 3000) // WEB-01 (v1.6): 3 s
+  schedule()
 })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => clearTimeout(timer))
 
 // IPX URLs at fixed target widths (1x and 2x). Height is left open: `cover` does the cropping.
-const img = useImage()
 const bg = (src: string, w: number) => `url("${img(mediaSrc(src), { width: w, format: 'webp', quality: 80 })}") 1x, url("${img(mediaSrc(src), { width: w * 2, format: 'webp', quality: 70 })}") 2x`
 const vars = (x: Slide) => ({
   '--hero-d': `image-set(${bg(x.media.url, 1200)})`,
@@ -57,12 +93,14 @@ const slots = computed(() => {
   const m = n.value
   if (!m) return []
   const side = dragX.value > 0 ? -1 : 1
+  // Every slide stays rendered (at most 8): a picture is fetched once and never dropped, so it can never reload mid-move.
+  // Slides further than one step away wait off-screen at ±2.
   return props.slides.map((x, k) => {
     let off = (k - i.value + m) % m
     if (off > m / 2) off -= m
     if (m === 2 && off !== 0) off = side
-    return { off, x }
-  }).filter((sl) => Math.abs(sl.off) <= 1)
+    return { off: Math.max(-2, Math.min(2, off)), x }
+  })
 })
 // WEB-12 (v1.11): phone box ratio = the first slide's mobile picture (or desktop picture), clamped 4:5 … 16:9.
 const mobileRatio = computed(() => {
@@ -120,22 +158,28 @@ const href = (x: Slide) => (x.link_type === 'category' ? `/shop/${x.link_value}`
          eyebrow starts exactly where the picture starts and the slide controls end exactly where the picture ends. Between them the
          heading, subtext and CTA buttons share the free space (flex-1). No per-column offsets to drift at other widths. -->
     <div class="order-2 flex flex-col justify-between gap-8 px-5 md:px-10 lg:order-1 lg:pl-[max(40px,calc((100vw-1320px)/2+40px))] lg:pr-[72px]">
-      <Transition mode="out-in" enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-200 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
-        <div :key="`e${s.id}`" aria-live="polite"><div v-if="s.eyebrow" class="eyebrow">{{ s.eyebrow }}</div></div>
+      <div class="grid">
+      <Transition enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-300 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
+        <div :key="`e${s.id}`" class="[grid-area:1/1]" aria-live="polite"><div v-if="s.eyebrow" class="eyebrow">{{ s.eyebrow }}</div></div>
       </Transition>
+      </div>
       <div class="flex flex-1 flex-col justify-center gap-6">
-        <Transition mode="out-in" enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-200 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
-          <div :key="s.id" class="flex flex-col gap-5">
+        <div class="grid">
+        <Transition enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-300 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
+          <div :key="s.id" class="flex flex-col gap-5 [grid-area:1/1]">
             <h1 class="h-display max-w-[520px]">{{ s.heading }}</h1>
             <p v-if="s.subtext" class="max-w-[430px] text-[17px] leading-[1.6] text-body">{{ s.subtext }}</p>
           </div>
         </Transition>
-        <Transition mode="out-in" enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-200 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
-        <div :key="`cta${s.id}`" class="flex flex-wrap gap-4">
+        </div>
+        <div class="grid">
+        <Transition enter-active-class="transition duration-500 ease-out" leave-active-class="transition duration-300 ease-in" enter-from-class="translate-y-2 opacity-0" leave-to-class="opacity-0">
+        <div :key="`cta${s.id}`" class="flex flex-wrap gap-4 [grid-area:1/1]">
           <NuxtLink v-if="s.button_label" :to="href(s)" class="btn" data-track="hero_cta">{{ s.button_label }}</NuxtLink>
           <button type="button" class="btn-o" aria-haspopup="dialog" data-track="hero_find_size" @click="sizeFinder.show()">Find your size</button>
         </div>
         </Transition>
+        </div>
       </div>
       <!-- Slide controls close the column, so their bottom edge is the picture's bottom edge. -->
       <div v-if="n > 1" class="flex flex-wrap items-center gap-x-3.5 gap-y-1">
@@ -148,8 +192,9 @@ const href = (x: Slide) => (x.link_type === 'category' ? `/shop/${x.link_value}`
     <div class="order-1 px-4 sm:h-[400px] md:px-6 lg:order-2 lg:h-auto lg:pl-0 lg:pr-[max(40px,calc((100vw-1320px)/2+40px))]">
       <div ref="box" class="hero-box relative cursor-grab touch-pan-y select-none overflow-hidden rounded-[5px] bg-cream active:cursor-grabbing" :style="{ '--hero-ratio': mobileRatio }" @pointerdown="swipeStart" @pointermove="swipeMove" @pointerup="swipeEnd" @pointercancel="swipeCancel" @dragstart.prevent>
         <div class="absolute inset-0 will-change-transform" :class="settling ? 'transition-transform duration-[350ms] ease-out' : ''" :style="{ transform: `translate3d(${dragX}px,0,0)` }" @transitionend.self="finish">
-          <div v-for="slot in slots" :key="slot.x.id" class="absolute inset-0" :style="{ left: `${slot.off * 100}%` }" :aria-hidden="slot.off !== 0 ? 'true' : undefined">
-            <div v-if="slot.x.media?.url" role="img" :aria-label="slot.x.media.alt_text || slot.x.heading" class="hero-bg absolute inset-0" :style="vars(slot.x)" />
+          <div v-for="slot in slots" :key="slot.x.id" class="absolute inset-0" :style="{ left: `${slot.off * 100}%`, visibility: Math.abs(slot.off) > 1 ? 'hidden' : undefined }" :aria-hidden="slot.off !== 0 ? 'true' : undefined">
+            <!-- First slide is server-rendered visible (LCP); others fade in once decoded if they are reached before that -->
+            <div v-if="slot.x.media?.url" role="img" :aria-label="slot.x.media.alt_text || slot.x.heading" class="hero-bg absolute inset-0 transition-opacity duration-500" :class="slot.x.id === slides[0]?.id || isReady(slot.x) ? 'opacity-100' : 'opacity-0'" :style="vars(slot.x)" />
             <StoreTile v-else src="" ratio="auto" tint="bg-tile-1" class="h-full !aspect-auto" art-width="380px" category="bras" />
           </div>
         </div>

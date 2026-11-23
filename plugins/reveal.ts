@@ -1,45 +1,16 @@
-// SRS v1.11 STF-UI-03: `v-reveal` Fade-In-Up entrance for product cards and lazily shown content.
-// - One shared IntersectionObserver; each element animates once, then is unobserved and its classes removed.
-// - Only opacity and transform animate (compositor-only, no layout work); cards entering together are staggered
-//   by 60 ms (max 300 ms) so a row ripples in instead of popping.
-// - Server-rendered content that is already on screen at first paint is never hidden (no flash, no LCP cost);
-//   content further down, or added later (client navigation, "load more", lazy sections), fades up as it appears.
-// - Nothing happens without JS or with prefers-reduced-motion: the content is simply visible.
+// SRS v1.11 STF-UI-03: `v-reveal` marks an element for the Fade-In-Up entrance run by the inline head script
+// (utils/revealScript.ts). The attribute is server-rendered (getSSRProps), so the script finds first-screen cards
+// before hydration; elements created later (client navigation, "load more", lazy sections) are handed to the same
+// observer from beforeMount, before they are painted, so they never flash in their final state.
+import { REVEAL_SCRIPT } from '~/utils/revealScript'
+
+declare global { interface Window { __sllReveal?: (el: Element) => void } }
+
 export default defineNuxtPlugin((nuxtApp) => {
-  let io: IntersectionObserver | null = null
-  const reduce = import.meta.client && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  function done(el: HTMLElement) {
-    el.classList.remove('reveal', 'reveal-in')
-    el.style.transitionDelay = ''
-  }
-  function observer() {
-    io ??= new IntersectionObserver((entries) => {
-      let k = 0
-      for (const e of entries) {
-        if (!e.isIntersecting) continue
-        const el = e.target as HTMLElement
-        io!.unobserve(el)
-        el.style.transitionDelay = `${Math.min(k++, 5) * 60}ms`
-        el.classList.add('reveal-in')
-        el.addEventListener('transitionend', () => done(el), { once: true })
-        setTimeout(() => done(el), 1200) // transitionend can be skipped (hidden tab)
-      }
-    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 })
-    return io
-  }
-
+  useHead({ script: [{ key: 'sll-reveal', innerHTML: REVEAL_SCRIPT, tagPosition: 'head' }] })
   nuxtApp.vueApp.directive<HTMLElement>('reveal', {
-    getSSRProps: () => ({}),
-    mounted(el) {
-      if (!import.meta.client || reduce || !('IntersectionObserver' in window)) return
-      if (nuxtApp.isHydrating) {
-        const r = el.getBoundingClientRect()
-        if (r.top < window.innerHeight && r.bottom > 0) return // already painted on screen: keep it still
-      }
-      el.classList.add('reveal')
-      observer().observe(el)
-    },
-    beforeUnmount(el) { io?.unobserve(el) }
+    getSSRProps: () => ({ 'data-reveal': '' }),
+    beforeMount(el) { el.setAttribute('data-reveal', '') },
+    mounted(el) { if (import.meta.client) window.__sllReveal?.(el) }
   })
 })

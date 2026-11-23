@@ -35,8 +35,8 @@ export function chosenVariant(variants: CardVariant[], st: BuyState): CardVarian
 export function missing(variants: CardVariant[], st: BuyState): string {
   const needColour = !st.colour && coloursOf(variants).length > 1
   const needSz = !st.size && (st.colour || coloursOf(variants).length === 1) && needsSize(variants, st.colour || coloursOf(variants)[0]!)
-  if (needColour && needsSize(variants, coloursOf(variants)[0]!)) return 'Select a colour and size'
-  if (needColour) return 'Select a colour'
-  if (needSz) return 'Select a size'
+  if (needColour && needsSize(variants, coloursOf(variants)[0]!)) return 'Please select a colour and size'
+  if (needColour) return 'Please select a colour'
+  if (needSz) return 'Please select a size'
   return ''
 }

@@ -71,29 +71,29 @@ const logoH = computed(() => (scrolled.value ? 'h-10 md:h-12 lg:h-14' : 'h-11 md
       <nav class="flex shrink-0 items-center justify-end gap-0 lg:gap-0.5 xl:gap-1 [&>*]:shrink-0" aria-label="Shortcuts">
         <!-- Icons at every desktop width (tooltip + aria-label): text labels did not fit beside a 560 px search on 1280-1600 px screens.
              Eight icons from md up: boxes are 36/40/44 px wide (md/lg/xl) and always 44 px tall. -->
-        <a v-if="wa" :href="wa" target="_blank" rel="noopener" class="tip flex h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11" aria-label="Chat on WhatsApp" data-tip="Chat on WhatsApp" data-track="header_whatsapp">
+        <a v-if="wa" :href="wa" target="_blank" rel="noopener" style="--hdr: var(--brand-whatsapp)" class="tip flex h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11" aria-label="Chat on WhatsApp" data-tip="Chat on WhatsApp" data-track="header_whatsapp">
           <!-- WhatsApp glyph (Tabler "brand-whatsapp", MIT), same 1.5 outline as the other header icons -->
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a.5 .5 0 0 0 0 1" /></svg>
         </a>
-        <a v-if="tel" :href="tel" class="tip flex h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11" aria-label="Call us" data-tip="Call us" data-track="header_call">
+        <a v-if="tel" :href="tel" style="--hdr: var(--color-accent)" class="tip flex h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11" aria-label="Call us" data-tip="Call us" data-track="header_call">
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M5.2 3.5h3.3l1.6 4.2-2.1 1.4a11.5 11.5 0 0 0 6.9 6.9l1.4-2.1 4.2 1.6v3.3a1.6 1.6 0 0 1-1.7 1.6A16.6 16.6 0 0 1 3.6 5.2a1.6 1.6 0 0 1 1.6-1.7z" /></svg>
         </a>
         <span v-if="wa || tel" class="hidden h-[22px] w-px bg-field md:block" />
-        <NuxtLink to="/track" class="tip hidden h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11 md:flex" aria-label="Track order" data-tip="Track order" data-track="header_track_order">
+        <NuxtLink to="/track" class="tip hidden h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11 md:flex" aria-label="Track order" data-tip="Track order" data-track="header_track_order">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z" /><path d="M3 7v10l9 4 9-4V7M12 11v10" /></svg>
         </NuxtLink>
-        <button type="button" class="tip hidden h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11 md:flex" aria-label="Find my size" data-tip="Find my size" data-track="header_find_size" aria-haspopup="dialog" @click="sizeFinder.show()">
+        <button type="button" class="tip hidden h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11 md:flex" aria-label="Find my size" data-tip="Find my size" data-track="header_find_size" aria-haspopup="dialog" @click="sizeFinder.show()">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="8" width="19" height="8" /><path d="M6 8v3M10 8v4M14 8v3M18 8v4" /></svg>
         </button>
         <span class="hidden h-[22px] w-px bg-field md:block" />
-        <NuxtLink to="/wishlist" class="tip relative hidden h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11 sm:flex" :aria-label="`Wishlist, ${customer.wishIds.length} items`" data-tip="Wishlist" data-track="header_wishlist">
+        <NuxtLink to="/wishlist" class="tip relative hidden h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11 sm:flex" :aria-label="`Wishlist, ${customer.wishIds.length} items`" data-tip="Wishlist" data-track="header_wishlist">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.7 3.7 4.5 7 4.5c2 0 3.7 1.1 5 3 1.3-1.9 3-3 5-3 3.3 0 5.3 3.2 4.2 6.6C19.5 15.9 12 20.5 12 20.5z" /></svg>
           <span v-if="customer.wishIds.length" class="absolute -right-0.5 top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-accent px-1 text-xs font-medium text-primary-contrast xl:right-0.5">{{ customer.wishIds.length }}</span>
         </NuxtLink>
-        <NuxtLink :to="customer.isIn ? '/account' : '/login'" class="tip hidden h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11 sm:flex" :aria-label="customer.isIn ? 'My account' : 'Log in'" :data-tip="customer.isIn ? 'My account' : 'Log in'" data-track="header_account">
+        <NuxtLink :to="customer.isIn ? '/account' : '/login'" class="tip hidden h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11 sm:flex" :aria-label="customer.isIn ? 'My account' : 'Log in'" :data-tip="customer.isIn ? 'My account' : 'Log in'" data-track="header_account">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4.5 4.2-6.5 8-6.5s7 2 8 6.5" /></svg>
         </NuxtLink>
-        <NuxtLink to="/cart" class="tip relative flex h-11 w-9 items-center justify-center transition-colors hover:text-accent lg:w-10 xl:w-11" :aria-label="`Shopping bag, ${cart.count} items`" data-tip="Bag" data-track="header_bag">
+        <NuxtLink to="/cart" class="tip relative flex h-11 w-9 items-center justify-center hdr-btn lg:w-10 xl:w-11" :aria-label="`Shopping bag, ${cart.count} items`" data-tip="Bag" data-track="header_bag">
           <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 8h14l-1 12H6z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
           <span v-if="cart.count" class="absolute -right-0.5 top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-accent px-1 text-xs font-medium text-primary-contrast xl:right-0.5">{{ cart.count }}</span>
         </NuxtLink>
@@ -123,3 +123,22 @@ const logoH = computed(() => (scrolled.value ? 'h-10 md:h-12 lg:h-14' : 'h-11 md
     </Transition>
   </header>
 </template>
+
+<style scoped>
+/* v1.11 owner request: header shortcuts get the footer social icons' hover. A soft disc in the action's colour
+   (WhatsApp green, Call accent, the rest the brand colour) grows behind the icon, which turns light and lifts.
+   The disc is a pseudo-element, so the 44 px hit area and the layout never change; count badges stay on top. */
+.hdr-btn { --hdr-c: var(--hdr, var(--color-primary)); position: relative; isolation: isolate; transition: color 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hdr-btn::before {
+  content: ""; position: absolute; left: 50%; top: 50%; z-index: -1; height: 2.25rem; width: 2.25rem; border-radius: 9999px;
+  background: var(--hdr-c); transform: translate(-50%, -50%) scale(0.4); opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s, box-shadow 0.3s;
+}
+@media (hover: hover) {
+  .hdr-btn:hover { color: var(--color-on-dark); transform: translateY(-2px); }
+  .hdr-btn:hover::before { opacity: 1; transform: translate(-50%, -50%) scale(1); box-shadow: 0 8px 16px -8px var(--hdr-c); }
+}
+.hdr-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 9999px; }
+.hdr-btn:active { transform: translateY(0) scale(0.94); }
+@media (prefers-reduced-motion: reduce) { .hdr-btn, .hdr-btn::before { transition: none; } .hdr-btn:hover { transform: none; } }
+</style>

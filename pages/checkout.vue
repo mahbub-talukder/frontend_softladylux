@@ -45,7 +45,7 @@ onMounted(async () => {
 watch(() => [cart.area, cart.coupon], () => cart.validate())
 
 const enabled = computed(() => (['bkash', 'nagad', 'bank', 'cod'] as const).filter((m) => methods.value?.[m]))
-const METHOD_NAME: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', bank: 'Bank transfer', cod: 'Cash on Delivery' }
+const METHOD_SHORT: Record<string, string> = { bkash: 'bKash', nagad: 'Nagad', bank: 'Bank transfer', cod: 'Cash on delivery' }
 const LOGO: Record<string, string> = { bkash: '/payments/bkash.svg', nagad: '/payments/nagad.png' } // CHK-12 official marks
 const bankRows = computed(() => ([['Bank', s.value?.bank_name], ['Account name', s.value?.bank_account_name], ['Account number', s.value?.bank_account_number], ['Branch', s.value?.bank_branch], ['Routing number', s.value?.bank_routing_number]] as [string, string | undefined][]).filter(([, v]) => v))
 const copied = ref('')
@@ -162,18 +162,18 @@ async function place() {
 
         <section class="flex flex-col gap-5">
           <div class="border-b border-ink pb-3.5"><h2 class="font-display text-h3 md:text-h3-lg">Payment</h2><p class="mt-1.5 text-[14.5px] text-body">Pay with bKash, Nagad or a bank transfer and confirm with your transaction ID, or pay in cash when your order arrives.</p></div>
-          <div class="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]" role="group" aria-label="Payment method">
-            <button v-for="m in enabled" :key="m" type="button" class="flex min-h-[72px] items-center gap-3.5 border px-[18px] py-4 text-left transition-colors md:px-[22px]" :class="form.payment_method === m ? 'border-ink bg-surface' : 'border-field hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().ecommerce('add_payment_info', { payment_type: m, items: cart.lines.map(useTrack().line) })">
-              <span class="h-[18px] w-[18px] flex-none rounded-full border border-ink" :class="form.payment_method === m ? 'bg-[radial-gradient(var(--color-ink)_0_45%,transparent_50%)]' : ''" />
-              <span class="flex min-w-0 flex-1 items-center justify-between gap-3">
-                <span class="font-display text-h3 font-semibold leading-[1.1]">{{ METHOD_NAME[m] }}</span>
-                <!-- CHK-12 (v1.11): official marks on a white chip so they read on any theme background -->
-                <span class="flex h-10 w-[68px] flex-none items-center justify-center rounded-[6px] bg-white px-1.5 ring-1 ring-black/5" aria-hidden="true">
-                  <img v-if="LOGO[m]" :src="LOGO[m]" alt="" width="60" height="28" class="max-h-7 w-auto" loading="lazy" decoding="async">
-                  <svg v-else-if="m === 'bank'" width="26" height="26" viewBox="0 0 24 24" fill="none" class="text-ink" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5M4.5 10v8M9.5 10v8M14.5 10v8M19.5 10v8M3 20h18" /></svg>
-                  <svg v-else width="28" height="24" viewBox="0 0 28 24" fill="none" class="text-success" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="5" width="25" height="14" rx="2" /><circle cx="14" cy="12" r="3.2" /><path d="M5.5 9v6M22.5 9v6" /></svg>
-                </span>
+          <!-- CHK-12 (v1.11 owner request): compact cards. Phones: 2 per row; from 640 px all methods sit on one line. -->
+          <div class="grid grid-cols-2 gap-2.5 sm:[grid-template-columns:repeat(var(--pay-n),minmax(0,1fr))]" :style="{ '--pay-n': enabled.length }" role="group" aria-label="Payment method">
+            <button v-for="m in enabled" :key="m" type="button" class="pay-card relative flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-[10px] border bg-surface px-2 py-3 text-center transition-[border-color,box-shadow,transform] duration-200" :class="form.payment_method === m ? 'border-ink shadow-[0_0_0_1px_var(--color-ink)]' : 'border-field hover:-translate-y-0.5 hover:border-ink'" :aria-pressed="form.payment_method === m" @click="form.payment_method = m; useTrack().ecommerce('add_payment_info', { payment_type: m, items: cart.lines.map(useTrack().line) })">
+              <!-- selected tick, top right -->
+              <span class="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full border transition-colors" :class="form.payment_method === m ? 'border-ink bg-ink text-bg' : 'border-field'" aria-hidden="true"><svg v-if="form.payment_method === m" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+              <!-- official marks on a white chip so they read on any theme background -->
+              <span class="flex h-9 w-[64px] items-center justify-center rounded-[6px] bg-white px-1.5 ring-1 ring-black/5" aria-hidden="true">
+                <img v-if="LOGO[m]" :src="LOGO[m]" alt="" width="56" height="26" class="max-h-[26px] w-auto" loading="lazy" decoding="async">
+                <svg v-else-if="m === 'bank'" width="22" height="22" viewBox="0 0 24 24" fill="none" class="text-ink" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5M4.5 10v8M9.5 10v8M14.5 10v8M19.5 10v8M3 20h18" /></svg>
+                <svg v-else width="24" height="20" viewBox="0 0 28 24" fill="none" class="text-success" stroke="currentColor" stroke-width="1.6"><rect x="1.5" y="5" width="25" height="14" rx="2" /><circle cx="14" cy="12" r="3.2" /><path d="M5.5 9v6M22.5 9v6" /></svg>
               </span>
+              <span class="text-[13px] font-medium leading-tight">{{ METHOD_SHORT[m] }}</span>
             </button>
           </div>
           <p v-if="!enabled.length" class="err" role="alert">No payment method is available right now. Please contact us.</p>

@@ -80,16 +80,14 @@ watch(sizeFinder.open, (o) => { if (!o) document.documentElement.style.overflow 
   <StoreDialog labelledby="buy-title" overlay-class="items-end sm:items-center sm:p-6" panel-class="buy-in flex max-h-[92dvh] w-full max-w-[760px] flex-col overflow-hidden rounded-t-[20px] bg-bg shadow-pop sm:max-h-[88vh] sm:rounded-[16px]" @close="emit('close')">
     <div class="mx-auto mt-2.5 h-1 w-10 flex-none rounded-full bg-field sm:hidden" aria-hidden="true" />
     <div class="grid min-h-0 flex-1 overflow-y-auto overscroll-contain sm:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      <!-- Photo (phones: a compact row with name and price; wider: a tall column) -->
-      <div class="hidden bg-cream sm:block">
-        <Transition mode="out-in" enter-active-class="transition-opacity duration-200" leave-active-class="transition-opacity duration-150" enter-from-class="opacity-0" leave-to-class="opacity-0">
-          <StoreTile :key="photo?.url ?? 'none'" :src="photo?.url" :alt="photo?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="3/4" :width="380" :height="506" sizes="sm:300px" art-width="56%" class="h-full !aspect-auto" />
-        </Transition>
+      <!-- Photo with zoom (v1.11 owner request; CAT-27 behaviour): +/−, pinch, Ctrl/⌘ + wheel, double-tap.
+           Wider screens: a column beside the options; phones: below the name, whole photo shown (contain). -->
+      <div class="hidden self-start bg-cream sm:block">
+        <StoreProductZoom :src="photo?.url" :alt="photo?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="3/4" fit="contain" compact />
       </div>
 
       <div class="flex flex-col gap-5 px-5 pb-5 pt-3 sm:px-7 sm:pt-6">
         <div class="flex items-start gap-3.5">
-          <StoreTile :src="photo?.url" :alt="''" :tile-key="p.id" :category="p.category.slug" ratio="3/4" :width="72" :height="96" art-width="56%" class="w-[64px] flex-none sm:hidden" />
           <div class="min-w-0 flex-1">
             <div class="text-xs uppercase tracking-[0.16em] text-muted">{{ p.subcategory?.name || p.category.name }}</div>
             <h2 id="buy-title" class="mt-1 font-display text-[22px] font-medium leading-[1.15] md:text-[26px]">{{ p.name }}</h2>
@@ -97,6 +95,7 @@ watch(sizeFinder.open, (o) => { if (!o) document.documentElement.style.overflow 
           </div>
           <button type="button" class="-mr-2 -mt-1 flex h-11 w-11 flex-none items-center justify-center rounded-full transition-colors hover:bg-cream" aria-label="Close" data-autofocus @click="emit('close')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
         </div>
+        <StoreProductZoom :src="photo?.url" :alt="photo?.alt_text || p.name" :tile-key="p.id" :category="p.category.slug" ratio="4/3" fit="contain" compact class="-mx-5 bg-cream sm:hidden" />
 
         <!-- Colour -->
         <fieldset v-if="colours.length > 1 || colours[0]" class="flex flex-col gap-2.5">
@@ -147,15 +146,15 @@ watch(sizeFinder.open, (o) => { if (!o) document.documentElement.style.overflow 
 
     <!-- Actions: pinned to the bottom of the sheet -->
     <div class="flex-none border-t border-border bg-bg px-5 pb-[calc(16px+env(safe-area-inset-bottom))] pt-3.5 sm:px-7 sm:pb-5">
-      <p class="mb-2.5 min-h-[18px] text-center text-[13px]" :class="full ? 'text-rose-deep' : 'text-muted'" role="status">{{ full ? live : hint }}</p>
+      <p class="mb-2.5 min-h-[18px] text-center text-[13px] font-medium text-rose-deep" role="status">{{ full ? live : hint }}</p>
       <div class="grid grid-cols-2 gap-2.5">
-        <button type="button" class="btn-o flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_add_to_cart" @click="onAdd">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4h2.2l2.3 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.1" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17.5" cy="20" r="1.3" /></svg>
-          <span>Add to Cart</span>
-        </button>
         <button type="button" class="btn flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_checkout_now" @click="onCheckout">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" stroke-linejoin="round" /></svg>
           <span>Checkout Now</span>
+        </button>
+        <button type="button" class="btn-o flex !h-[52px] items-center justify-center gap-2 whitespace-nowrap !px-2 !text-[11.5px] !tracking-[0.1em] sm:!text-xs sm:!tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45" :disabled="!chosen || busy" data-track="buy_add_to_cart" @click="onAdd">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4h2.2l2.3 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.1" /><circle cx="9.5" cy="20" r="1.3" /><circle cx="17.5" cy="20" r="1.3" /></svg>
+          <span>Add to Cart</span>
         </button>
       </div>
     </div>
