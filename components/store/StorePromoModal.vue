@@ -9,18 +9,27 @@ let shownThisLoad = false
 // heading, text, button and on/off. While it is on, it opens once per application load: shortly after the first home
 // page view of a full page load (first visit, reload, or typed URL). Going back to the home page through in-app
 // navigation does not open it again. ×, Esc, the backdrop and "Continue browsing" close it until the next full load.
+// SEO (2026-11-26): it opens on the visitor's first scroll (~300 px), or after 12 s without scrolling, instead of
+// 0.8 s after load. A popup covering the page on load is the page's largest paint on phones (LCP ~5 s) and is an
+// "intrusive interstitial" that Google demotes in mobile results.
 import type { Banner } from '~/types/api'
 
 const props = defineProps<{ popup: Banner }>()
 const open = ref(false)
 const hasText = computed(() => !!(props.popup.heading || props.popup.text || props.popup.button_label))
 const cta = computed(() => props.popup.button_label || 'Shop now')
+const SCROLL_PX = 300
+const FALLBACK_MS = 12000
 let timer: ReturnType<typeof setTimeout> | undefined
+const stop = () => { clearTimeout(timer); window.removeEventListener('scroll', onScroll) }
+const show = () => { stop(); if (shownThisLoad) return; shownThisLoad = true; open.value = true }
+function onScroll() { if (window.scrollY >= SCROLL_PX) show() }
 onMounted(() => {
   if (!props.popup.media || shownThisLoad) return
-  timer = setTimeout(() => { shownThisLoad = true; open.value = true }, 800)
+  window.addEventListener('scroll', onScroll, { passive: true })
+  timer = setTimeout(show, FALLBACK_MS)
 })
-onBeforeUnmount(() => clearTimeout(timer))
+onBeforeUnmount(stop)
 const close = () => { open.value = false }
 // The image keeps its own proportions (no crop): resize to 800 px wide with the matching height.
 const shape = computed(() => {
