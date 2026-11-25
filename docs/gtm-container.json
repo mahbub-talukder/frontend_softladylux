@@ -134,7 +134,11 @@
         "firingTriggerId": [
           "101"
         ],
-        "tagFiringOption": "ONCE_PER_EVENT"
+        "tagFiringOption": "ONCE_PER_EVENT",
+        "blockingTriggerId": [
+          "105"
+        ],
+        "notes": "Counts page changes inside the site (SPA). The first page of a full load is counted by GA4's automatic page view, so it is blocked here (trigger 105)."
       },
       {
         "accountId": "0",
@@ -424,6 +428,48 @@
             ]
           }
         ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "triggerId": "105",
+        "name": "CE - page_view (first of page load)",
+        "type": "CUSTOM_EVENT",
+        "customEventFilter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{_event}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "page_view"
+              }
+            ]
+          }
+        ],
+        "filter": [
+          {
+            "type": "EQUALS",
+            "parameter": [
+              {
+                "type": "TEMPLATE",
+                "key": "arg0",
+                "value": "{{JS - is first page_view}}"
+              },
+              {
+                "type": "TEMPLATE",
+                "key": "arg1",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "notes": "Blocks GA4 - page_view on a full page load: GA4 enhanced measurement already sends that page view."
       }
     ],
     "variable": [
@@ -440,7 +486,7 @@
             "value": "G-XXXXXXXXXX"
           }
         ],
-        "notes": "Replace with your GA4 Measurement ID (GA4 \u2192 Admin \u2192 Data streams \u2192 Web)."
+        "notes": "Replace with your GA4 Measurement ID (GA4 → Admin → Data streams → Web)."
       },
       {
         "accountId": "0",
@@ -633,6 +679,45 @@
             "value": "method"
           }
         ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "10",
+        "name": "DLV - gtm.uniqueEventId",
+        "type": "v",
+        "parameter": [
+          {
+            "type": "INTEGER",
+            "key": "dataLayerVersion",
+            "value": "2"
+          },
+          {
+            "type": "BOOLEAN",
+            "key": "setDefaultValue",
+            "value": "false"
+          },
+          {
+            "type": "TEMPLATE",
+            "key": "name",
+            "value": "gtm.uniqueEventId"
+          }
+        ]
+      },
+      {
+        "accountId": "0",
+        "containerId": "0",
+        "variableId": "11",
+        "name": "JS - is first page_view",
+        "type": "jsm",
+        "parameter": [
+          {
+            "type": "TEMPLATE",
+            "key": "javascript",
+            "value": "function() {\n  // SRS INS-05: true only for the first page_view of this page load; GA4's automatic page view\n  // (enhanced measurement, cannot be switched off) already counts that page.\n  var dl = window.dataLayer || [];\n  for (var i = 0; i < dl.length; i++) {\n    var e = dl[i];\n    if (e && e.event === 'page_view' && typeof e.length !== 'number') return e['gtm.uniqueEventId'] === {{DLV - gtm.uniqueEventId}};\n  }\n  return false;\n}"
+          }
+        ],
+        "notes": "True for the first page_view pushed in this page load."
       }
     ],
     "builtInVariable": [

@@ -62,6 +62,13 @@ The container has: a Google tag (`send_page_view` off, Initialization trigger); 
 the data layer, on a custom-event regex trigger), `ui_click` (button_name, button_location, page_path) and
 `search` / `login` / `sign_up` (search_term, results, method); one Data Layer Variable per parameter.
 
+**No double page views (container v4, 2026-11-26):** GA4's enhanced-measurement page view on a full page load
+cannot be switched off and ignores `send_page_view: false`. So the `GA4 - page_view` tag has a blocking trigger
+`CE - page_view (first of page load)` (Custom JS variable `JS - is first page_view`, comparing `gtm.uniqueEventId`):
+GA4 counts the landing page itself and the tag counts in-site page changes only. Because the automatic page view
+uses the full URL, the GA4 stream redacts the query parameters `q`, `phone` and `token`
+(Admin → Data streams → Redact data); `utm_*` stays for campaign attribution.
+
 **Manual fallback** (if the import is refused): build the same items by hand. Variables: Constant
 `GA4 Measurement ID`; Data Layer Variables (version 2) `page_path`, `page_location`, `page_title`, `button_name`,
 `button_location`, `search_term`, `results`, `method`. Triggers (Custom Event): `page_view`; `ui_click`;
