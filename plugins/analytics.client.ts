@@ -21,7 +21,26 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     push('page_view', { page_path: path, page_location: `${window.location.origin}${path}`, page_title: document.title })
   }
   view(router.currentRoute.value.fullPath)
-  nuxtApp.hook('page:finish', () => view(router.currentRoute.value.fullPath))
+
+  // SRS INS-05 page_title: on page:finish Nuxt only starts writing the new page's <title> (asynchronously),
+  // so document.title still holds the previous page's title there. Push the page_view once unhead reports
+  // the head rendered (dom:rendered), with a short fallback in case nothing in the head changed.
+  const head = injectHead()
+  let pending = ''
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const flush = () => {
+    clearTimeout(timer)
+    if (!pending) return
+    const full = pending
+    pending = ''
+    view(full)
+  }
+  nuxtApp.hook('page:finish', () => {
+    flush() // a page left before its title rendered is still counted
+    pending = router.currentRoute.value.fullPath
+    timer = setTimeout(flush, 500)
+  })
+  head.hooks.hook('dom:rendered', flush)
 
   document.addEventListener('click', (e) => {
     const info = clickInfo(e.target as unknown as TrackEl, router.currentRoute.value.fullPath)
