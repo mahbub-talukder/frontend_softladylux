@@ -3,7 +3,7 @@
 // details tabs, delivery info from Settings, related), CAT-13 (out-of-stock visible but disabled),
 // CAT-22 (breadcrumb Home > Category > Sub-category), CRT-02 (Add to bag, quantity 1-10).
 import type { ProductDetail, ProductVariant } from '~/types/api'
-import { breadcrumbJsonLd, ldScript, productJsonLd, siteOrigin } from '~/utils/seo'
+import { breadcrumbJsonLd, ldScript, productDescription, productJsonLd, productTitle, RETURN_DAYS, siteOrigin } from '~/utils/seo'
 
 const route = useRoute()
 const { api } = useApi()
@@ -13,16 +13,28 @@ const { data: s } = await useSiteSettings()
 
 const reqUrl = useRequestURL()
 const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, reqUrl.host, reqUrl.protocol.replace(':', ''))
+// SEO copy v1 (docs/seo-copy.md): "Jelly Bra Price in Bangladesh | SoftLadyLux"; the admin SEO fields win.
 useSeoMeta({
-  title: () => p.value?.seo_title || p.value?.name, description: () => p.value?.seo_description || p.value?.short_desc,
-  ogTitle: () => p.value?.seo_title || p.value?.name, ogDescription: () => p.value?.seo_description || p.value?.short_desc,
-  ogImage: () => (p.value?.image ? origin + p.value.image.url : undefined), ogType: 'website'
+  title: () => productTitle(p.value!), description: () => productDescription(p.value!),
+  ogTitle: () => productTitle(p.value!), ogDescription: () => productDescription(p.value!),
+  ogImage: () => (p.value?.image ? origin + p.value.image.url : undefined), ogImageAlt: () => p.value?.image?.alt_text || p.value?.name,
+  ogType: 'website'
 })
-// §9 SEO: Product and BreadcrumbList structured data
-useHead({ script: [
-  { type: 'application/ld+json', innerHTML: ldScript(productJsonLd(origin, p.value!)) },
-  { type: 'application/ld+json', innerHTML: ldScript(breadcrumbJsonLd(origin, p.value!)) }
-] })
+// §9 SEO: Product (brand, all images, price range, delivery fees, return window) and BreadcrumbList structured data,
+// plus product price meta for link previews.
+useHead({
+  meta: [
+    { property: 'product:price:amount', content: Number(p.value!.price).toFixed(2) },
+    { property: 'product:price:currency', content: 'BDT' },
+    { property: 'product:availability', content: p.value!.sold_out ? 'out of stock' : 'in stock' }
+  ],
+  script: [
+    { type: 'application/ld+json', innerHTML: ldScript(productJsonLd(origin, p.value!, origin, {
+      brand: s.value?.company_name, feeInsideDhaka: s.value?.delivery_fee_inside_dhaka, feeOutsideDhaka: s.value?.delivery_fee_outside_dhaka, returnDays: RETURN_DAYS
+    })) },
+    { type: 'application/ld+json', innerHTML: ldScript(breadcrumbJsonLd(origin, p.value!)) }
+  ]
+})
 
 const colours = computed(() => {
   const seen = new Map<string, string>()

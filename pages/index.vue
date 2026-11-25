@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CardProduct, Media } from '~/types/api'
+import { ldScript, organizationJsonLd, siteOrigin, websiteJsonLd } from '~/utils/seo'
 // Design: Main + MobileHome boards. Fixed layout (SRS WEB-06): hero, trust strip, category carousel,
 // New arrivals, Signature collection, Offers tabs, Video gallery, Size-finder band. Each block shows
 // only when it has content; New / Signature / Offers fill from product flags (CAT-07).
@@ -8,8 +9,18 @@ const { data: home } = await useHome()
 const { data: s } = await useSiteSettings()
 useSeoMeta({
   title: () => s.value?.seo_title || s.value?.company_name || 'SoftLadyLux',
-  description: () => s.value?.seo_description || s.value?.tagline || ''
+  description: () => s.value?.seo_description || s.value?.tagline || '',
+  ogTitle: () => s.value?.seo_title || s.value?.company_name || 'SoftLadyLux'
 })
+// SEO copy v1 (docs/seo-copy.md): the shop as Organization + WebSite structured data (logo, contact, address, socials).
+const reqUrl = useRequestURL()
+const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, reqUrl.host, reqUrl.protocol.replace(':', ''))
+useHead({ script: [
+  { type: 'application/ld+json', innerHTML: ldScript(organizationJsonLd(origin, s.value ?? {})) },
+  { type: 'application/ld+json', innerHTML: ldScript(websiteJsonLd(origin, s.value?.company_name || undefined)) }
+] })
+// One H1 for the page (the hero slide headlines are H2s); visually hidden, the hero carries the visual headline.
+const H1 = 'Bras, Panties & Lingerie Online in Bangladesh'
 const banner = (p: string) => home.value?.banners.find((b) => b.placement === p)
 // Home promo / offer banners show the whole uploaded picture (v1.6): the box takes the image's own proportions instead
 // of a fixed 2:1 crop, and the resize keeps that shape. 2:1 is only the fallback when the size is unknown.
@@ -34,6 +45,7 @@ const sigBanner = computed(() => home.value?.signature_banner ?? null) // WEB-02
 
 <template>
   <div>
+    <h1 class="sr-only">{{ H1 }}</h1>
     <StoreHomeHero :slides="home?.carousel ?? []" />
     <!-- WEB-11 (v1.6): promotional popup once per full page load (not on in-app returns to home); renders nothing on the server -->
     <StorePromoModal v-if="home?.popup" :popup="home.popup" />
@@ -42,7 +54,7 @@ const sigBanner = computed(() => home.value?.signature_banner ?? null) // WEB-02
          dividers between items (2×2 on phones, one row from lg). Icon comes from the item's admin "Icon name". -->
     <!-- Contained to the main 1320px content column (owner request), not full viewport width -->
     <section v-if="home?.trust.length" class="wrap" aria-label="Why shop with us">
-      <ul class="grid grid-cols-2 border border-border bg-cream py-2 md:py-3":class="home.trust.length >= 4 ? 'lg:grid-cols-4' : home.trust.length === 3 ? 'lg:grid-cols-3' : ''">
+      <ul class="grid grid-cols-2 border border-border bg-cream py-2 md:py-3" :class="home.trust.length >= 4 ? 'lg:grid-cols-4' : home.trust.length === 3 ? 'lg:grid-cols-3' : ''">
         <li
           v-for="(t, i) in home.trust.slice(0, 4)" :key="t.id"
           class="flex items-center gap-3 px-2 py-3 md:justify-center md:gap-4 md:px-5 md:py-4"

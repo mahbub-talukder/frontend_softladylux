@@ -94,6 +94,7 @@ export interface PublicCategory {
   name: string; slug: string; description: string; count: number
   subcategories: { name: string; slug: string; count: number }[]
   tile: { url: string; alt_text: string } | null
+  seo_title?: string; seo_description?: string
 }
 export interface Facets {
   subcategories: { name: string; slug: string; count: number }[]

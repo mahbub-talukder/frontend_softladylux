@@ -146,7 +146,7 @@ const isCurrent = (k: number) => k === i.value
       <div class="flex flex-1 flex-col justify-center gap-6">
         <div class="grid">
           <div v-for="(x, k) in slides" :key="`h${x.id}`" class="hero-txt flex flex-col gap-5 [grid-area:1/1]" :class="isCurrent(k) ? 'is-on' : ''" :aria-hidden="!isCurrent(k) || undefined">
-            <component :is="k === 0 ? 'h1' : 'h2'" class="h-display max-w-[520px]">{{ x.heading }}</component>
+            <h2 class="h-display max-w-[520px]">{{ x.heading }}</h2>
             <p v-if="x.subtext" class="max-w-[430px] text-[17px] leading-[1.6] text-body">{{ x.subtext }}</p>
           </div>
         </div>
@@ -172,7 +172,7 @@ const isCurrent = (k: number) => k === i.value
           <div v-for="(x, k) in track" :key="`${k}-${x.id}`" class="relative h-full w-full flex-none" :aria-hidden="(loop ? k - 1 : k) !== i || undefined">
             <picture v-if="x.media?.url">
               <source media="(max-width: 639px)" :srcset="set(mobileSrc(x), 640)">
-              <img :srcset="set(x.media.url, 1200)" :src="url(x.media.url, 1200, 80)" :alt="(loop ? k - 1 : k) === i ? x.media.alt_text || x.heading : ''" draggable="false" decoding="async" :loading="k <= 2 ? 'eager' : 'lazy'" :fetchpriority="(loop ? k === 1 : k === 0) ? 'high' : undefined" class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500" :class="(loop ? k === 1 : k === 0) || isReady(x) ? 'opacity-100' : 'opacity-0'">
+              <img :srcset="set(x.media.url, 1200)" :src="url(x.media.url, 1200, 80)" :alt="(loop ? k - 1 : k) === i ? x.media.alt_text || x.heading : ''" draggable="false" decoding="async" :loading="(loop ? k === 1 : k === 0) ? 'eager' : 'lazy'" :fetchpriority="(loop ? k === 1 : k === 0) ? 'high' : undefined" class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500" :class="(loop ? k === 1 : k === 0) || isReady(x) ? 'opacity-100' : 'opacity-0'">
             </picture>
             <StoreTile v-else src="" ratio="auto" tint="bg-tile-1" class="h-full !aspect-auto" art-width="380px" category="bras" />
           </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { canonicalOf, siteOrigin } from '~/utils/seo'
+import { BRAND, canonicalOf, siteOrigin, withBrand } from '~/utils/seo'
 defineProps<{ bleed?: boolean }>()
 
 // Storefront shell: header + footer read from the Settings API (SET-08). `bleed` pages (home) run
@@ -14,10 +14,13 @@ watch(() => route.fullPath, () => { sizeFinder.hide(); buy.close() })
 // Read once in setup: composables like useRuntimeConfig() must not run lazily inside computed().
 const origin = siteOrigin(useRuntimeConfig().public.siteUrl as string, url.host, url.protocol.replace(':', ''))
 useHead({
+  // SEO copy v1: every storefront title ends with the brand ("Bras Online in Bangladesh | SoftLadyLux").
+  titleTemplate: (t?: string) => withBrand(t, s.value?.company_name || BRAND),
   link: () => [...(s.value?.favicon ? [{ key: 'favicon', rel: 'icon', href: s.value.favicon.url }] : []), { rel: 'canonical', href: canonicalOf(origin, route.path) }]
 })
 // Open Graph defaults from Settings (SET-04); pages override title/description/image.
 useSeoMeta({
+  ogUrl: () => canonicalOf(origin, route.path), ogLocale: 'en_BD',
   ogSiteName: () => s.value?.company_name, ogType: 'website', twitterCard: 'summary_large_image',
   ogImage: () => (s.value?.seo_share_image ? origin + s.value.seo_share_image.url : undefined),
   description: () => s.value?.seo_description || s.value?.tagline || undefined, ogDescription: () => s.value?.seo_description || undefined

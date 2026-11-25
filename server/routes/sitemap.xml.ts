@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) => {
   for (const c of (await get<{ slug: string }[]>('/categories/')) ?? []) urls.push({ path: `/shop/${c.slug}`, changefreq: 'daily', priority: 0.8 })
   for (const slug of ['about', 'delivery-returns', 'privacy', 'terms']) if (await get(`/pages/${slug}/`)) urls.push({ path: `/pages/${slug}`, priority: 0.3 })
   for (let page = 1; page <= 50; page++) {
-    const r = await get<{ results: { slug: string }[]; next: string | null }>(`/products/?page=${page}&page_size=100`)
-    for (const p of r?.results ?? []) urls.push({ path: `/product/${p.slug}`, changefreq: 'weekly', priority: 0.6 })
+    const r = await get<{ results: { slug: string; image?: { url: string } | null }[]; next: string | null }>(`/products/?page=${page}&page_size=100`)
+    for (const p of r?.results ?? []) urls.push({ path: `/product/${p.slug}`, changefreq: 'weekly', priority: 0.6, images: p.image?.url ? [p.image.url] : [] })
     if (!r?.next) break
   }
   setHeader(event, 'content-type', 'application/xml; charset=utf-8')

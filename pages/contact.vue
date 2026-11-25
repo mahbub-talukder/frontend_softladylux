@@ -2,10 +2,18 @@
 import { SOCIAL_ICON_PATHS } from '~/utils/socialIcons'
 // Design: Contact board. SRS NTF-01 (stored, emailed to support, honeypot + rate limit), NTF-05
 // (WhatsApp/Messenger in the footer), SET-08 (address, phone, email from Settings).
-useSeoMeta({ title: 'Contact us' })
 definePageMeta({ layout: 'bleed' })
 const { api, errorOf } = useApi()
 const { data: s } = await useSiteSettings()
+// SEO copy v1 (docs/seo-copy.md): phone, email and area come from Settings.
+useSeoMeta({
+  title: () => `Contact Us: ${[s.value?.address_line1?.split(',').at(-2)?.trim(), s.value?.city].filter(Boolean).join(', ') || 'Dhaka'}`,
+  description: () => [
+    s.value?.support_phones?.[0] ? `Call or WhatsApp ${s.value.support_phones[0]}` : '',
+    s.value?.support_email ? `email ${s.value.support_email}` : '',
+    s.value?.city ? `or visit us in ${s.value.city}` : ''
+  ].filter(Boolean).join(', ') + '.' + (s.value?.working_hours ? ` ${s.value.working_hours}.` : '')
+})
 const f = reactive({ name: '', phone: '', email: '', subject: '', message: '', website: '' })
 const errors = ref<Record<string, string>>({})
 const message = ref('')
